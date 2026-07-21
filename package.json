@@ -1,0 +1,17 @@
+{
+  "name": "@roundhouse/spam-filter",
+  "version": "1.0.0",
+  "description": "Shared contact-form spam filter for Roundhouse client sites",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "scripts": {
+    "test": "node test.js"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
