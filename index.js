@@ -26,6 +26,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "integribridge.com",
   "fringmail.com",
   "mailturk.xyz",
+  "tidyhome.info", // guest-post pitch, IrriGators 2026-08-20
 ];
 
 // TLDs no real customer sends from.
@@ -76,6 +77,25 @@ export const SPAM_PHRASES = {
     "digital marketing agency",
     "more leads guaranteed",
     "lead generation service",
+  ],
+  // Guest-post / "let me write for you" pitches. These arrive from real people
+  // with real phone numbers, so only the wording gives them away, and they
+  // rotate domains constantly — the phrases matter more than the blocklist.
+  //
+  // Deliberately "write an article", never bare "article": a real customer
+  // saying "I read your article about winterizing sprinklers" is a warm lead
+  // and must get through. See the MUST_PASS case guarding exactly that.
+  guestPosting: [
+    "write an article",
+    "write articles",
+    "craft articles",
+    "contribute an article",
+    "contribute a post",
+    "publish an article",
+    "share an outline",
+    "your readers would",
+    "alternative topic",
+    "write on a subject of your choice",
   ],
   videoBranding: [
     "explainer video",

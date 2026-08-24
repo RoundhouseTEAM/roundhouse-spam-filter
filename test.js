@@ -45,6 +45,30 @@ const MUST_BLOCK = [
       "We offer Virtual Assistants that utilize our custom built AI tool, MAVIS, that easily replaces a 20 man team. Are you looking for help?",
   },
   {
+    label: "Guest-post pitch (blocked domain) — IrriGators, 2026-08-20",
+    name: "Redacted Sender",
+    email: "sender@tidyhome.info",
+    phone: "5555034088",
+    message:
+      "Hello, Can I write an article for your website that speaks directly to freelancers, contractors, and gig workers who own a home?",
+  },
+  {
+    label: "Guest-post pitch from a clean gmail — keyword must catch it alone",
+    name: "Redacted Sender",
+    email: "sender@gmail.com",
+    phone: "5551234567",
+    message:
+      "I believe your readers would find this a timely and genuinely useful resource, and I'd be glad to share an outline or a draft whenever it's convenient for you.",
+  },
+  {
+    label: "Guest-post pitch — the P.S. variant, no other tell",
+    name: "Redacted Sender",
+    email: "sender@outlook.com",
+    phone: "5559876543",
+    message:
+      "If you'd like to propose an alternative topic, please feel free. I am more than willing to write on a subject of your choice.",
+  },
+  {
     label: "Business acquisition (blocked domain)",
     name: "Redacted Sender",
     email: "sender@bizbuydave.com",
@@ -228,6 +252,14 @@ const MUST_PASS = [
     phone: "5551010101",
     message:
       "We are interested in getting a quote for a whole house carbon filter and under sink reverse osmosis system.",
+  },
+  {
+    label: "Real lead — customer refers to an ARTICLE they read on the site",
+    name: "Customer L",
+    email: "customer.l@example.com",
+    phone: "5552223333",
+    message:
+      "I read your article about when to turn the irrigation system off for winter and would like a quote to have mine serviced.",
   },
   {
     label: "Real lead — customer mentions finding the WEBSITE",
