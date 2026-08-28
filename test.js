@@ -167,6 +167,29 @@ const MUST_BLOCK = [
       "The US president raged at NATO allies over defense spending in meeting with the German chancellor",
   },
   {
+    label: "AI-employee pitch (blocked domain) — Newmans, 2026-08-28",
+    name: "Frederik Redacted",
+    email: "sender@mail.svarklar.com",
+    phone: "+45 91 60 04 23",
+    message:
+      "If I could get you more time, by automating the office work, without you needing to learn anything, would that be helpful? SvarKlar - An AI employee for your business.",
+  },
+  {
+    label: "AI-employee pitch from a clean gmail — keyword must catch it alone",
+    name: "Redacted Sender",
+    email: "sender@gmail.com",
+    phone: "5551234567",
+    message:
+      "If I could get you more time, by automating the office work, would that be helpful? An AI employee for your business. I found you through your website and your Google listing.",
+  },
+  {
+    label: "AI-employee pitch — the privacy-line variant, no other tell",
+    name: "Redacted Sender",
+    email: "sender@outlook.com",
+    phone: "5559876543",
+    message: "I found you through your website and your Google listing. What I do with your details: example.com/privacy",
+  },
+  {
     label: "Suspicious TLD (.bid)",
     name: "Redacted Sender",
     email: "sender@example.bid",
@@ -260,6 +283,14 @@ const MUST_PASS = [
     phone: "5552223333",
     message:
       "I read your article about when to turn the irrigation system off for winter and would like a quote to have mine serviced.",
+  },
+  {
+    label: "Real lead — customer offers photos, uses WOULD THAT BE HELPFUL",
+    name: "Customer M",
+    email: "customer.m@example.com",
+    phone: "5554445555",
+    message:
+      "There is water pooling under the kitchen sink. I can send photos of the leak before you come out, would that be helpful?",
   },
   {
     label: "Real lead — customer mentions finding the WEBSITE",

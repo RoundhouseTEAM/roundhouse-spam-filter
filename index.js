@@ -27,6 +27,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "fringmail.com",
   "mailturk.xyz",
   "tidyhome.info", // guest-post pitch, IrriGators 2026-08-20
+  "svarklar.com", // "AI employee" pitch, Newmans 2026-08-28 (covers mail.svarklar.com)
 ];
 
 // TLDs no real customer sends from.
@@ -117,6 +118,34 @@ export const SPAM_PHRASES = {
     "no obligation",
     "reply yes and i",
     "didn't want to interrupt your workday",
+    // Newmans 2026-08-28. Deliberately "found you through your website", not
+    // "found your website" — a real customer saying "I found your website on
+    // Google" is a lead, and there is a MUST_PASS case guarding it.
+    "i found you through your website",
+    "found you through your google listing",
+    "what i do with your details",
+  ],
+  // AI / automation sales pitches. A newer genre than the rest of this list —
+  // the SvarKlar pitch that reached Newmans on 2026-08-28 passed all five
+  // layers because nothing here described it. These are all vendor-side
+  // wording: a homeowner reporting a leak never uses any of them.
+  //
+  // Note what is NOT here: "would that be helpful?" was in the original pitch
+  // but a real customer offering photos of a leak writes exactly that, so it
+  // stays out. See the MUST_PASS case.
+  aiAutomation: [
+    "ai employee",
+    "ai employees",
+    "ai receptionist",
+    "ai voice agent",
+    "ai chatbot",
+    "ai agent for your business",
+    "automating the office work",
+    "automate the office work",
+    "automate your office work",
+    "without you needing to learn anything",
+    "never miss another call",
+    "on autopilot",
   ],
   offTopic: [
     "deneme bonusu",
