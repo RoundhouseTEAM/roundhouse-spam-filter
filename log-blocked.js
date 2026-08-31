@@ -33,8 +33,36 @@
  * behaviour (silent discard) rather than throwing a 500 at a real visitor.
  */
 
-/** Layers where only a bot realistically lands. Logged, never emailed. */
-const SILENT_LAYERS = new Set(["honeypot", "origin", "timing", "missing-fields"]);
+/**
+ * Layers where only a bot realistically lands. Logged, never emailed.
+ *
+ * "honeypot" is deliberately NOT in this set. It was, until a real submission was
+ * blocked by it on Indiana Flow on 2026-08-31 — a password manager had filled the
+ * hidden field. A honeypot hit is therefore NOT proof of a bot, so it is judged on
+ * whether the rest of the submission reads like a person (see shouldAlert).
+ */
+const SILENT_LAYERS = new Set(["origin", "timing", "missing-fields"]);
+
+/**
+ * A name, a dialable phone and an actual message together. Bots that trip the
+ * honeypot frequently miss at least one; a person caught by autofill has all three.
+ */
+function looksLikeRealEnquiry(row) {
+  const digits = String(row.phone || "").replace(/\D/g, "");
+  return String(row.name || "").trim().length > 1 &&
+         digits.length >= 7 &&
+         String(row.message || "").trim().length > 0;
+}
+
+/**
+ * Content and keyword blocks always alert — that is where false positives live.
+ * Honeypot blocks alert only when the submission looks like a real enquiry, so a
+ * customer caught by autofill reaches the inbox without every bot doing the same.
+ */
+function shouldAlert(row) {
+  if (row.layer === "honeypot") return looksLikeRealEnquiry(row);
+  return !SILENT_LAYERS.has(row.layer);
+}
 
 /** Sheets tops out at 50k chars per cell; stay well clear and keep rows readable. */
 const MAX_FIELD = 4000;
@@ -116,6 +144,7 @@ async function sendAlertEmail(row) {
       <p style="margin:0 0 16px;color:#64748b;">
         This was withheld from the client by the <strong>${escapeHtml(row.layer)}</strong> rule.
         If it reads like a real customer, the filter needs adjusting and this lead needs rescuing.
+        ${row.layer === "honeypot" ? "<br><strong>A honeypot hit with a full name, phone and message is usually a password manager filling the hidden field \u2014 most likely a real customer, not a bot.</strong>" : ""}
       </p>
       <table style="border-collapse:collapse;width:100%;max-width:620px;">
         ${field("Rule", row.layer)}
@@ -223,7 +252,7 @@ export async function logBlocked(entry = {}) {
       console.warn("[blocked-log] BLOCKED_LOG_WEBHOOK not set — console only");
     }
 
-    if (!SILENT_LAYERS.has(row.layer)) {
+    if (shouldAlert(row)) {
       tasks.push(sendAlertEmail(row));
     }
 

@@ -103,13 +103,37 @@ await withHarness({ env: FULL_ENV }, async (calls) => {
 });
 
 // Bot-certain layers are logged but must not reach the inbox.
-for (const layer of ["honeypot", "origin", "timing", "missing-fields"]) {
+for (const layer of ["origin", "timing", "missing-fields"]) {
   await withHarness({ env: FULL_ENV }, async (calls) => {
     await logBlocked({ ...lead, layer });
     check(`"${layer}" logs to the sheet`, calls.some((c) => c.url.includes("script.google.com")));
     check(`"${layer}" sends NO alert email`, !calls.some((c) => c.url.includes("api.resend.com")));
   });
 }
+
+// A honeypot hit is NOT proof of a bot — a password manager filling the hidden
+// field caught a real customer on Indiana Flow. Judge it on the rest of the entry.
+await withHarness({ env: FULL_ENV }, async (calls) => {
+  await logBlocked({ ...lead, layer: "honeypot", matched: "filled: https://indianaflow.com" });
+  check("honeypot + full name/phone/message DOES alert (autofill victim)",
+    calls.some((c) => c.url.includes("api.resend.com")));
+});
+await withHarness({ env: FULL_ENV }, async (calls) => {
+  await logBlocked({ site: "x", layer: "honeypot", name: "", phone: "", message: "",
+                     matched: "filled: buy-cheap-pills" });
+  check("honeypot with an empty submission does NOT alert (bot)",
+    !calls.some((c) => c.url.includes("api.resend.com")));
+});
+await withHarness({ env: FULL_ENV }, async (calls) => {
+  await logBlocked({ site: "x", layer: "honeypot", name: "Bot", phone: "123", message: "hi" });
+  check("honeypot with an undialable phone does NOT alert (bot)",
+    !calls.some((c) => c.url.includes("api.resend.com")));
+});
+await withHarness({ env: FULL_ENV }, async (calls) => {
+  await logBlocked({ ...lead, layer: "honeypot", message: "" });
+  check("honeypot with no message does NOT alert (bot)",
+    !calls.some((c) => c.url.includes("api.resend.com")));
+});
 
 // The content layer catches real people quoting a URL, so it must alert.
 await withHarness({ env: FULL_ENV }, async (calls) => {
