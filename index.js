@@ -11,6 +11,10 @@
  * legitimate paying inquiries and must never be blocked.
  */
 
+// The blocked-submission recorder lives alongside the filter so every consumer
+// gets it from the same import. It never affects verdicts — it only writes them down.
+export { logBlocked } from "./log-blocked.js";
+
 // ── Email domains ────────────────────────────────────────────────
 // Confirmed spam senders. Several have hit more than one client.
 export const BLOCKED_EMAIL_DOMAINS = [
