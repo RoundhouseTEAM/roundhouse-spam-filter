@@ -49,7 +49,6 @@ export const SPAM_PHRASES = {
   virtualAssistant: [
     "virtual assistant",
     "virtual assistants",
-    "mavis",
     "my advanced virtual intelligent system",
     "20 man team",
     "20-person team",
@@ -113,20 +112,20 @@ export const SPAM_PHRASES = {
     "web design services",
     "redesign your website",
   ],
+  // Vendor-side wording ONLY. Everything here must be something a homeowner would
+  // never write.
+  //
+  // Seven phrases were REMOVED on 2026-08-31 after an audit found them blocking 6
+  // of 12 natural customer opening lines: "i came across your website", "i just
+  // visited your website", "came across your site", "noticed your website", "i
+  // found you through your website", "found you through your google listing" and
+  // "no obligation". Every one of those is exactly how a real customer opens a
+  // contact form, and because rejection returns a fake success they vanished
+  // without trace. Do not put them back — see the MUST_PASS cases guarding them.
   coldOutreach: [
-    "i came across your website",
-    "i just visited your website",
-    "came across your site",
-    "noticed your website",
     "quick zoom demo",
-    "no obligation",
     "reply yes and i",
     "didn't want to interrupt your workday",
-    // Newmans 2026-08-28. Deliberately "found you through your website", not
-    // "found your website" — a real customer saying "I found your website on
-    // Google" is a lead, and there is a MUST_PASS case guarding it.
-    "i found you through your website",
-    "found you through your google listing",
     "what i do with your details",
   ],
   // AI / automation sales pitches. A newer genre than the rest of this list —

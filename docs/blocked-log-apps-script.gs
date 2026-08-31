@@ -18,6 +18,9 @@
  *   Alpha Omega run, and it means the filters are doing their job.
  * • A sudden drop in rows for one site can mean its route stopped logging — check
  *   that BLOCKED_LOG_WEBHOOK is still set on that Vercel project.
+ * • Layer "delivered-no-js" is NOT a block. The visitor's JavaScript never ran, so
+ *   the form posted with an empty _ts. The lead WAS delivered, flagged for review.
+ *   These rows only exist to show how many submissions arrive without JS.
  *
  * ── Deploy ──────────────────────────────────────────────────────
  * The sheet exists and its ID is already filled in below — nothing to edit.
@@ -47,7 +50,7 @@
 
 // Bump whenever this script changes. The health check reports it, so you can tell
 // which version is actually deployed rather than assuming the last paste went live.
-var VERSION = 'v2-locked-header';
+var VERSION = 'v3-no-js-rows';
 
 // The Blocked Submissions sheet, already created:
 // https://docs.google.com/spreadsheets/d/1LIcJM6u41o_z3OwH2hEZQ6-9naCtcoImtXokjUoOu0g/edit

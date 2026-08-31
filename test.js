@@ -198,6 +198,50 @@ const MUST_BLOCK = [
 ];
 
 const MUST_PASS = [
+  // ── The 2026-08-31 regression guards ──────────────────────────────
+  // Seven coldOutreach phrases were blocking these exact openings. Each is how a
+  // real customer actually starts a contact form, and a fake success meant they
+  // vanished silently. If any of these ever fails, a phrase has been put back.
+  {
+    label: "Real lead — opens with I CAME ACROSS YOUR WEBSITE",
+    name: "Sarah Mitchell", email: "sarah.mitchell@gmail.com", phone: "5125550134",
+    message: "I came across your website while looking for a plumber in Round Rock. Our water heater is leaking, can someone come out today?",
+  },
+  {
+    label: "Real lead — opens with I JUST VISITED YOUR WEBSITE",
+    name: "Tom Bradley", email: "tbradley@outlook.com", phone: "5125550142",
+    message: "I just visited your website and saw you do sewer camera work. Can you do that for our line?",
+  },
+  {
+    label: "Real lead — opens with CAME ACROSS YOUR SITE",
+    name: "Kevin Park", email: "kpark@gmail.com", phone: "5125550155",
+    message: "Came across your site on Google. Suspected slab leak, our water bill doubled this month.",
+  },
+  {
+    label: "Real lead — opens with NOTICED YOUR WEBSITE",
+    name: "Dave Nguyen", email: "dnguyen@yahoo.com", phone: "7375559921",
+    message: "Noticed your website says you do tankless installs. Looking for a quote to replace our 50 gallon unit.",
+  },
+  {
+    label: "Real lead — opens with I FOUND YOU THROUGH YOUR WEBSITE",
+    name: "Maria Alvarez", email: "malvarez@gmail.com", phone: "5125550163",
+    message: "I found you through your website. The toilet upstairs runs constantly, can someone take a look?",
+  },
+  {
+    label: "Real lead — opens with FOUND YOU THROUGH YOUR GOOGLE LISTING",
+    name: "Angela Ruiz", email: "aruiz@hotmail.com", phone: "5125550177",
+    message: "Found you through your Google listing. Do you service Georgetown? Need a water softener installed.",
+  },
+  {
+    label: "Real lead — asks for a NO OBLIGATION quote",
+    name: "Robert Diaz", email: "rdiaz@gmail.com", phone: "5125550166",
+    message: "Outdoor spigot drips and the upstairs toilet runs. Could I get a no obligation quote please?",
+  },
+  {
+    label: "Real lead — customer's first name is MAVIS",
+    name: "Mavis Johnson", email: "mavisj@gmail.com", phone: "5125550188",
+    message: "Kitchen sink is backing up into the dishwasher. Need someone out this week.",
+  },
   {
     label: "Real job — sewer snake VIDEO for a retail project",
     name: "Customer A",

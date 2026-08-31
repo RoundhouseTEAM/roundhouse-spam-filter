@@ -41,7 +41,16 @@
  * hidden field. A honeypot hit is therefore NOT proof of a bot, so it is judged on
  * whether the rest of the submission reads like a person (see shouldAlert).
  */
-const SILENT_LAYERS = new Set(["origin", "timing", "missing-fields"]);
+const SILENT_LAYERS = new Set([
+  "origin",
+  "timing",
+  "missing-fields",
+  // NOT a block. A visitor whose JavaScript never ran submits with an empty _ts;
+  // the lead IS delivered (flagged for review) and recorded here purely so the
+  // volume of no-JS submissions is visible. From 2026-08-14 to 2026-08-31 these
+  // were silently discarded instead.
+  "delivered-no-js",
+]);
 
 /**
  * A name, a dialable phone and an actual message together. Bots that trip the
