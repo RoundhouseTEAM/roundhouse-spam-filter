@@ -49,4 +49,8 @@ export interface BlockedEntry {
  * Await it before returning the fake success — on serverless a fire-and-forget
  * fetch is killed when the response is sent. Never rejects.
  */
+/**
+ * Alerts send from the shared verified Roundhouse sender unless BLOCKED_ALERT_FROM
+ * overrides it, so no per-project email configuration is needed.
+ */
 export declare function logBlocked(entry: BlockedEntry): Promise<void>;

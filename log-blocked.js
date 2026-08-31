@@ -94,14 +94,16 @@ function readRequestMeta(req) {
 async function sendAlertEmail(row) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.BLOCKED_ALERT_TO || "support@getroundhouse.com";
-  const from = process.env.BLOCKED_ALERT_FROM;
 
-  // `from` must be an address on a domain verified in Resend for THIS project,
-  // which is why it is per-project rather than one shared Roundhouse sender.
-  if (!apiKey || !from) {
-    console.warn(
-      "[blocked-log] alert skipped — RESEND_API_KEY or BLOCKED_ALERT_FROM not set"
-    );
+  // Every Roundhouse site already sends its leads from this one verified domain,
+  // so the default works everywhere and the alerts need no per-project setup.
+  // Override only if a site is ever moved to its own verified sending domain.
+  const from =
+    process.env.BLOCKED_ALERT_FROM ||
+    "Roundhouse Blocked Submissions <leads@resend.getroundhouse.com>";
+
+  if (!apiKey) {
+    console.warn("[blocked-log] alert skipped — RESEND_API_KEY not set");
     return;
   }
 

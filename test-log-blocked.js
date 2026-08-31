@@ -189,13 +189,25 @@ await withHarness({ env: FULL_ENV }, async (calls) => {
   check("truncation is marked", row.message.endsWith("[truncated]"));
 });
 
-// Alert cannot be sent without a verified sender — must degrade, not throw.
+// With no BLOCKED_ALERT_FROM set, the shared verified sender must be used, so
+// alerts work across every project with no per-project configuration.
 await withHarness({
   env: { BLOCKED_LOG_WEBHOOK: FULL_ENV.BLOCKED_LOG_WEBHOOK, RESEND_API_KEY: "re_test" },
+}, async (calls) => {
+  await logBlocked({ ...lead, layer: "keyword:coldOutreach", matched: "x" });
+  const email = calls.find((c) => c.url.includes("api.resend.com"));
+  check("no BLOCKED_ALERT_FROM still sends the alert", !!email);
+  check("it falls back to the shared verified sender",
+    JSON.parse(email.options.body).from.includes("leads@resend.getroundhouse.com"));
+});
+
+// Without a Resend key there is nothing to send with — degrade, don't throw.
+await withHarness({
+  env: { BLOCKED_LOG_WEBHOOK: FULL_ENV.BLOCKED_LOG_WEBHOOK },
 }, async (calls, logs) => {
   await logBlocked({ ...lead, layer: "keyword:coldOutreach", matched: "x" });
-  check("missing BLOCKED_ALERT_FROM skips the email", !calls.some((c) => c.url.includes("resend")));
-  check("missing BLOCKED_ALERT_FROM is reported", logs.some((l) => l.includes("alert skipped")));
+  check("missing RESEND_API_KEY skips the email", !calls.some((c) => c.url.includes("resend")));
+  check("missing RESEND_API_KEY is reported", logs.some((l) => l.includes("alert skipped")));
   check("the sheet row is written regardless", calls.some((c) => c.url.includes("script.google")));
 });
 
