@@ -20,18 +20,24 @@
  *   that BLOCKED_LOG_WEBHOOK is still set on that Vercel project.
  *
  * ── Deploy ──────────────────────────────────────────────────────
- * 1. Create a Google Sheet named "Roundhouse — Blocked Submissions".
- * 2. Extensions -> Apps Script. Paste this over Code.gs.
- * 3. Put the sheet's ID (from its URL) in SHEET_ID below, then Save (Cmd+S) FIRST —
- *    a deployment snapshots saved code, so saving after deploying ships nothing.
- * 4. Deploy -> New deployment -> Web app.
+ * The sheet exists and its ID is already filled in below — nothing to edit.
+ *
+ * 1. Open the sheet:
+ *    https://docs.google.com/spreadsheets/d/1LIcJM6u41o_z3OwH2hEZQ6-9naCtcoImtXokjUoOu0g/edit
+ * 2. Extensions -> Apps Script. Paste this over everything in Code.gs.
+ * 3. Save (Cmd+S) FIRST — a deployment snapshots SAVED code, so deploying before
+ *    saving ships nothing and the tab never appears.
+ * 4. Deploy -> New deployment. Click the gear next to "Select type" -> Web app.
  *      Execute as:     Me
  *      Who has access: Anyone
+ *    Authorise when prompted (it will warn the app is unverified — that is normal
+ *    for your own Apps Script; choose Advanced -> Go to the project).
  *    Copy the /exec URL.
- * 5. Set that URL as BLOCKED_LOG_WEBHOOK on every Vercel project (a Team-level
- *    Shared Environment Variable sets all of them at once).
+ * 5. Set that URL as BLOCKED_LOG_WEBHOOK on the Vercel projects. A Team-level
+ *    Shared Environment Variable covers all of them at once.
  * 6. Check: opening the /exec URL in a browser returns
- *    {"ok":true,"status":"listening",...}
+ *    {"ok":true,"status":"listening",...} — and the "Blocked" tab, with its
+ *    header row, is created automatically the first time it is called.
  *
  * ── Redeploy after editing ──────────────────────────────────────
  * Save, then Deploy -> Manage deployments -> pencil -> Version: New version -> Deploy.
@@ -43,8 +49,9 @@
 // which version is actually deployed rather than assuming the last paste went live.
 var VERSION = 'v1-central-blocked-log';
 
-// ── Paste the Blocked Submissions sheet ID here ─────────────────
-var SHEET_ID = 'PASTE_THE_SHEET_ID_HERE';
+// The Blocked Submissions sheet, already created:
+// https://docs.google.com/spreadsheets/d/1LIcJM6u41o_z3OwH2hEZQ6-9naCtcoImtXokjUoOu0g/edit
+var SHEET_ID = '1LIcJM6u41o_z3OwH2hEZQ6-9naCtcoImtXokjUoOu0g';
 
 var TAB_NAME = 'Blocked';
 var TIMEZONE = 'America/Chicago';
