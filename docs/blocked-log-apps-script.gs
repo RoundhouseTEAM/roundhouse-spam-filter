@@ -47,7 +47,7 @@
 
 // Bump whenever this script changes. The health check reports it, so you can tell
 // which version is actually deployed rather than assuming the last paste went live.
-var VERSION = 'v1-central-blocked-log';
+var VERSION = 'v2-locked-header';
 
 // The Blocked Submissions sheet, already created:
 // https://docs.google.com/spreadsheets/d/1LIcJM6u41o_z3OwH2hEZQ6-9naCtcoImtXokjUoOu0g/edit
@@ -63,19 +63,67 @@ var HEADERS = [
   'Message', 'Source', 'Origin', 'Referer', 'User Agent', 'IP', 'Reviewed'
 ];
 
-/** Creates the tab and header row on first use so there is nothing to set up by hand. */
-function getTab_(ss) {
+/**
+ * Returns the Blocked tab, creating it and its header row on first use.
+ *
+ * Guarded by a lock and by the CONTENT of row 1 rather than by getLastRow() === 0.
+ * v1 checked only getLastRow(), and doGet created the tab too — so two calls that
+ * arrived together (or a health check racing a submission) both saw an empty sheet
+ * and both appended the header. That produced a duplicate header row, which also
+ * inflated the doGet totals, since totalBlocked is derived from the row count.
+ */
+function getTab_(ss, createIfMissing) {
   var sheet = ss.getSheetByName(TAB_NAME);
   if (!sheet) {
+    if (!createIfMissing) return null;
     sheet = ss.insertSheet(TAB_NAME);
   }
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(HEADERS);
-    sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
-    sheet.setFrozenRows(1);
-    sheet.getRange(1, 1, 1, HEADERS.length).setBackground('#f1f3f4');
+  if (!createIfMissing) return sheet;
+
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+  } catch (err) {
+    // Another execution holds it and is doing the same setup — carry on.
+    return sheet;
+  }
+  try {
+    if (!hasHeader_(sheet)) {
+      sheet.insertRowBefore(1);
+      sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+      sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold').setBackground('#f1f3f4');
+      sheet.setFrozenRows(1);
+    }
+    removeStrayHeaderRows_(sheet);
+  } finally {
+    lock.releaseLock();
   }
   return sheet;
+}
+
+/** True when row 1 already holds the header, whatever else is in the sheet. */
+function hasHeader_(sheet) {
+  if (sheet.getLastRow() < 1) return false;
+  var row = sheet.getRange(1, 1, 1, HEADERS.length).getValues()[0];
+  return String(row[0]).trim() === HEADERS[0] && String(row[1]).trim() === HEADERS[1];
+}
+
+/**
+ * Deletes any DATA row that is really a duplicate header. v1's race left one of
+ * these behind; without this it would sit in the log for ever and be counted as a
+ * blocked submission. Only removes rows that match the header exactly.
+ */
+function removeStrayHeaderRows_(sheet) {
+  var last = sheet.getLastRow();
+  if (last < 2) return;
+  var values = sheet.getRange(2, 1, last - 1, HEADERS.length).getValues();
+  for (var i = values.length - 1; i >= 0; i--) {
+    var isHeader = true;
+    for (var c = 0; c < HEADERS.length; c++) {
+      if (String(values[i][c]).trim() !== HEADERS[c]) { isHeader = false; break; }
+    }
+    if (isHeader) sheet.deleteRow(i + 2);
+  }
 }
 
 function doPost(e) {
@@ -88,7 +136,7 @@ function doPost(e) {
     }
 
     var ss = SpreadsheetApp.openById(SHEET_ID);
-    var sheet = getTab_(ss);
+    var sheet = getTab_(ss, true);
 
     // The route sends an ISO timestamp; re-render it in local time so the sheet is
     // readable, and fall back to now if it is missing or unparseable.
@@ -135,12 +183,12 @@ function doPost(e) {
 function doGet() {
   try {
     var ss = SpreadsheetApp.openById(SHEET_ID);
-    var sheet = getTab_(ss);
-    var lastRow = sheet.getLastRow();
+    var sheet = getTab_(ss, false);   // read-only: never create from a health check
+    var lastRow = sheet ? sheet.getLastRow() : 0;
     var byLayer = {};
     var bySite = {};
 
-    if (lastRow > 1) {
+    if (sheet && lastRow > 1) {
       var rows = sheet.getRange(2, 1, lastRow - 1, 3).getValues();  // Timestamp, Site, Layer
       for (var i = 0; i < rows.length; i++) {
         var site = rows[i][1] || '(unknown)';
@@ -155,6 +203,7 @@ function doGet() {
         ok: true,
         status: 'listening',
         version: VERSION,
+        tabExists: !!sheet,
         totalBlocked: Math.max(lastRow - 1, 0),
         byLayer: byLayer,
         bySite: bySite
