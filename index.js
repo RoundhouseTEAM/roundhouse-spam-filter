@@ -256,4 +256,96 @@ export function checkSpam(input = {}) {
   return { blocked: false };
 }
 
+// ── Layer 3: origin / referer ────────────────────────────────────
+// Lived inline and identical in all 17 contact routes until 2026-09-08. It is here
+// so the referer rule below only had to be written once.
+
+/** A referer pointing at an API endpoint is never a real form submission. */
+function isApiReferer(referer) {
+  try {
+    return new URL(referer).pathname.startsWith("/api/");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Layer 3. A header must be PRESENT and allowlisted — "validate only if present"
+ * lets a script that omits the header skip the check entirely (the 2026-08-14
+ * bypass). Browsers send Origin on fetch() POSTs and Referer on native form posts,
+ * so a genuine submission always carries at least one.
+ *
+ * The referer must also not point at an API path. A browser posting a form sends
+ * the PAGE as the referer; sqlmap and friends send the endpoint they are hammering.
+ * On 2026-09-08 that was the only thing separating 66 injection probes from a real
+ * submission: blank Origin, and `Referer: https://www.indianaflow.com/api/contact`.
+ * They passed this layer on the domain match and were only stopped further down, at
+ * a layer that emailed on every hit.
+ *
+ * @param {object} input
+ * @param {string} input.origin   The Origin header, "" when absent.
+ * @param {string} input.referer  The Referer header, "" when absent.
+ * @param {string[]} input.allowed Domain fragments, e.g. ["example.com", "localhost", ".vercel.app"].
+ *        ALWAYS keep ".vercel.app" — client sites live on their preview URL for the
+ *        whole build-and-review period, and every rejection returns a fake success,
+ *        so an over-tight allowlist silently discards real leads and looks fine.
+ * @returns {{ok: boolean, reason: string}}
+ */
+export function checkOrigin(input = {}) {
+  const origin = String(input.origin ?? "");
+  const referer = String(input.referer ?? "");
+  const allowed = input.allowed ?? [];
+
+  const originOk = origin !== "" && allowed.some((a) => origin.includes(a));
+  const refererOk =
+    referer !== "" && allowed.some((a) => referer.includes(a)) && !isApiReferer(referer);
+
+  if (originOk || refererOk) return { ok: true, reason: "" };
+  return {
+    ok: false,
+    reason: `origin="${origin}" referer="${referer}"${
+      referer !== "" && isApiReferer(referer) ? " (referer is an API path)" : ""
+    }`,
+  };
+}
+
+// ── Layer 4: content patterns ────────────────────────────────────
+
+/**
+ * Layer 4. Bot-typical content: an undialable phone, a URL in a text field, or
+ * non-Latin script.
+ *
+ * Each returns its OWN layer name rather than a shared "content". They behave
+ * nothing alike: "phone under 7 digits" is the highest-volume and lowest-value rule
+ * in the whole filter (66 of 66 sqlmap probes on 2026-09-08, and a submission with
+ * no dialable number is not a rescuable lead either way), while a URL or Cyrillic
+ * false positive is a real customer worth chasing the same day. Merged under one
+ * label there was no way to treat them differently.
+ *
+ * @param {object} input
+ * @param {boolean} [input.nonLatin=true] Whether Cyrillic/Greek is a spam signal.
+ *        True for every current Roundhouse client — they are English-language US
+ *        service businesses. Set false for a client with a multilingual customer
+ *        base, where this would block real people.
+ * @returns {{blocked: boolean, layer?: string, reason?: string}}
+ */
+export function checkContent(input = {}) {
+  const name = input.name ?? "";
+  const message = input.message ?? "";
+  const haystack = `${name} ${message}`;
+  const phoneDigits = String(input.phone ?? "").replace(/\D/g, "");
+  const nonLatin = input.nonLatin !== false;
+
+  if (phoneDigits.length < 7) {
+    return { blocked: true, layer: "content:short-phone", reason: "phone under 7 digits" };
+  }
+  if (/https?:\/\/|www\./i.test(haystack)) {
+    return { blocked: true, layer: "content:url", reason: "url in name or message" };
+  }
+  if (nonLatin && /[\u0400-\u04FF\u0370-\u03FF]/.test(haystack)) {
+    return { blocked: true, layer: "content:non-latin", reason: "non-Latin script" };
+  }
+  return { blocked: false };
+}
+
 export default checkSpam;

@@ -13,7 +13,7 @@
  * Run with: npm test
  */
 
-import { checkSpam } from "./index.js";
+import { checkSpam, checkOrigin, checkContent } from "./index.js";
 
 const MUST_BLOCK = [
   {
@@ -367,9 +367,65 @@ for (const c of MUST_PASS) {
   );
 }
 
+// ── Layer 3: origin / referer ───────────────────────────────────
+// The allowlist ALWAYS keeps ".vercel.app": client sites live on their preview URL
+// for the whole build-and-review period, and a rejection returns a fake success, so
+// an over-tight allowlist silently discards real leads while looking like it works.
+const ALLOWED = ["indianaflow.com", "localhost", ".vercel.app"];
+const ORIGIN_CASES = [
+  ["native form post from the contact page", { referer: "https://www.indianaflow.com/contact" }, true],
+  ["fetch() POST sending Origin only", { origin: "https://www.indianaflow.com" }, true],
+  ["submission from the Vercel preview URL", { origin: "https://indiana-flow.vercel.app" }, true],
+  ["local development", { origin: "http://localhost:3000" }, true],
+  // 2026-09-08: 66 sqlmap probes in 19 minutes, blank Origin, Referer set to the
+  // endpoint itself. A browser posting a form sends the PAGE as the referer.
+  ["sqlmap posting the endpoint directly", { referer: "https://www.indianaflow.com/api/contact" }, false],
+  // 2026-08-14: "validate only if present" let a script skip the check entirely.
+  ["script sending no headers at all", {}, false],
+  ["referer from another domain", { referer: "https://evil.example/x" }, false],
+  ["origin from another domain", { origin: "https://evil.example" }, false],
+  // A real Origin is trustworthy on its own — a browser cannot forge it.
+  ["good Origin despite an odd referer", { origin: "https://www.indianaflow.com", referer: "https://www.indianaflow.com/api/contact" }, true],
+];
+
+console.log("\n── Layer 3: origin / referer ───────────────────────────");
+for (const [label, headers, shouldPass] of ORIGIN_CASES) {
+  const v = checkOrigin({ origin: "", referer: "", ...headers, allowed: ALLOWED });
+  const ok = v.ok === shouldPass;
+  if (!ok) failures++;
+  console.log(`${ok ? "  ✓ " : "  ✗ WRONG "} ${shouldPass ? "allow" : "block"}  ${label}`);
+}
+
+// ── Layer 4: content patterns ───────────────────────────────────
+const CONTENT_CASES = [
+  ["real customer, clean", { name: "Sarah Mitchell", phone: "(317) 555-0134", message: "Water heater is leaking, can someone come out today?" }, null],
+  ["real customer quoting their own site", { name: "Dan", phone: "3175550134", message: "we run www.example.com and need a backflow test" }, "content:url"],
+  ["sqlmap probe", { name: "ORDER BY 1-- -", phone: "-5244", message: "CONCAT(0x7e" }, "content:short-phone"],
+  ["Cyrillic SEO spam", { name: "Мария", phone: "3175550134", message: "аудит сайта" }, "content:non-latin"],
+  ["no phone at all", { name: "Bob", phone: "", message: "hello" }, "content:short-phone"],
+];
+
+console.log("\n── Layer 4: content patterns ───────────────────────────");
+for (const [label, input, expected] of CONTENT_CASES) {
+  const v = checkContent(input);
+  const got = v.blocked ? v.layer : null;
+  const ok = got === expected;
+  if (!ok) failures++;
+  console.log(`${ok ? "  ✓ " : "  ✗ WRONG "} ${String(got)}  ${label}`);
+}
+
+// A multilingual client must be able to turn the script rule off without losing
+// the other two — the reason these are separate layers rather than one "content".
+{
+  const v = checkContent({ name: "Мария", phone: "3175550134", message: "аудит", nonLatin: false });
+  const ok = !v.blocked;
+  if (!ok) failures++;
+  console.log(`${ok ? "  ✓ " : "  ✗ WRONG "} nonLatin:false lets non-Latin script through`);
+}
+
 const total = MUST_BLOCK.length + MUST_PASS.length;
 console.log(
-  `\n${failures === 0 ? "PASS" : "FAIL"} — ${total - failures}/${total} correct` +
+  `\n${failures === 0 ? "PASS" : "FAIL"} — ${total} keyword cases + layer 3/4 checks` +
     (failures ? ` (${failures} wrong)` : "")
 );
 process.exit(failures === 0 ? 0 : 1);

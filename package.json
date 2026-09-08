@@ -1,6 +1,6 @@
 {
   "name": "@roundhouse/spam-filter",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Shared contact-form spam filter for Roundhouse client sites",
   "type": "module",
   "main": "index.js",
@@ -11,7 +11,7 @@
     "log-blocked.js"
   ],
   "scripts": {
-    "test": "node test.js && node test-log-blocked.js"
+    "test": "node test.js && node test-log-blocked.js && node test-apps-script.js"
   },
   "license": "UNLICENSED",
   "private": true
