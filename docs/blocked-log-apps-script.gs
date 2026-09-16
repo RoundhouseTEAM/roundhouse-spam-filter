@@ -83,7 +83,7 @@
 
 // Bump whenever this script changes. The health check reports it, so you can tell
 // which version is actually deployed rather than assuming the last paste went live.
-var VERSION = 'v7-spikes-bounces';
+var VERSION = 'v8-sheet-unconfirmed';
 
 // The Blocked Submissions sheet, already created:
 // https://docs.google.com/spreadsheets/d/1LIcJM6u41o_z3OwH2hEZQ6-9naCtcoImtXokjUoOu0g/edit
@@ -114,7 +114,7 @@ var SHEET_FAILED_SPIKE_THRESHOLD = 3;
  * delivered-flagged, a broken client sheet is delivered-sheet-failed).
  */
 var SPIKE_LAYERS = {
-  'delivered-flagged': true, 'delivered-sheet-failed': true,
+  'delivered-flagged': true, 'delivered-sheet-failed': true, 'delivered-sheet-unconfirmed': true,
   'delivered-email-failed': true, 'delivery-failed': true
 };
 
@@ -442,7 +442,8 @@ function maybeSendSpike_(sheet, p) {
   var layer = String(p.layer || '');
   var site = String(p.site || '(unknown)');
   if (!SPIKE_LAYERS[layer]) return false;
-  var threshold = layer === 'delivered-sheet-failed' ? SHEET_FAILED_SPIKE_THRESHOLD : SPIKE_THRESHOLD;
+  var threshold = layer === 'delivered-sheet-failed' || layer === 'delivered-sheet-unconfirmed'
+    ? SHEET_FAILED_SPIKE_THRESHOLD : SPIKE_THRESHOLD;
 
   var today = dayKey_(new Date());
   var rows = recentRows_(sheet);
@@ -467,7 +468,9 @@ function maybeSendSpike_(sheet, p) {
     .join('');
 
   var advice =
-    layer === 'delivered-sheet-failed'
+    layer === 'delivered-sheet-unconfirmed'
+      ? 'The client\'s sheet script keeps running without its answer being readable, so these rows are unconfirmed. Open the client\'s sheet and check the leads are there; a very slow script is the usual cause.'
+      : layer === 'delivered-sheet-failed'
       ? 'Leads are reaching the client by email but NOT their sheet. Check the client\'s Apps Script deployment (access must be "Anyone") and its URL in GOOGLE_SHEET_WEBHOOK.'
       : layer === 'delivered-flagged'
       ? 'These leads WERE delivered. If the reasons say "origin not in allowedOrigins", the site is being served from a domain missing from its route config. If a keyword keeps matching real customers, remove it from the package.'

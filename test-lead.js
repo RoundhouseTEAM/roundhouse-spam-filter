@@ -11,6 +11,7 @@ import { MESSAGES } from "./validate.js";
 const calls = { sheet: [], email: [], blocked: [] };
 let sheetStatus = 200;
 let sheetBody = JSON.stringify({ ok: true });
+let outputBehaviour = "ok"; // "ok" | "error" | "hang"
 let emailBehaviour = "ok"; // "ok" | "reject" | "throw"
 let redisBehaviour = "ok"; // "ok" | "down"
 let redisCount = 0;
@@ -28,6 +29,18 @@ globalThis.fetch = async (url, options = {}) => {
   if (url.startsWith("https://sheet.test/exec?")) {
     calls.sheet.push({ method: options.method, query: Object.fromEntries(new URL(url).searchParams) });
     return new Response(sheetBody, { status: sheetStatus });
+  }
+  // Real Apps Script behaviour: run, then 302 to the output page.
+  if (url.startsWith("https://script.test/exec")) {
+    calls.sheet.push(body);
+    if (options.redirect !== "manual") throw new Error("Apps Script must be called with redirect: manual");
+    return new Response(null, { status: 302, headers: { location: "https://output.test/echo" } });
+  }
+  if (url === "https://output.test/echo") {
+    if (outputBehaviour === "hang") {
+      return new Promise((_, reject) => options.signal?.addEventListener("abort", () => reject(Object.assign(new Error("aborted"), { name: "AbortError" }))));
+    }
+    return new Response(outputBehaviour === "error" ? JSON.stringify({ ok: false, error: "TypeError" }) : JSON.stringify({ ok: true }), { status: 200 });
   }
   if (url === "https://api.resend.com/emails") {
     calls.email.push(body);
@@ -117,6 +130,7 @@ function reset() {
   calls.blocked.length = 0;
   sheetStatus = 200;
   sheetBody = JSON.stringify({ ok: true });
+  outputBehaviour = "ok";
   emailBehaviour = "ok";
   consoleLines.length = 0;
 }
@@ -658,6 +672,66 @@ await test("native post: withheld submission redirects to the success page with 
   const res = await handleLead(nativeReq(fields), CONFIG);
   assert.equal(res.status, 303);
   assert.equal(res.headers.get("location"), "/thank-you");
+});
+
+// ── Apps Script redirects (2.8.0) ────────────────────────────────
+const SCRIPT_CONFIG = { ...CONFIG, sheetWebhook: "https://script.test/exec" };
+
+await test("apps script: 302 then {ok:true} → the sheet counts as saved", async () => {
+  const res = await handleLead(jsonReq(goodLead()), SCRIPT_CONFIG);
+  assert.equal((await res.json()).delivered, true);
+  assert.equal(calls.sheet.length, 1);
+  assert.equal(calls.blocked.length, 0);
+});
+
+await test("apps script: 302 then {ok:false} → delivered-sheet-failed", async () => {
+  outputBehaviour = "error";
+  const res = await handleLead(jsonReq(goodLead()), SCRIPT_CONFIG);
+  assert.equal((await res.json()).delivered, true);
+  assert.equal(calls.blocked[0].layer, "delivered-sheet-failed");
+});
+
+await test("apps script: ran but the answer can't be read → sheet UNCONFIRMED, not failed", async () => {
+  outputBehaviour = "hang";
+  const res = await handleLead(jsonReq(goodLead()), SCRIPT_CONFIG);
+  assert.equal((await res.json()).delivered, true);
+  assert.equal(calls.blocked[0].layer, "delivered-sheet-unconfirmed");
+  assert.equal(calls.blocked[0].delivered, "Yes");
+  assert.equal(calls.blocked[0].urgent, "", "the email reached the client");
+});
+
+await test("apps script: email failed + sheet unconfirmed → visitor thanked, urgent CHECK row", async () => {
+  outputBehaviour = "hang";
+  emailBehaviour = "reject";
+  const res = await handleLead(jsonReq(goodLead()), SCRIPT_CONFIG);
+  assert.equal(res.status, 200, "the script finished — telling them to call would be wrong");
+  const row = calls.blocked[0];
+  assert.equal(row.layer, "delivered-email-failed");
+  assert.match(row.matched, /CHECK the client's sheet/);
+  assert.equal(row.urgent, "yes");
+});
+
+await test("central log is written after the response when the platform supports it", async () => {
+  const sym = Symbol.for("@vercel/request-context");
+  const pending = [];
+  globalThis[sym] = { get: () => ({ waitUntil: (p) => pending.push(p) }) };
+  const real = globalThis.fetch;
+  let releaseLog;
+  globalThis.fetch = async (url, o) => {
+    if (url === "https://blocked.test/exec") await new Promise((r) => (releaseLog = r));
+    return real(url, o);
+  };
+  try {
+    const res = await handleLead(jsonReq(goodLead({ name: "Олена Коваль" })), CONFIG);
+    assert.equal((await res.json()).delivered, true, "answered while the log was still pending");
+    assert.equal(pending.length, 1);
+    releaseLog();
+    await pending[0];
+    assert.equal(calls.blocked[0].layer, "delivered-flagged");
+  } finally {
+    delete globalThis[sym];
+    globalThis.fetch = real;
+  }
 });
 
 // ── Monitor mode ─────────────────────────────────────────────────

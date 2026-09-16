@@ -283,6 +283,31 @@ await withHarness({ env: FULL_ENV, fetchImpl: () => new Response(JSON.stringify(
   check("{ok:true} is recorded — no ROW NOT RECORDED", !logs.some((l) => l.includes("ROW NOT RECORDED")));
 });
 
+// 2.8.0: Apps Script redirects. A 302 then {ok:true} is recorded; a 302 whose answer
+// can't be read is "ran, unread" — a warning, not ROW NOT RECORDED.
+await withHarness({
+  env: FULL_ENV,
+  fetchImpl: (url, o) =>
+    String(url).includes("script.google.com")
+      ? new Response(null, { status: 302, headers: { location: "https://script.googleusercontent.com/echo" } })
+      : new Response(JSON.stringify({ ok: true }), { status: 200 }),
+}, async (calls, logs) => {
+  await logBlocked({ ...lead, layer: "keyword:offTopic" });
+  check("302 → {ok:true} is recorded", !logs.some((l) => l.includes("ROW NOT RECORDED")));
+  check("the script is called with redirect: manual", calls[0].options.redirect === "manual");
+});
+await withHarness({
+  env: FULL_ENV,
+  fetchImpl: (url, o) =>
+    String(url).includes("script.google.com")
+      ? new Response(null, { status: 302, headers: { location: "https://script.googleusercontent.com/echo" } })
+      : new Promise((_, reject) => o.signal.addEventListener("abort", () => reject(Object.assign(new Error("x"), { name: "AbortError" })))),
+}, async (_calls, logs) => {
+  await logBlocked({ ...lead, layer: "keyword:offTopic" });
+  check("302 with an unreadable answer is not reported as lost", !logs.some((l) => l.includes("ROW NOT RECORDED")));
+  check("…but is noted", logs.some((l) => l.includes("couldn't be read")));
+});
+
 console.log(results.join("\n"));
 console.log(
   `\n${failures === 0 ? "PASS" : "FAIL"} — blocked-log: ${failures} failure${failures === 1 ? "" : "s"}\n`

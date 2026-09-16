@@ -160,6 +160,15 @@ Vercel runtime logs.
   `https://roundhouse-cms.vercel.app/api/resend-webhook` (verifies the signature with
   `RESEND_WEBHOOK_SECRET`) → the central log script → an urgent row + immediate email.
 
+## Calling Apps Script (2.8.0)
+
+Apps Script runs the script first, then answers with a 302 to its output. From Vercel the
+run takes 20–30s and following the redirect was seen to hang, so `apps-script.js` times
+the run and the read separately (`redirect: "manual"`). A 302 proves the script ran; only
+`{ok:true}` in the output proves it succeeded. Ran-but-unreadable is **unconfirmed**
+(`delivered-sheet-unconfirmed`), never "failed". Central-log rows are written after the
+response via Vercel's `waitUntil`, so a visitor never waits on the log.
+
 ## Where blocked submissions go, and who hears about it
 
 `logBlocked()` writes one row to the central Roundhouse **Blocked Submissions** sheet

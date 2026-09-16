@@ -116,24 +116,19 @@ function isUrgent(row) {
 /** Sheets tops out at 50k chars per cell; stay well clear and keep rows readable. */
 const MAX_FIELD = 4000;
 
-// Apps Script cold starts regularly exceed 3s — the old limit aborted rows on 2026-09-16.
-const WEBHOOK_TIMEOUT_MS = 12000;
+import { callAppsScript } from "./apps-script.js";
+
+// From Vercel the central script takes 20–30s to RUN (2026-09-16), so the run gets 24s and
+// reading its answer a separate 4s — see apps-script.js. handleLead sends these after the
+// response where the platform allows, so a visitor never waits on them.
+const WEBHOOK_RUN_TIMEOUT_MS = 24000;
+const WEBHOOK_READ_TIMEOUT_MS = 4000;
 
 function clip(value, limit = MAX_FIELD) {
   const s = String(value ?? "").trim();
   return s.length > limit ? `${s.slice(0, limit)}… [truncated]` : s;
 }
 
-/** fetch with a hard ceiling — a hanging webhook must not hold a serverless response open. */
-async function fetchWithTimeout(url, options, ms) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), ms);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 /**
  * Pulls forensics off the request. A submission with NO origin, NO referer and a
@@ -225,27 +220,33 @@ export async function logBlocked(entry = {}) {
       return;
     }
 
-    const res = await fetchWithTimeout(
+    const call = await callAppsScript(
       webhook,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(row),
-      },
-      WEBHOOK_TIMEOUT_MS
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(row) },
+      { runTimeoutMs: WEBHOOK_RUN_TIMEOUT_MS, readTimeoutMs: WEBHOOK_READ_TIMEOUT_MS }
     );
-    // The Apps Script answers 200 with {ok:false} when it throws, and Google answers 200
-    // with a sign-in page when the deployment's access changes — only {ok:true} counts.
-    const text = await res.text().catch(() => "");
+    if (call.unread) {
+      // The script finished (Google only redirects afterwards) — the row is almost
+      // certainly there, but its answer couldn't be confirmed.
+      console.warn(`[blocked-log] row sent; ${call.detail}`);
+      return;
+    }
+    if (!call.response) {
+      console.error(`[blocked-log] ROW NOT RECORDED (${call.detail}) — the row above is the only copy`);
+      return;
+    }
+    // The Apps Script answers {ok:false} when it throws, and Google answers 200 with a
+    // sign-in page when the deployment's access changes — only {ok:true} counts.
+    const text = await call.response.text().catch(() => "");
     let data = null;
     try {
       data = JSON.parse(text);
     } catch {
       /* not JSON */
     }
-    if (!res.ok || data?.ok !== true) {
+    if (!call.response.ok || data?.ok !== true) {
       console.error(
-        `[blocked-log] ROW NOT RECORDED (${res.status}: ${text.replace(/\s+/g, " ").slice(0, 160)}) — the row above is the only copy`
+        `[blocked-log] ROW NOT RECORDED (${call.response.status}: ${text.replace(/\s+/g, " ").slice(0, 160)}) — the row above is the only copy`
       );
     }
   } catch (err) {

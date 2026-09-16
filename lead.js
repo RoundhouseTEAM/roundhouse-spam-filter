@@ -60,6 +60,7 @@
  */
 
 import { checkSpam, checkContent, logBlocked } from "./index.js";
+import { callAppsScript, afterResponse } from "./apps-script.js";
 import { checkRateLimit, clientIp, DEFAULT_LIMIT, DEFAULT_WINDOW_MS, DEFAULT_FLOOD_LIMIT } from "./ratelimit.js";
 import {
   validateLead,
@@ -83,9 +84,11 @@ const MAX_PLAUSIBLE_OPEN_MS = 7 * 24 * 60 * 60 * 1000;
 const DUPLICATE_WINDOW_MS = 2 * 60 * 1000;
 // Generous on purpose. Apps Script routinely takes 5–15s (cold start, script lock), and
 // the 6s limit shipped in 2.0.0 aborted a real Power Construction sheet write on
-// 2026-09-16. Sheet and email run in parallel, so the slowest path is ~25s of delivery
-// plus ~12s of logging — well inside the routes' maxDuration = 60.
+// 2026-09-16. The run and the read of its answer are timed separately (apps-script.js).
+// Sheet and email run in parallel, so the slowest path is ~29s of delivery plus ~28s of
+// central logging after the response — inside the routes' maxDuration = 60.
 const SHEET_TIMEOUT_MS = 25000;
+const SHEET_READ_TIMEOUT_MS = 4000;
 const EMAIL_TIMEOUT_MS = 15000;
 
 /** Resend's sink address: a real send through the real key and domain, delivered nowhere. */
@@ -343,7 +346,7 @@ async function deliverToSheet(site, config, lead, leadId) {
             url: `${sheetWebhook}${sheetWebhook.includes("?") ? "&" : "?"}${new URLSearchParams(
               Object.entries(payload).map(([k, v]) => [k, String(v ?? "")])
             )}`,
-            options: { method: "GET", redirect: "follow" },
+            options: { method: "GET" },
           }
         : {
             url: sheetWebhook,
@@ -351,13 +354,23 @@ async function deliverToSheet(site, config, lead, leadId) {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload),
-              redirect: "follow",
             },
           };
-    const res = await fetchWithTimeout(request.url, request.options, SHEET_TIMEOUT_MS);
-    const verdict = await sheetAccepted(res);
+    const call = await callAppsScript(request.url, request.options, {
+      runTimeoutMs: SHEET_TIMEOUT_MS,
+      readTimeoutMs: SHEET_READ_TIMEOUT_MS,
+    });
+    if (!call.response) {
+      // `unread`: the script ran (Google redirects only afterwards) but whether it saved
+      // the row is unknown — a script that throws redirects too. Never counted as saved,
+      // never reported as failed.
+      if (call.unread) console.warn(`[lead] ${site}: sheet unconfirmed — ${call.detail}`);
+      else console.error(`[lead] ${site}: sheet did not record the lead — ${call.detail}`);
+      return { ok: false, unconfirmed: call.unread, configured: true, detail: call.detail };
+    }
+    const verdict = await sheetAccepted(call.response);
     if (!verdict.ok) console.error(`[lead] ${site}: sheet did not record the lead — ${verdict.detail}`);
-    return { ...verdict, configured: true };
+    return { ...verdict, unconfirmed: false, configured: true };
   } catch (err) {
     console.error(`[lead] ${site}: sheet webhook error`, err);
     return { ok: false, configured: true, detail: `request failed: ${String(err?.name === "AbortError" ? "timed out" : err).slice(0, 160)}` };
@@ -423,7 +436,7 @@ export async function handleLead(req, config) {
     if (parsed.tooLarge) {
       // No fields are parsed, so there is nothing to show a visitor — and no real form
       // can produce this.
-      await logBlocked({ site, layer: "too-large", matched: `${parsed.tooLarge} bytes (max ${MAX_BODY_BYTES})`, req });
+      await afterResponse(logBlocked({ site, layer: "too-large", matched: `${parsed.tooLarge} bytes (max ${MAX_BODY_BYTES})`, req }));
       return native ? redirect(successPath) : json({ ok: true });
     }
     const body = parsed.body ?? {};
@@ -454,7 +467,7 @@ export async function handleLead(req, config) {
 
     const withhold = async (layer, matched = "") => {
       if (monitor) return json({ ok: true, monitor: { withheld: layer, matched } });
-      await logBlocked({ ...logFields, layer, matched });
+      await afterResponse(logBlocked({ ...logFields, layer, matched }));
       return native ? redirect(successPath) : json({ ok: true });
     };
 
@@ -480,11 +493,13 @@ export async function handleLead(req, config) {
     const errors = validateLead(lead, extraFields);
     if (Object.keys(errors).length) {
       if (monitor) return json({ ok: false, errors, monitor: { validation: errors } }, 400);
-      await logBlocked({
-        ...logFields,
-        layer: "validation",
-        matched: Object.entries(errors).map(([k, v]) => `${k}: ${v}`).join(" | "),
-      });
+      await afterResponse(
+        logBlocked({
+          ...logFields,
+          layer: "validation",
+          matched: Object.entries(errors).map(([k, v]) => `${k}: ${v}`).join(" | "),
+        })
+      );
       if (native) {
         return htmlPage("Please fix the following", Object.values(errors), lead.source || "/", 400);
       }
@@ -570,9 +585,13 @@ export async function handleLead(req, config) {
       deliverByEmail(site, config, lead),
     ]);
 
-    // 9. Log what happened. Delivered rows carry Delivered = Yes in the central sheet.
+    // 9. Log what happened — after the response where the platform allows, so the
+    // visitor never waits on the central log. Delivered rows carry Delivered = Yes.
+    // A sheet that ran but couldn't confirm still counts as captured for the visitor
+    // (the script finished), but is always logged so someone checks.
+    const captured = email.ok || sheet.ok || sheet.unconfirmed;
     const logs = [];
-    if (!email.ok && !sheet.ok) {
+    if (!captured) {
       console.error(`[lead] UNDELIVERED LEAD ${site}`, JSON.stringify(record));
       logs.push(
         logBlocked({
@@ -587,16 +606,18 @@ export async function handleLead(req, config) {
           logBlocked({
             ...logFields,
             layer: "delivered-email-failed",
-            matched: `email failed (${email.detail}) — the client's sheet confirmed the row`,
+            matched: sheet.ok
+              ? `email failed (${email.detail}) — the client's sheet confirmed the row`
+              : `email failed (${email.detail}) — the sheet script ran but its answer couldn't be read: CHECK the client's sheet for this lead`,
           })
         );
       }
-      if (!sheet.ok && sheet.configured) {
+      if (email.ok && !sheet.ok && sheet.configured) {
         logs.push(
           logBlocked({
             ...logFields,
-            layer: "delivered-sheet-failed",
-            matched: `sheet failed (${sheet.detail}) — the email was sent`,
+            layer: sheet.unconfirmed ? "delivered-sheet-unconfirmed" : "delivered-sheet-failed",
+            matched: `${sheet.unconfirmed ? "sheet unconfirmed" : "sheet failed"} (${sheet.detail}) — the email was sent`,
           })
         );
       }
@@ -604,9 +625,9 @@ export async function handleLead(req, config) {
         logs.push(logBlocked({ ...logFields, layer: "delivered-flagged", matched: flags.join(" | ") }));
       }
     }
-    await Promise.all(logs);
+    await afterResponse(Promise.all(logs));
 
-    if (!email.ok && !sheet.ok) {
+    if (!captured) {
       const msg = deliveryFailedMessage(businessPhone);
       return native
         ? htmlPage("We couldn't send your request", [msg], lead.source || "/", 500)
