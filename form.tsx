@@ -80,6 +80,13 @@ export interface LeadFormProps {
   /** Fields beyond the standard four, e.g. [{ name: "address", label: "Address" }]. */
   extraFields?: ExtraField[];
   /**
+   * Fixed values sent with the submission but never shown, e.g. { service: "Water heaters" }
+   * for a form on a service page. Declare the same names in the route's extraFields so
+   * they reach the email and sheet. Rendered as hidden inputs WITHOUT defaultValue, so a
+   * re-render can't wipe them.
+   */
+  hiddenValues?: Record<string, string>;
+  /**
    * Field order and grouping. Each inner array is one row; two names in a row sit side
    * by side (style that with classNames.rowMulti). Defaults to one field per row:
    * name, phone, email, each extra field, message.
@@ -134,6 +141,7 @@ export default function LeadForm({
   endpoint = "/api/contact",
   phone,
   extraFields = [],
+  hiddenValues = {},
   rows,
   labels = {},
   placeholders = {},
@@ -224,6 +232,7 @@ export default function LeadForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
+          ...hiddenValues,
           _ts: openedAt.current,
           source: window.location.href,
         }),
@@ -378,6 +387,13 @@ export default function LeadForm({
         aria-hidden="true"
         style={HONEYPOT_STYLE}
       />
+
+      {/* `value`, not `defaultValue`: these are constants, and a controlled hidden input is
+          never reset by a re-render. They matter only to a no-JavaScript native post — the
+          fetch path sends hiddenValues directly. */}
+      {Object.entries(hiddenValues).map(([k, v]) => (
+        <input key={k} type="hidden" name={k} value={v} />
+      ))}
 
       {layout.map((row) => (
         <div key={row.join("|")} className={row.length > 1 ? cn.rowMulti : cn.row}>

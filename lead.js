@@ -281,13 +281,30 @@ export async function handleLead(req, config) {
       console.error(`[lead] ${site}: GOOGLE_SHEET_WEBHOOK is not set — lead not written to the sheet`);
     } else {
       try {
-        const payload = { ...lead, leadId, submittedAt: new Date().toISOString() };
-        delete payload.phoneDigits;
-        const res = await fetchWithTimeout(
-          sheetWebhook,
-          { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), redirect: "follow" },
-          SHEET_TIMEOUT_MS
-        );
+        const base = { ...lead, leadId, submittedAt: new Date().toISOString() };
+        delete base.phoneDigits;
+        // Each client's Apps Script already expects particular keys (and some a GET with
+        // query params). sheetPayload/sheetMethod adapt to it, so migrating a site never
+        // means editing the client's own sheet script.
+        const payload = config.sheetPayload ? config.sheetPayload(base) : base;
+        const request =
+          config.sheetMethod === "GET"
+            ? {
+                url: `${sheetWebhook}${sheetWebhook.includes("?") ? "&" : "?"}${new URLSearchParams(
+                  Object.entries(payload).map(([k, v]) => [k, String(v ?? "")])
+                )}`,
+                options: { method: "GET", redirect: "follow" },
+              }
+            : {
+                url: sheetWebhook,
+                options: {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload),
+                  redirect: "follow",
+                },
+              };
+        const res = await fetchWithTimeout(request.url, request.options, SHEET_TIMEOUT_MS);
         sheetOk = res.ok;
         if (!res.ok) console.error(`[lead] ${site}: sheet webhook returned ${res.status}`);
       } catch (err) {

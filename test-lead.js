@@ -21,6 +21,10 @@ globalThis.fetch = async (url, options = {}) => {
     calls.sheet.push(body);
     return new Response("ok", { status: sheetStatus });
   }
+  if (url.startsWith("https://sheet.test/exec?")) {
+    calls.sheet.push({ method: options.method, query: Object.fromEntries(new URL(url).searchParams) });
+    return new Response("ok", { status: sheetStatus });
+  }
   if (url === "https://api.resend.com/emails") {
     calls.email.push(body);
     if (emailBehaviour === "throw") throw new Error("network down");
@@ -269,6 +273,36 @@ await test("double-click: second identical submission is not delivered twice", a
   assert.equal(second.leadId, first.leadId, "same leadId, so Ads dedupes too");
   assert.equal(calls.email.length, 1);
   assert.equal(calls.sheet.length, 1);
+});
+
+// ── Adapting to each client's existing Apps Script ───────────────
+await test("sheetMethod GET sends the row as query params", async () => {
+  await handleLead(jsonReq(goodLead()), { ...CONFIG, sheetMethod: "GET" });
+  assert.equal(calls.sheet.length, 1);
+  assert.equal(calls.sheet[0].method, "GET");
+  assert.equal(calls.sheet[0].query.name, "Jane Rivera");
+  assert.equal(calls.sheet[0].query.address, "12 Main St");
+});
+
+await test("sheetPayload reshapes the row (rename keys, add a constant)", async () => {
+  await handleLead(jsonReq(goodLead()), {
+    ...CONFIG,
+    sheetMethod: "GET",
+    sheetPayload: (l) => ({ sheet: "Brandon Google Ads", name: l.name, phone: l.phone, pageUrl: l.source }),
+  });
+  assert.deepEqual(calls.sheet[0].query, {
+    sheet: "Brandon Google Ads",
+    name: "Jane Rivera",
+    phone: "(512) 555-0100",
+    pageUrl: "https://www.testplumbing.com/contact",
+  });
+});
+
+await test("a hidden per-page value (declared as an extra field) reaches sheet and email", async () => {
+  const cfg = { ...CONFIG, extraFields: [...CONFIG.extraFields, { name: "service", label: "Service" }] };
+  await handleLead(jsonReq(goodLead({ service: "Water heater replacement" })), cfg);
+  assert.equal(calls.sheet[0].service, "Water heater replacement");
+  assert.ok(calls.email[0].html.includes("Water heater replacement"));
 });
 
 // ── Native (no-JavaScript) posts ─────────────────────────────────

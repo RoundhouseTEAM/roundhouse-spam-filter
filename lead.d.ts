@@ -25,6 +25,14 @@ export interface LeadConfig {
   nonLatin?: boolean;
   /** Defaults to process.env.GOOGLE_SHEET_WEBHOOK. */
   sheetWebhook?: string;
+  /** How the client's Apps Script expects the row: JSON POST (default) or GET query params. */
+  sheetMethod?: "POST" | "GET";
+  /**
+   * Reshape the row for the client's existing Apps Script, e.g. rename keys or add a
+   * constant ({ sheet: "Brandon Google Ads" }). Receives name, phone, email, message,
+   * source, every extra field, leadId and submittedAt.
+   */
+  sheetPayload?: (lead: Record<string, string>) => Record<string, string>;
   /** Defaults to process.env.RESEND_API_KEY. */
   resendApiKey?: string;
 }
