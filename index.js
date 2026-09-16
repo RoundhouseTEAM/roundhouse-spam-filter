@@ -335,12 +335,17 @@ export function checkContent(input = {}) {
   const haystack = `${name} ${message}`;
   const phoneDigits = String(input.phone ?? "").replace(/\D/g, "");
   const nonLatin = input.nonLatin !== false;
+  // handleLead() passes true: links are allowed in the message (Philip, 2026-09-16), and
+  // a link in the name is a visible validation error there, not a silent block. Routes
+  // not yet migrated keep the old behaviour.
+  const allowMessageUrls = input.allowMessageUrls === true;
 
   if (phoneDigits.length < 7) {
     return { blocked: true, layer: "content:short-phone", reason: "phone under 7 digits" };
   }
-  if (/https?:\/\/|www\./i.test(haystack)) {
-    return { blocked: true, layer: "content:url", reason: "url in name or message" };
+  const urlHaystack = allowMessageUrls ? name : haystack;
+  if (/https?:\/\/|www\./i.test(urlHaystack)) {
+    return { blocked: true, layer: "content:url", reason: allowMessageUrls ? "url in name" : "url in name or message" };
   }
   if (nonLatin && /[\u0400-\u04FF\u0370-\u03FF]/.test(haystack)) {
     return { blocked: true, layer: "content:non-latin", reason: "non-Latin script" };

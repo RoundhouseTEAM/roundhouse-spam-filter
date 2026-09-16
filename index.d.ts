@@ -45,6 +45,8 @@ export interface ContentCheckInput {
   /** Whether Cyrillic/Greek is a spam signal. True for every current Roundhouse
    *  client; set false for one with a multilingual customer base. */
   nonLatin?: boolean;
+  /** Only check the NAME for links; links in the message are allowed. handleLead() sets this. */
+  allowMessageUrls?: boolean;
 }
 
 export interface ContentVerdict {

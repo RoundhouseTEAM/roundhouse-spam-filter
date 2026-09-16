@@ -2,6 +2,52 @@
 
 Shared contact-form spam filter for Roundhouse client sites. One list, every client.
 
+## v2: the whole contact form (use this for every site)
+
+Since 2.0.0 the package also holds the **entire** lead pipeline, so no site carries its
+own copy of form or route logic. Per-site copies drifted, and real leads were lost in
+the gaps between them.
+
+| Import | What it is |
+|---|---|
+| `@roundhouse/spam-filter/form` | `<LeadForm>` — the client form. Visible per-field messages, time token in a ref, off-screen honeypot, conversions only on `delivered`. |
+| `@roundhouse/spam-filter/lead` | `handleLead(req, config)` — the whole API route. |
+| `@roundhouse/spam-filter/validate` | The field rules and messages, shared by both. |
+| `@roundhouse/spam-filter/env` | `checkLeadEnv()` — fails a production build with no delivery settings. |
+
+**Rules (Philip, 2026-09-16):** name, phone, email and message are all required. Phone
+must be exactly 10 US digits (a leading 1 is dropped). Message max 600 characters; links
+allowed in the message, not the name. Every mistake a person can make gets a specific
+visible message. Only bot signals (origin, timing, honeypot, non-Latin, keyword list)
+are silent — and they are logged. No "Unverified" subject line.
+
+**Site setup** — see power-construction-website for the reference implementation:
+
+```ts
+// next.config.ts
+import { checkLeadEnv } from "@roundhouse/spam-filter/env";
+checkLeadEnv();
+const nextConfig = { transpilePackages: ["@roundhouse/spam-filter"], /* … */ };
+
+// app/api/contact/route.ts
+import { handleLead, type LeadConfig } from "@roundhouse/spam-filter/lead";
+const LEAD_CONFIG: LeadConfig = { site, businessName, phone, allowedOrigins, recipients,
+  leadsSheetUrl, brandColor, extraFields, successPath };
+export function POST(req: Request) { return handleLead(req, LEAD_CONFIG); }
+
+// app/components/LeadForm.tsx — a thin wrapper: labels, classNames, success notice,
+// and onDelivered(leadId) firing the site's GA / Google Ads conversion.
+```
+
+Order inside `handleLead`: origin → timing → honeypot (autofill-aware) → validation
+(visible) → non-Latin → keyword list → double-click guard → client sheet → Resend email.
+Delivered-but-recorded rows (`delivered-no-js`, `delivered-honeypot-autofill`) carry
+`Delivered: Yes` in the central sheet — paste the updated `docs/blocked-log-apps-script.gs`
+to get that column. `npm test` covers every path with the network stubbed.
+
+**After pushing a change here, no site gets it until its `package-lock.json` is bumped**
+(`npm install @roundhouse/spam-filter@github:RoundhouseTEAM/roundhouse-spam-filter`).
+
 Every rule was derived from real spam across Alpha Omega, Newmans, and Indiana Flow —
 not guessed. `test.js` holds those real submissions plus real paying customers, so
 changes can be validated against both.

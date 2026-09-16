@@ -97,12 +97,16 @@ var MAX_SCAN_ROWS = 2000;
 // marking that a false positive has been chased up.
 var HEADERS = [
   'Timestamp', 'Site', 'Layer', 'Matched', 'Name', 'Phone', 'Email',
-  'Message', 'Source', 'Origin', 'Referer', 'User Agent', 'IP', 'Reviewed', 'Urgent'
+  'Message', 'Source', 'Origin', 'Referer', 'User Agent', 'IP', 'Reviewed', 'Urgent',
+  // v5 (2026-09-16): "Yes" when the lead WAS delivered to the client and the row is here
+  // only for visibility (delivered-no-js, delivered-honeypot-autofill). Five of ten
+  // "good leads marked as spam" reported that day had in fact reached the client.
+  'Delivered'
 ];
 
 var COL = { TIMESTAMP: 0, SITE: 1, LAYER: 2, MATCHED: 3, NAME: 4, PHONE: 5, EMAIL: 6,
             MESSAGE: 7, SOURCE: 8, ORIGIN: 9, REFERER: 10, UA: 11, IP: 12,
-            REVIEWED: 13, URGENT: 14 };
+            REVIEWED: 13, URGENT: 14, DELIVERED: 15 };
 
 /**
  * Returns the Blocked tab, creating it and its header row on first use.
@@ -229,8 +233,15 @@ function looksLikeRealEnquiry_(name, phone, message) {
  */
 var NEVER_URGENT_LAYERS = {
   'origin': true, 'timing': true, 'missing-fields': true,
-  'content:short-phone': true, 'delivered-no-js': true
+  'content:short-phone': true, 'delivered-no-js': true,
+  'delivered-honeypot-autofill': true, 'validation': true
 };
+
+/** Mirrors isDelivered() in the package, for sites still on an older package. */
+function isDelivered_(payload) {
+  if (payload.delivered) return String(payload.delivered).toLowerCase() === 'yes';
+  return String(payload.layer || '').indexOf('delivered-') === 0;
+}
 
 function isUrgent_(payload) {
   // The current package decides this and sends it, so one definition governs both.
@@ -285,7 +296,8 @@ function doPost(e) {
       p.userAgent || '',
       p.ip || '',
       '',                    // Reviewed — left for a human
-      urgent ? 'yes' : ''
+      urgent ? 'yes' : '',
+      isDelivered_(p) ? 'Yes' : ''
     ]);
 
     // Alerting must never cost us the row. If mail fails, the log still stands.

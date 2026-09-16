@@ -1,17 +1,52 @@
 {
   "name": "@roundhouse/spam-filter",
-  "version": "1.5.0",
-  "description": "Shared contact-form spam filter for Roundhouse client sites",
+  "version": "2.0.0",
+  "description": "Shared contact-form spam filter, lead handler and lead form for Roundhouse client sites",
   "type": "module",
   "main": "index.js",
   "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./lead": {
+      "types": "./lead.d.ts",
+      "default": "./lead.js"
+    },
+    "./validate": {
+      "types": "./validate.d.ts",
+      "default": "./validate.js"
+    },
+    "./env": {
+      "types": "./env-check.d.ts",
+      "default": "./env-check.js"
+    },
+    "./form": "./form.tsx",
+    "./package.json": "./package.json"
+  },
   "files": [
     "index.js",
     "index.d.ts",
-    "log-blocked.js"
+    "log-blocked.js",
+    "validate.js",
+    "validate.d.ts",
+    "lead.js",
+    "lead.d.ts",
+    "env-check.js",
+    "env-check.d.ts",
+    "form.tsx"
   ],
   "scripts": {
-    "test": "node test.js && node test-log-blocked.js && node test-apps-script.js"
+    "test": "node test.js && node test-log-blocked.js && node test-apps-script.js && node test-validate.js && node test-lead.js"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   },
   "license": "UNLICENSED",
   "private": true

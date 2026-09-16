@@ -65,7 +65,18 @@ const NEVER_URGENT_LAYERS = new Set([
   // the lead IS delivered (flagged for review) and recorded here purely so the
   // volume of no-JS submissions is visible.
   "delivered-no-js",
+  // NOT a block either: browser autofill filled the honeypot on a real visit, and the
+  // lead WAS delivered normally. An urgent alert for a lead the client already has would
+  // just be noise.
+  "delivered-honeypot-autofill",
+  // A visitor was shown a message telling them what to fix. Nothing was lost.
+  "validation",
 ]);
+
+/** Rows that record a lead the client DID receive — shown as "Yes" in the Delivered column. */
+function isDelivered(layer) {
+  return String(layer).startsWith("delivered-");
+}
 
 /**
  * A name, a dialable phone and an actual message together. Bots frequently miss at
@@ -182,6 +193,9 @@ export async function logBlocked(entry = {}) {
     // Tells the Apps Script whether to email now or leave it for the daily digest.
     // Sent as a string because the sheet stores it as one.
     row.urgent = isUrgent({ layer: row.layer, name, phone, message }) ? "yes" : "";
+    // So a delivered lead in this sheet is never mistaken for a lost one (2026-09-16:
+    // five of ten "good leads marked as spam" had actually reached the client).
+    row.delivered = isDelivered(row.layer) ? "Yes" : "";
 
     // Console first — this is the fallback record if the webhook is unset or down,
     // and it is what shows up in Vercel runtime logs.
