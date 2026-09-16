@@ -21,8 +21,12 @@
  *                  Runs before the spam content checks so a real person is always told.
  *  5. Non-Latin    Cyrillic/Greek in name or message → silent, logged.
  *  6. Keyword list checkSpam() → silent, logged.
+ *  0. Size         request over 64 KB → silent, logged (no real form comes close).
+ *  1b. Fetch meta  Sec-Fetch-Site: cross-site → silent, logged. A missing header is fine.
  *  7. Duplicate    same phone + message within 2 minutes (a double-click) → success,
  *                  not delivered twice.
+ *  7b. Rate limit  more than 5 deliverable submissions from one IP in 10 minutes →
+ *                  silent, logged with the full lead. Fails open.
  *  8. Deliver      client sheet FIRST, then the Resend email. Either one alone keeps
  *                  the lead. Both failing → the visitor is told to call, the full lead
  *                  is written to the Vercel logs and the central log.
@@ -37,6 +41,7 @@
  */
 
 import { checkOrigin, checkContent, checkSpam, logBlocked } from "./index.js";
+import { checkRateLimit, clientIp, DEFAULT_LIMIT, DEFAULT_WINDOW_MS } from "./ratelimit.js";
 import {
   validateLead,
   normalizePhone,
@@ -44,6 +49,13 @@ import {
   deliveryFailedMessage,
   STANDARD_FIELDS,
 } from "./validate.js";
+
+/**
+ * Largest request accepted. The biggest possible real submission — every field at its
+ * maximum, a 600-character message and a long Google Ads URL — is under 10 KB, so 64 KB
+ * can never cut off a real lead; it only stops someone POSTing megabytes at the endpoint.
+ */
+export const MAX_BODY_BYTES = 64 * 1024;
 
 const MIN_FILL_MS = 1500;
 const AUTOFILL_MIN_OPEN_MS = 3000;
@@ -120,13 +132,23 @@ h1{font-size:22px}li{margin:6px 0}a{color:#1d4ed8;font-weight:600}</style></head
 
 async function readBody(req) {
   const type = req.headers.get("content-type") ?? "";
-  if (type.includes("application/json")) {
-    return { body: await req.json(), native: false };
+  const native = !type.includes("application/json");
+  // Refuse by the declared size before reading anything, then check what actually arrived.
+  const declared = Number(req.headers.get("content-length") ?? "");
+  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) return { body: {}, native, tooLarge: declared };
+  const text = await req.text();
+  const bytes = new TextEncoder().encode(text).length;
+  if (bytes > MAX_BODY_BYTES) return { body: {}, native, tooLarge: bytes };
+  if (!native) return { body: text ? JSON.parse(text) : {}, native };
+  let fd;
+  if (type.includes("multipart/form-data")) {
+    fd = await new Response(text, { headers: { "content-type": type } }).formData();
+  } else {
+    fd = new URLSearchParams(text);
   }
-  const fd = await req.formData();
   const body = {};
   for (const [k, v] of fd.entries()) if (typeof v === "string") body[k] = v;
-  return { body, native: true };
+  return { body, native };
 }
 
 function emailHtml(lead, config) {
@@ -178,6 +200,12 @@ export async function handleLead(req, config) {
   try {
     const parsed = await readBody(req);
     native = parsed.native;
+    if (parsed.tooLarge) {
+      // 0. Oversized. No fields are parsed, so there is nothing to show a visitor — and no
+      // real form can produce this. Silent, like every other bot signal, and logged.
+      await logBlocked({ site, layer: "too-large", matched: `${parsed.tooLarge} bytes (max ${MAX_BODY_BYTES})`, req });
+      return native ? redirect(successPath) : json({ ok: true });
+    }
     const body = parsed.body ?? {};
 
     lead = {
@@ -216,6 +244,14 @@ export async function handleLead(req, config) {
       allowed: allowedOrigins,
     });
     if (!origin.ok) return silent("origin", origin.reason);
+
+    // 1b. Fetch Metadata. A browser labels a request made from ANOTHER website
+    // "cross-site"; our own form is always "same-origin" (or "same-site" across a
+    // subdomain). Only an explicit "cross-site" is rejected — older browsers (e.g. Safari
+    // before 16.4) send no header at all, and a missing header must never block a lead.
+    if ((req.headers.get("sec-fetch-site") ?? "").toLowerCase() === "cross-site") {
+      return silent("fetch-metadata", "sec-fetch-site: cross-site");
+    }
 
     // 2. Timing. A missing token is a visitor whose JavaScript never ran — not a bot.
     const tsRaw = body._ts;
@@ -263,6 +299,23 @@ export async function handleLead(req, config) {
     if (dupe) {
       return native ? redirect(`${successPath}?lead=${dupe.leadId}`) : json({ ok: true, delivered: true, leadId: dupe.leadId });
     }
+    // 7b. Rate limit — counted only here, after every spam check and the double-click
+    // guard, so only submissions that would actually reach the client count. Over the
+    // limit is silent and logged with the full lead (never lost; a real-looking one raises
+    // the urgent alert). The limiter allows the lead whenever it can't decide.
+    if (config.rateLimit !== false) {
+      const ip = clientIp(req);
+      const limit = config.rateLimit?.limit ?? DEFAULT_LIMIT;
+      const windowMs = (config.rateLimit?.windowMinutes ?? DEFAULT_WINDOW_MS / 60000) * 60000;
+      const rl = await checkRateLimit(ip ? `${site}:${ip}` : "", { limit, windowMs });
+      if (!rl.allowed) {
+        return silent(
+          "rate-limit",
+          `${rl.count} deliverable submissions from ${ip} within ${Math.round(windowMs / 60000)} min (limit ${limit}, ${rl.store})`
+        );
+      }
+    }
+
     const leadId = newLeadId();
 
     // Not blocks — recorded so they stay visible, marked Delivered in the log.

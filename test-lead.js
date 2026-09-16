@@ -3,13 +3,16 @@
  * central blocked log) are stubbed, so nothing real is sent. Run with: npm test
  */
 import assert from "node:assert/strict";
-import { handleLead } from "./lead.js";
+import { handleLead, MAX_BODY_BYTES } from "./lead.js";
+import { _resetRateLimitMemory } from "./ratelimit.js";
 import { MESSAGES } from "./validate.js";
 
 // ── Stubs ────────────────────────────────────────────────────────
 const calls = { sheet: [], email: [], blocked: [] };
 let sheetStatus = 200;
 let emailBehaviour = "ok"; // "ok" | "reject" | "throw"
+let redisBehaviour = "ok"; // "ok" | "down"
+let redisCount = 0;
 
 process.env.GOOGLE_SHEET_WEBHOOK = "https://sheet.test/exec";
 process.env.RESEND_API_KEY = "re_test";
@@ -32,6 +35,12 @@ globalThis.fetch = async (url, options = {}) => {
       return new Response(JSON.stringify({ name: "daily_quota_exceeded" }), { status: 429 });
     }
     return new Response(JSON.stringify({ id: "email_123" }), { status: 200 });
+  }
+  if (url === "https://redis.test/pipeline") {
+    calls.redis = (calls.redis ?? 0) + 1;
+    if (redisBehaviour === "down") return new Response("oops", { status: 500 });
+    redisCount += 1;
+    return new Response(JSON.stringify([{ result: redisCount }, { result: 1 }]), { status: 200 });
   }
   if (url === "https://blocked.test/exec") {
     calls.blocked.push(body);
@@ -93,6 +102,11 @@ function nativeReq(fields, headers = {}) {
 }
 
 function reset() {
+  _resetRateLimitMemory();
+  redisCount = 0;
+  redisBehaviour = "ok";
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
   calls.sheet.length = 0;
   calls.email.length = 0;
   calls.blocked.length = 0;
@@ -338,6 +352,106 @@ await test("a hidden extra field that is absent never blocks a lead", async () =
   const cfg = { ...CONFIG, extraFields: [...CONFIG.extraFields, { name: "service", label: "Service", hidden: true }] };
   const res = await handleLead(jsonReq(goodLead()), cfg);
   assert.equal((await res.json()).delivered, true);
+});
+
+// ── Request size, Fetch Metadata, rate limiting ─────────────────
+await test("oversized body (actual bytes) → silent, logged too-large, nothing delivered", async () => {
+  const res = await handleLead(jsonReq(goodLead({ message: "x".repeat(MAX_BODY_BYTES) })), CONFIG);
+  assert.deepEqual(await res.json(), { ok: true });
+  assert.equal(calls.email.length, 0);
+  assert.equal(calls.sheet.length, 0);
+  assert.equal(calls.blocked[0].layer, "too-large");
+});
+
+await test("oversized declared Content-Length → rejected without reading the body", async () => {
+  const req = new Request("https://www.testplumbing.com/api/contact", {
+    method: "POST",
+    headers: { "content-type": "application/json", origin: "https://www.testplumbing.com", "content-length": String(MAX_BODY_BYTES + 1) },
+    body: JSON.stringify(goodLead()),
+  });
+  assert.deepEqual(await (await handleLead(req, CONFIG)).json(), { ok: true });
+  assert.equal(calls.email.length, 0);
+  assert.equal(calls.blocked[0].layer, "too-large");
+});
+
+await test("the largest possible real lead is far under the size cap and delivered", async () => {
+  const big = goodLead({
+    name: "N".repeat(100),
+    email: `${"e".repeat(240)}@example.com`,
+    message: "M".repeat(600),
+    address: "A".repeat(200),
+    source: `https://www.testplumbing.com/lp/water-heater?gclid=${"g".repeat(900)}&gbraid=${"b".repeat(300)}`,
+  });
+  assert.ok(JSON.stringify(big).length < 10_000);
+  assert.equal((await (await handleLead(jsonReq(big), CONFIG)).json()).delivered, true);
+});
+
+await test("Sec-Fetch-Site: cross-site → silent, logged fetch-metadata", async () => {
+  const res = await handleLead(jsonReq(goodLead(), { "sec-fetch-site": "cross-site" }), CONFIG);
+  assert.deepEqual(await res.json(), { ok: true });
+  assert.equal(calls.email.length, 0);
+  assert.equal(calls.blocked[0].layer, "fetch-metadata");
+});
+
+await test("Sec-Fetch-Site missing (older Safari), same-origin or same-site → delivered", async () => {
+  for (const headers of [{}, { "sec-fetch-site": "same-origin" }, { "sec-fetch-site": "same-site" }]) {
+    reset();
+    const res = await handleLead(jsonReq(goodLead(), headers), CONFIG);
+    assert.equal((await res.json()).delivered, true, JSON.stringify(headers));
+  }
+});
+
+await test("rate limit: 5 real leads from one IP delivered, the 6th is silent and logged with the full lead", async () => {
+  const ipHeaders = { "x-forwarded-for": "203.0.113.7" };
+  for (let i = 0; i < 5; i++) {
+    const r = await handleLead(jsonReq(goodLead(), ipHeaders), CONFIG);
+    assert.equal((await r.json()).delivered, true, `lead ${i + 1}`);
+  }
+  const sixth = await handleLead(jsonReq(goodLead({ name: "Sixth Person" }), ipHeaders), CONFIG);
+  assert.deepEqual(await sixth.json(), { ok: true });
+  assert.equal(calls.email.length, 5);
+  const row = calls.blocked.find((b) => b.layer === "rate-limit");
+  assert.ok(row, "rate-limit row logged");
+  assert.equal(row.name, "Sixth Person", "the full lead is kept in the log");
+  assert.equal(row.urgent, "yes", "a real-looking lead over the limit raises the urgent alert");
+});
+
+await test("rate limit: a different IP is unaffected; unknown IP is never limited", async () => {
+  for (let i = 0; i < 6; i++) await handleLead(jsonReq(goodLead(), { "x-forwarded-for": "203.0.113.7" }), CONFIG);
+  const other = await handleLead(jsonReq(goodLead(), { "x-forwarded-for": "198.51.100.9" }), CONFIG);
+  assert.equal((await other.json()).delivered, true);
+  reset();
+  for (let i = 0; i < 8; i++) {
+    const r = await handleLead(jsonReq(goodLead()), CONFIG);
+    assert.equal((await r.json()).delivered, true, "no IP header → never limited");
+  }
+});
+
+await test("rate limit: blocked spam and validation errors never count toward the limit", async () => {
+  const ipHeaders = { "x-forwarded-for": "203.0.113.50" };
+  for (let i = 0; i < 10; i++) await handleLead(jsonReq(goodLead({ message: "seo audit for your site" }), ipHeaders), CONFIG);
+  for (let i = 0; i < 10; i++) await handleLead(jsonReq(goodLead({ phone: "555" }), ipHeaders), CONFIG);
+  const real = await handleLead(jsonReq(goodLead(), ipHeaders), CONFIG);
+  assert.equal((await real.json()).delivered, true);
+});
+
+await test("rate limit: uses Upstash when configured; falls back to memory when Upstash is down", async () => {
+  process.env.UPSTASH_REDIS_REST_URL = "https://redis.test";
+  process.env.UPSTASH_REDIS_REST_TOKEN = "tok";
+  const ipHeaders = { "x-forwarded-for": "203.0.113.99" };
+  await handleLead(jsonReq(goodLead(), ipHeaders), CONFIG);
+  assert.equal(calls.redis, 1);
+  redisBehaviour = "down";
+  const r = await handleLead(jsonReq(goodLead(), ipHeaders), CONFIG);
+  assert.equal((await r.json()).delivered, true, "a store outage never blocks a lead");
+  calls.redis = 0;
+});
+
+await test("rate limit can be disabled per site", async () => {
+  for (let i = 0; i < 7; i++) {
+    const r = await handleLead(jsonReq(goodLead(), { "x-forwarded-for": "203.0.113.8" }), { ...CONFIG, rateLimit: false });
+    assert.equal((await r.json()).delivered, true);
+  }
 });
 
 // ── Native (no-JavaScript) posts ─────────────────────────────────

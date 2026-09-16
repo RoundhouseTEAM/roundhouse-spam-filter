@@ -71,6 +71,10 @@ const NEVER_URGENT_LAYERS = new Set([
   "delivered-honeypot-autofill",
   // A visitor was shown a message telling them what to fix. Nothing was lost.
   "validation",
+  // No fields were even parsed — there is no lead to rescue.
+  "too-large",
+  // Posted from another website's page — never our own form.
+  "fetch-metadata",
 ]);
 
 /** Rows that record a lead the client DID receive — shown as "Yes" in the Delivered column. */

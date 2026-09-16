@@ -23,6 +23,13 @@ export interface LeadConfig {
   extraFields?: ExtraField[];
   /** Where a no-JavaScript visitor is redirected after submitting. Defaults to "/". */
   successPath?: string;
+  /**
+   * Per-IP limit on DELIVERABLE submissions (counted after every spam check). Defaults to
+   * 5 per 10 minutes. `false` disables it. Uses Upstash Redis when UPSTASH_REDIS_REST_URL /
+   * _TOKEN (or KV_REST_API_URL / _TOKEN) are set, otherwise an in-memory count per instance.
+   * Never blocks because of its own failure.
+   */
+  rateLimit?: { limit?: number; windowMinutes?: number } | false;
   /** Whether Cyrillic/Greek is a spam signal. Defaults to true. */
   nonLatin?: boolean;
   /** Defaults to process.env.GOOGLE_SHEET_WEBHOOK. */
@@ -40,5 +47,6 @@ export interface LeadConfig {
 }
 
 /** The entire server side of a Roundhouse contact form. */
+export declare const MAX_BODY_BYTES: number;
 export declare function handleLead(req: Request, config: LeadConfig): Promise<Response>;
 export default handleLead;
