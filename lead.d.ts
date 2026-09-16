@@ -24,13 +24,14 @@ export interface LeadConfig {
   /** Where a no-JavaScript visitor is redirected after submitting. Defaults to "/". */
   successPath?: string;
   /**
-   * Per-IP limit on DELIVERABLE submissions (counted after every spam check). Defaults to
-   * 5 per 10 minutes. `false` disables it. Uses Upstash Redis when UPSTASH_REDIS_REST_URL /
-   * _TOKEN (or KV_REST_API_URL / _TOKEN) are set, otherwise an in-memory count per instance.
-   * Never blocks because of its own failure.
+   * Per-IP count of DELIVERABLE submissions (counted after every spam check). Over `limit`
+   * (default 5 per 10 minutes) the lead is delivered and flagged; over `floodLimit`
+   * (default 30) it is withheld and logged in full. `false` disables it. Uses Upstash Redis
+   * when UPSTASH_REDIS_REST_URL / _TOKEN (or KV_REST_API_URL / _TOKEN) are set, otherwise an
+   * in-memory count per instance. Never withholds because of its own failure.
    */
-  rateLimit?: { limit?: number; windowMinutes?: number } | false;
-  /** Whether Cyrillic/Greek is a spam signal. Defaults to true. */
+  rateLimit?: { limit?: number; floodLimit?: number; windowMinutes?: number } | false;
+  /** Whether Cyrillic/Greek is flagged in the central log. Defaults to true. Never withholds a lead. */
   nonLatin?: boolean;
   /** Defaults to process.env.GOOGLE_SHEET_WEBHOOK. */
   sheetWebhook?: string;
@@ -48,5 +49,14 @@ export interface LeadConfig {
 
 /** The entire server side of a Roundhouse contact form. */
 export declare const MAX_BODY_BYTES: number;
+export declare function readOpenTime(body: Record<string, unknown>): { jsRan: boolean; openMs: number | null };
+export declare function automationSignals(input: {
+  body: Record<string, unknown>;
+  headers: Headers;
+  allowedOrigins?: string[];
+  jsRan: boolean;
+  openMs: number | null;
+}): { strong: string[]; weak: string[]; honeypot: string };
+export declare function sheetAccepted(res: Response): Promise<{ ok: boolean; detail: string }>;
 export declare function handleLead(req: Request, config: LeadConfig): Promise<Response>;
 export default handleLead;

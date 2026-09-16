@@ -67,7 +67,7 @@
 
 // Bump whenever this script changes. The health check reports it, so you can tell
 // which version is actually deployed rather than assuming the last paste went live.
-var VERSION = 'v5-delivered-column';
+var VERSION = 'v6-delivery-wording';
 
 // The Blocked Submissions sheet, already created:
 // https://docs.google.com/spreadsheets/d/1LIcJM6u41o_z3OwH2hEZQ6-9naCtcoImtXokjUoOu0g/edit
@@ -355,11 +355,8 @@ function maybeSendImmediate_(sheet, p, stamp) {
   var lastOfRation = urgentToday === MAX_IMMEDIATE_PER_SITE_PER_DAY;
   var html =
     '<div style="font-family:-apple-system,Segoe UI,sans-serif;font-size:14px;color:#0f172a;">' +
-      '<h2 style="margin:0 0 4px;">Possible lost lead — ' + esc_(site) + '</h2>' +
-      '<p style="margin:0 0 16px;color:#64748b;">This was withheld from the client by the <strong>' +
-        esc_(p.layer) + '</strong> rule, but it has a real name, a dialable phone and a ' +
-        'message — so it may be a customer, not a bot. If it reads like one, call them, ' +
-        'then fix the rule.' +
+      '<h2 style="margin:0 0 4px;">' + esc_(alertHeading_(p.layer)) + ' — ' + esc_(site) + '</h2>' +
+      '<p style="margin:0 0 16px;color:#64748b;">' + alertExplanation_(p.layer) +
         (p.layer === 'honeypot'
           ? '<br><strong>A honeypot hit with a full name, phone and message is usually a ' +
             'password manager filling the hidden field — most likely a real customer.</strong>'
@@ -380,10 +377,37 @@ function maybeSendImmediate_(sheet, p, stamp) {
 
   MailApp.sendEmail({
     to: alertRecipient_(),
-    subject: 'Possible lost lead: ' + (p.layer || '?') + ' — ' + site + (p.name ? ' (' + p.name + ')' : ''),
+    subject: alertHeading_(p.layer) + ': ' + (p.layer || '?') + ' — ' + site + (p.name ? ' (' + p.name + ')' : ''),
     htmlBody: html
   });
   return true;
+}
+
+/**
+ * Since package 2.6.0 two kinds of row are urgent that are NOT spam blocks: a lead that
+ * reached neither the sheet nor the email, and one that reached only the sheet. The
+ * old "withheld by the rule" wording sent people looking for a spam rule to fix.
+ */
+function alertHeading_(layer) {
+  if (layer === 'delivery-failed') return 'LEAD NOT DELIVERED';
+  if (layer === 'delivered-email-failed') return 'Lead email failed';
+  return 'Possible lost lead';
+}
+
+function alertExplanation_(layer) {
+  if (layer === 'delivery-failed') {
+    return '<strong>Neither the client\'s sheet nor the email accepted this lead.</strong> ' +
+      'The details below are the only copy — send it to the client now, then check the ' +
+      'Matched column for what failed (Resend quota or key, Apps Script deployment).';
+  }
+  if (layer === 'delivered-email-failed') {
+    return 'This lead reached the client\'s leads sheet, but the email did not send, so a ' +
+      'client who works from their inbox will not see it. Forward it, then check Resend ' +
+      '(quota, API key, sending domain) — an email failure usually hits every site.';
+  }
+  return 'This was withheld from the client by the <strong>' + esc_(layer) + '</strong> rule, ' +
+    'but it has a real name, a dialable phone and a message — so it may be a customer, not a ' +
+    'bot. If it reads like one, call them, then fix the rule.';
 }
 
 // ── Daily digest ─────────────────────────────────────────────────

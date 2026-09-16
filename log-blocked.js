@@ -40,9 +40,12 @@
  *
  * FAILURE POLICY
  * ──────────────
- * This must never break a contact route. Every path is wrapped, bounded by a
- * timeout, and falls back to console output. A logging outage degrades to silent
- * discard rather than throwing a 500 at a real visitor.
+ * This must never break a contact route. Every path is wrapped and bounded by a
+ * timeout. The FULL row (name, phone, message) is written to the console before the
+ * webhook is tried, so a withheld lead can still be recovered from the Vercel runtime
+ * logs when the sheet is down. Until 2.6.0 the console line held only the rule name,
+ * and a 200 from the webhook counted as success even when the Apps Script had answered
+ * {ok:false} — a broken log meant withheld leads left no trace at all.
  */
 
 /**
@@ -71,6 +74,9 @@ const NEVER_URGENT_LAYERS = new Set([
   "delivered-honeypot-autofill",
   // A visitor was shown a message telling them what to fix. Nothing was lost.
   "validation",
+  // 30+ deliverable submissions from one IP in 10 minutes. Every row is still logged in
+  // full; the per-day cap would be spent on one flood otherwise.
+  "rate-limit-flood",
   // No fields were even parsed — there is no lead to rescue.
   "too-large",
   // Posted from another website's page — never our own form.
@@ -100,6 +106,10 @@ export function looksLikeRealEnquiry(row) {
  */
 function isUrgent(row) {
   if (NEVER_URGENT_LAYERS.has(row.layer)) return false;
+  // The client HAS a delivered lead, so there is nothing to rescue — except when only
+  // the sheet caught it: a client who works from their inbox won't see it, and a
+  // failing email usually means every site's email is failing.
+  if (isDelivered(row.layer)) return row.layer === "delivered-email-failed";
   return looksLikeRealEnquiry(row);
 }
 
@@ -202,10 +212,11 @@ export async function logBlocked(entry = {}) {
     // five of ten "good leads marked as spam" had actually reached the client).
     row.delivered = isDelivered(row.layer) ? "Yes" : "";
 
-    // Console first — this is the fallback record if the webhook is unset or down,
-    // and it is what shows up in Vercel runtime logs.
+    // Console first, with the whole row — this is the fallback record if the webhook is
+    // unset, down or broken, and it is what shows up in Vercel runtime logs.
     console.warn(
-      `[blocked-log] ${row.site} | ${row.layer} | ${row.matched || "—"}${row.urgent ? " | URGENT" : ""}`
+      `[blocked-log] ${row.site} | ${row.layer} | ${row.matched || "—"}${row.urgent ? " | URGENT" : ""}`,
+      JSON.stringify(row)
     );
 
     const webhook = process.env.BLOCKED_LOG_WEBHOOK;
@@ -223,7 +234,20 @@ export async function logBlocked(entry = {}) {
       },
       WEBHOOK_TIMEOUT_MS
     );
-    if (!res.ok) console.error("[blocked-log] webhook returned", res.status);
+    // The Apps Script answers 200 with {ok:false} when it throws, and Google answers 200
+    // with a sign-in page when the deployment's access changes — only {ok:true} counts.
+    const text = await res.text().catch(() => "");
+    let data = null;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      /* not JSON */
+    }
+    if (!res.ok || data?.ok !== true) {
+      console.error(
+        `[blocked-log] ROW NOT RECORDED (${res.status}: ${text.replace(/\s+/g, " ").slice(0, 160)}) — the row above is the only copy`
+      );
+    }
   } catch (err) {
     console.error("[blocked-log] failed to record blocked submission:", err);
   }

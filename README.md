@@ -25,8 +25,28 @@ button, is `noindex`, and is not in the sitemap. Never fire a conversion on a ba
 **Rules (Philip, 2026-09-16):** name, phone, email and message are all required. Phone
 must be exactly 10 US digits (a leading 1 is dropped). Message max 600 characters; links
 allowed in the message, not the name. Every mistake a person can make gets a specific
-visible message. Only bot signals (origin, timing, honeypot, non-Latin, keyword list)
-are silent — and they are logged. No "Unverified" subject line.
+visible message. No "Unverified" subject line.
+
+**When in doubt, deliver it (2.6.0, Philip 2026-09-16).** A real lead silently withheld
+costs a client a job; a spam email costs them a delete. So `handleLead` **withholds**
+(silent success, full row in the central log) only what a customer can't produce:
+
+- an oversized body, or `Sec-Fetch-Site: cross-site`
+- a blocklisted email domain or phone number (confirmed repeat spammers)
+- a flood: over 30 deliverable submissions from one IP in 10 minutes
+- **two automation signals together**, at least one strong — strong: honeypot filled
+  without autofill, submitted under 1.5s, no Origin/Referer at all, Referer is an
+  `/api/` path; supporting: no JavaScript, foreign origin, autofilled honeypot
+
+Everything else that used to block is **delivered to the client and flagged**
+(`delivered-flagged` row, never shown to the client, never an urgent alert): keyword
+phrases, odd TLDs, gibberish, Cyrillic/Greek, a foreign origin (a domain missing from
+`allowedOrigins`), a single timing or honeypot signal, no JavaScript, more than 5 leads
+from one IP. Review the flagged rows to tune the rules.
+
+Timing is measured on the visitor's own device (`_elapsed`). Until 2.6.0 the server
+compared the device's clock to its own, so a phone or PC running a few minutes fast
+looked like an instant bot and the lead was dropped with no alert.
 
 **Site setup** — see power-construction-website for the reference implementation:
 
@@ -47,11 +67,26 @@ export function POST(req: Request) { return handleLead(req, LEAD_CONFIG); }
 // and onDelivered(leadId) firing the site's GA / Google Ads conversion.
 ```
 
-Order inside `handleLead`: origin → timing → honeypot (autofill-aware) → validation
-(visible) → non-Latin → keyword list → double-click guard → client sheet → Resend email.
-Delivered-but-recorded rows (`delivered-no-js`, `delivered-honeypot-autofill`) carry
-`Delivered: Yes` in the central sheet — paste the updated `docs/blocked-log-apps-script.gs`
-to get that column. `npm test` covers every path with the network stubbed.
+Order inside `handleLead`: size / cross-site → automation signals → validation (visible)
+→ content (blocklist withheld, the rest flagged) → double-click guard → rate limit →
+**full lead written to the Vercel logs** → client sheet and Resend email **in parallel**
+→ central log rows for flags and partial failures.
+
+Delivery only counts on a verified answer: the sheet must not answer `{ok:false}`, a
+Google sign-in/error page, or the `listening` health check (Apps Script returns all of
+those with HTTP 200); the email must return a Resend `id`. Central log rows:
+
+| Layer | Meaning | Urgent |
+|---|---|---|
+| `delivered-flagged` | Delivered; carries the flags | never |
+| `delivered-sheet-failed` | Delivered by email; the sheet didn't record it | no |
+| `delivered-email-failed` | In the client's sheet only; the email failed | **yes** |
+| `delivery-failed` | Neither — visitor told to call; this row is the lead | **yes** |
+
+`logBlocked` writes the full row to the console first and logs `ROW NOT RECORDED` when the
+central script doesn't answer `{ok:true}`, so a withheld lead is recoverable from the
+Vercel runtime logs even while the central sheet is broken. `npm test` covers every path
+with the network stubbed.
 
 **After pushing a change here, no site gets it until its `package-lock.json` is bumped**
 (`npm install @roundhouse/spam-filter@github:RoundhouseTEAM/roundhouse-spam-filter`).
@@ -135,11 +170,11 @@ degrades to `console.warn` only, so it is safe to deploy before the sheet exists
 
 ## Rules, in order
 
-1. **Email domain** — confirmed spam senders (`bizbuydave.com`, `vettedvas.com`, …)
-2. **Email TLD** — `.bid`, `.xyz`, `.top`, `.click`, `.loan`
-3. **Phone** — repeat offenders who rotate names but reuse a number
-4. **Keywords** — phrase match on name + message, word-boundary aware
-5. **Gibberish** — long unbroken letter+digit tokens like `NAEWTRER365118NEYHRTGE`
+1. **Email domain** — confirmed spam senders (`bizbuydave.com`, `vettedvas.com`, …) — withheld
+2. **Email TLD** — `.bid`, `.xyz`, `.top`, `.click`, `.loan` — flagged
+3. **Phone** — repeat offenders who rotate names but reuse a number — withheld
+4. **Keywords** — phrase match on name + message, word-boundary aware — flagged
+5. **Gibberish** — long unbroken letter+digit tokens like `NAEWTRER365118NEYHRTGE` — flagged
 
 Keywords are matched against **name and message only** — never phone or email, since
 a company name inside an email address would cause false positives.

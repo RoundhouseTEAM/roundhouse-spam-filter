@@ -252,6 +252,37 @@ await withHarness({
   check("an aborted webhook does not throw", !threw);
 });
 
+// 2.6.0 urgency: delivered rows never alert, except when only the sheet caught the lead.
+for (const [layer, expected] of [
+  ["delivered-flagged", ""],
+  ["delivered-sheet-failed", ""],
+  ["delivered-email-failed", "yes"],
+  ["rate-limit-flood", ""],
+  ["automation", "yes"],
+  ["delivery-failed", "yes"],
+]) {
+  await withHarness({ env: FULL_ENV }, async (calls) => {
+    await logBlocked({ ...lead, layer });
+    check(`${layer}: urgent="${expected}"`, rowOf(calls).urgent === expected, `got "${rowOf(calls).urgent}"`);
+  });
+}
+
+// 2.6.0: the whole row reaches the console, and only {ok:true} counts as recorded.
+for (const [label, body] of [
+  ["{ok:false} from the Apps Script", JSON.stringify({ ok: false, error: "boom" })],
+  ["a Google sign-in page", "<html><title>Sign in</title></html>"],
+]) {
+  await withHarness({ env: FULL_ENV, fetchImpl: () => new Response(body, { status: 200 }) }, async (_calls, logs) => {
+    await logBlocked({ ...lead, layer: "keyword:offTopic" });
+    check(`${label}: the console holds the full lead`, logs.some((l) => l.includes(lead.name) && l.includes(lead.phone)));
+    check(`${label}: flagged ROW NOT RECORDED`, logs.some((l) => l.includes("ROW NOT RECORDED")));
+  });
+}
+await withHarness({ env: FULL_ENV, fetchImpl: () => new Response(JSON.stringify({ ok: true }), { status: 200 }) }, async (_calls, logs) => {
+  await logBlocked({ ...lead, layer: "keyword:offTopic" });
+  check("{ok:true} is recorded — no ROW NOT RECORDED", !logs.some((l) => l.includes("ROW NOT RECORDED")));
+});
+
 console.log(results.join("\n"));
 console.log(
   `\n${failures === 0 ? "PASS" : "FAIL"} — blocked-log: ${failures} failure${failures === 1 ? "" : "s"}\n`

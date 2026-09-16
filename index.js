@@ -5,6 +5,10 @@
  * (honeypot, origin check, time token, basic content patterns) that live in
  * each client's /api/contact route — it does not replace them.
  *
+ * Since 2.6.0 handleLead() WITHHOLDS a lead only on the email-domain and phone
+ * blocklists. Every other match here (keywords, TLDs, gibberish, non-Latin) is
+ * delivered to the client and flagged in the central log — see lead.js.
+ *
  * Every rule here was derived from real spam submissions across Alpha Omega,
  * Newmans, and Indiana Flow. Before adding a term, check it against real leads:
  * words like "video", "website", "business" and "scope of work" all appear in
@@ -64,7 +68,7 @@ export const SPAM_PHRASES = {
     "selling your business",
     "sell your business",
     "purchasing businesses in your industry",
-    "open to selling",
+    // "open to selling" removed 2026-09-16: "we're open to selling the house after the repair".
   ],
   seoMarketing: [
     "rank better",
@@ -77,7 +81,7 @@ export const SPAM_PHRASES = {
     "guest post",
     "helped hundreds of businesses",
     "boost your rankings",
-    "first page of google",
+    // "first page of google" removed 2026-09-16: "found you on the first page of Google".
     "digital marketing agency",
     "more leads guaranteed",
     "lead generation service",
@@ -103,8 +107,7 @@ export const SPAM_PHRASES = {
   ],
   videoBranding: [
     "explainer video",
-    "30 second video",
-    "60 second video",
+    // "30/60 second video" removed 2026-09-16: "I can send a 30 second video of the leak".
     "voice-over",
     "visual identity",
     "brand identity",
@@ -124,7 +127,7 @@ export const SPAM_PHRASES = {
   // without trace. Do not put them back — see the MUST_PASS cases guarding them.
   coldOutreach: [
     "quick zoom demo",
-    "reply yes and i",
+    // "reply yes and i" removed 2026-09-16: "please reply yes and I will send pictures".
     "didn't want to interrupt your workday",
     "what i do with your details",
   ],
@@ -148,13 +151,13 @@ export const SPAM_PHRASES = {
     "automate your office work",
     "without you needing to learn anything",
     "never miss another call",
-    "on autopilot",
+    // "on autopilot" removed 2026-09-16: "our sprinklers run on autopilot but zone 3 is broken".
   ],
   offTopic: [
     "deneme bonusu",
     "bonus veren",
     "bahis",
-    "casino",
+    // "casino" removed 2026-09-16: a commercial kitchen AT a casino is a real job.
     "crypto",
     "bitcoin",
     "forex",

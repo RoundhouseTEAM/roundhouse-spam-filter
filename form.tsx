@@ -9,7 +9,9 @@
  *
  * Built to avoid every form bug that has cost a real lead so far:
  *  - Inputs are UNCONTROLLED and there is no hidden `_ts` input. The time token lives in
- *    a React ref. A hidden input with defaultValue="" was reset by React on every
+ *    a React ref, and the form sends `_elapsed` — measured start to finish on the
+ *    visitor's own clock. Sending only the clock reading (`_ts`) let a device running a
+ *    few minutes fast look like an instant bot submission (fixed 2.6.0). A hidden input with defaultValue="" was reset by React on every
  *    re-render, erasing the timestamp — every Power Construction and Indiana Flow lead
  *    arrived flagged "JavaScript did not run" because of it.
  *  - The honeypot keeps its off-screen positioning (not display:none — some bots skip
@@ -241,8 +243,12 @@ export default function LeadForm({
     if (errors[name] && !validateField(name, value, extraFields)) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
-    if (name === "message" && counterRef.current) {
-      counterRef.current.textContent = `${value.length} / ${MESSAGE_MAX}`;
+    if (name === "message") {
+      if (counterRef.current) counterRef.current.textContent = `${value.length} / ${MESSAGE_MAX}`;
+      // Say so the moment a typed or pasted message passes the limit.
+      if (value.trim().length > MESSAGE_MAX && !errors[name]) {
+        setErrors((prev) => ({ ...prev, [name]: validateField(name, value, extraFields) }));
+      }
     }
   }
 
@@ -267,6 +273,8 @@ export default function LeadForm({
         body: JSON.stringify({
           ...values,
           ...hiddenValues,
+          // Both ends on the visitor's own clock, so a wrong device clock can't matter.
+          _elapsed: openedAt.current ? Date.now() - openedAt.current : undefined,
           _ts: openedAt.current,
           source: window.location.href,
         }),
@@ -360,11 +368,14 @@ export default function LeadForm({
 
     let control: ReactNode;
     if (name === "message" || extra?.multiline) {
+      // No maxLength on the message: the browser would silently cut a pasted description
+      // at 600 characters and the visitor would never know. Over the limit, the counter
+      // shows it and validation asks them to shorten it.
       control = (
         <textarea
           {...common}
           rows={messageRows}
-          maxLength={name === "message" ? MESSAGE_MAX : extra?.maxLength ?? EXTRA_FIELD_MAX}
+          maxLength={name === "message" ? undefined : extra?.maxLength ?? EXTRA_FIELD_MAX}
         />
       );
     } else if (extra?.options?.length) {

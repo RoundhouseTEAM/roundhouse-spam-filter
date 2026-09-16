@@ -3,8 +3,9 @@
  *
  * Only DELIVERABLE submissions are counted — handleLead calls this after every spam
  * check and after the double-click guard — so bots, validation errors and blocked junk
- * never use up a real visitor's allowance. It exists to stop a flood of valid-looking
- * submissions from one source reaching a client's inbox.
+ * never use up a real visitor's allowance. handleLead flags a lead over DEFAULT_LIMIT and
+ * withholds only over DEFAULT_FLOOD_LIMIT, to stop a flood of valid-looking submissions
+ * from one source reaching a client's inbox.
  *
  * NEVER BLOCKS A LEAD BECAUSE OF ITS OWN FAILURE. A missing IP, a store that is down,
  * slow or unconfigured — every one of those allows the submission.
@@ -15,7 +16,13 @@
  * on the same warm instance.
  */
 
+/** Above this many deliverable leads from one IP the lead is still delivered, but flagged. */
 export const DEFAULT_LIMIT = 5;
+/**
+ * Above this many it is withheld (logged in full). Far beyond any office, property
+ * manager or client testing their own form — only a flood reaches it.
+ */
+export const DEFAULT_FLOOD_LIMIT = 30;
 export const DEFAULT_WINDOW_MS = 10 * 60 * 1000;
 const REDIS_TIMEOUT_MS = 1000;
 
