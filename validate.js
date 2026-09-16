@@ -105,15 +105,27 @@ function validateMessage(value) {
   return "";
 }
 
+/**
+ * Every field a PERSON can see is required (Philip, 2026-09-16): if we show a field we
+ * want it filled in. So an extra field is required unless it is `hidden` — a value the
+ * page supplies itself (e.g. the service a page is about), never shown to the visitor.
+ * `required: false` is still honoured as an explicit, deliberate exception.
+ */
+export function isRequiredExtra(field) {
+  if (field.hidden) return false;
+  return field.required !== false;
+}
+
 function validateExtra(field, value) {
   const v = String(value ?? "").trim();
   const label = field.label || field.name;
+  const required = isRequiredExtra(field);
   if (field.checkbox) {
     // e.g. an express-consent checkbox (Proverbs, carried over from Duda).
-    return field.required && !isChecked(v) ? field.requiredMessage || MESSAGES.consentMissing : "";
+    return required && !isChecked(v) ? field.requiredMessage || MESSAGES.consentMissing : "";
   }
   if (!v) {
-    return field.required ? field.requiredMessage || `Please enter your ${label.toLowerCase()}.` : "";
+    return required ? field.requiredMessage || `Please enter your ${label.toLowerCase()}.` : "";
   }
   const max = field.maxLength ?? EXTRA_FIELD_MAX;
   if (v.length > max) return `Please keep your ${label.toLowerCase()} under ${max} characters.`;

@@ -40,6 +40,7 @@ import {
   EXTRA_FIELD_MAX,
   validateField,
   validateLead,
+  isRequiredExtra,
   suggestEmail,
   offlineMessage,
   deliveryFailedMessage,
@@ -180,17 +181,28 @@ export default function LeadForm({
       ["name"],
       ["phone"],
       ["email"],
-      ...extraFields.filter((f) => !f.checkbox).map((f) => [f.name]),
+      ...extraFields.filter((f) => !f.checkbox && !f.hidden).map((f) => [f.name]),
       ["message"],
       // Checkboxes (consent) read naturally last, just above the button.
-      ...extraFields.filter((f) => f.checkbox).map((f) => [f.name]),
+      ...extraFields.filter((f) => f.checkbox && !f.hidden).map((f) => [f.name]),
     ];
   const extraByName = Object.fromEntries(extraFields.map((f) => [f.name, f]));
 
   const labelFor = (name: string) =>
     labels[name] ?? DEFAULT_LABELS[name] ?? extraByName[name]?.label ?? name;
-  const isRequired = (name: string) => name in DEFAULT_LABELS || Boolean(extraByName[name]?.required);
+  const isRequired = (name: string) =>
+    name in DEFAULT_LABELS || (extraByName[name] ? isRequiredExtra(extraByName[name]) : false);
   const idFor = (name: string) => `${uid}-${name}`;
+  /**
+   * With labels hidden the placeholder is the only visible label, so a required field
+   * must say so there — otherwise a required box ("Describe your sprinkler issue...")
+   * looks optional next to one that shows " *" (Brandon, 2026-09-16).
+   */
+  const placeholderFor = (name: string, required: boolean) => {
+    const p = placeholders[name];
+    if (!p || !hideLabels || !requiredMark || !required || p.includes("*")) return p;
+    return `${p} *`;
+  };
 
   function readValues(): Record<string, string> {
     const values: Record<string, string> = {};
@@ -287,6 +299,7 @@ export default function LeadForm({
 
   function renderField(name: string) {
     const extra = extraByName[name];
+    if (extra?.hidden) return null;
     const id = idFor(name);
     const error = errors[name];
     const errorId = `${id}-error`;
@@ -323,7 +336,7 @@ export default function LeadForm({
       name,
       required,
       className: fieldClass,
-      placeholder: placeholders[name],
+      placeholder: placeholderFor(name, required),
       "aria-invalid": error ? true : undefined,
       "aria-describedby": error ? errorId : undefined,
       onBlur: (ev: { currentTarget: { value: string } }) => onFieldBlur(name, ev.currentTarget.value),
@@ -343,7 +356,7 @@ export default function LeadForm({
       control = (
         <select {...common} defaultValue="">
           <option value="" disabled>
-            {placeholders[name] ?? `Choose your ${labelFor(name).toLowerCase()}`}
+            {placeholderFor(name, required) ?? `Choose your ${labelFor(name).toLowerCase()}`}
           </option>
           {extra.options.map((o) => (
             <option key={o} value={o}>

@@ -102,9 +102,22 @@ test("message: links are allowed", () => {
 });
 
 // ── Extra fields ─────────────────────────────────────────────────
-test("extra fields: optional, required, max length, options", () => {
+test("extra fields: visible ones are required by default; hidden never; explicit false honoured", () => {
+  assert.deepEqual(validateLead(good, [{ name: "address", label: "Address" }]), {
+    address: "Please enter your address.",
+  });
+  assert.deepEqual(validateLead(good, [{ name: "service", label: "Service", hidden: true }]), {});
+  assert.deepEqual(validateLead(good, [{ name: "address", label: "Address", required: false }]), {});
+  assert.deepEqual(
+    validateLead(good, [{ name: "service", label: "Service", hidden: true, required: true }]),
+    {},
+    "hidden wins: a value the page supplies can never block a visitor"
+  );
+});
+
+test("extra fields: required, max length, options", () => {
   const extras = [
-    { name: "address", label: "Address" },
+    { name: "address", label: "Address", required: false },
     { name: "area", label: "Area", required: true, options: ["Brandon", "Ocala"] },
   ];
   assert.deepEqual(validateLead({ ...good, area: "Ocala" }, extras), {});

@@ -185,7 +185,7 @@ await test("validation: every missing field reported at once", async () => {
   const res = await handleLead(jsonReq({ _ts: Date.now() - 10_000 }), CONFIG);
   const data = await res.json();
   assert.equal(res.status, 400);
-  assert.deepEqual(Object.keys(data.errors).sort(), ["email", "message", "name", "phone"]);
+  assert.deepEqual(Object.keys(data.errors).sort(), ["address", "email", "message", "name", "phone"], "visible extra fields are required too");
 });
 
 await test("validation: a link in the name is visible; a link in the message is allowed", async () => {
@@ -298,8 +298,15 @@ await test("sheetPayload reshapes the row (rename keys, add a constant)", async 
   });
 });
 
+await test("a visible extra field left blank is rejected with a visible message", async () => {
+  const res = await handleLead(jsonReq(goodLead({ address: "" })), CONFIG);
+  assert.equal(res.status, 400);
+  assert.equal((await res.json()).errors.address, "Please enter your address.");
+  assert.equal(calls.email.length, 0);
+});
+
 await test("a hidden per-page value (declared as an extra field) reaches sheet and email", async () => {
-  const cfg = { ...CONFIG, extraFields: [...CONFIG.extraFields, { name: "service", label: "Service" }] };
+  const cfg = { ...CONFIG, extraFields: [...CONFIG.extraFields, { name: "service", label: "Service", hidden: true }] };
   await handleLead(jsonReq(goodLead({ service: "Water heater replacement" })), cfg);
   assert.equal(calls.sheet[0].service, "Water heater replacement");
   assert.ok(calls.email[0].html.includes("Water heater replacement"));
@@ -325,6 +332,12 @@ await test("consent checkbox: unchecked → visible 400; checked → 'Yes' in sh
 await test("subjectPrefix is prepended to the email subject", async () => {
   await handleLead(jsonReq(goodLead()), { ...CONFIG, subjectPrefix: "[TEST] " });
   assert.ok(calls.email[0].subject.startsWith("[TEST] New Lead — "));
+});
+
+await test("a hidden extra field that is absent never blocks a lead", async () => {
+  const cfg = { ...CONFIG, extraFields: [...CONFIG.extraFields, { name: "service", label: "Service", hidden: true }] };
+  const res = await handleLead(jsonReq(goodLead()), cfg);
+  assert.equal((await res.json()).delivered, true);
 });
 
 // ── Native (no-JavaScript) posts ─────────────────────────────────
