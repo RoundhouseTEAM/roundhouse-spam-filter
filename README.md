@@ -142,6 +142,24 @@ Because **every rejection path returns a fake success**, a form can never be ver
 by submitting it and seeing "thanks". Confirm a real email arrived, or read the
 Vercel runtime logs.
 
+## Daily monitor, spike alerts and bounce alerts (2.7.0)
+
+- **End-to-end test lead.** `monitor/check.mjs` (GitHub Action, 12:00 UTC) submits one valid
+  lead per `"e2e": true` site through the real form in a real browser, with header
+  `x-roundhouse-monitor: $LEAD_MONITOR_SECRET`. `handleLead` runs every check, then emails
+  `delivered@resend.dev` instead of the client, skips the client sheet and central log, and
+  returns `delivered:false` + a `monitor` report. The run fails on a withheld, flagged or
+  unemailed lead, or missing delivery env vars. **Set `LEAD_MONITOR_SECRET` on a site's Vercel
+  project before giving it `"e2e": true`** — without it the monitor's lead is a REAL lead.
+  It does not write the client's sheet, so a broken client sheet script is caught by the
+  spike alert on `delivered-sheet-failed` instead.
+- **Spike alerts** (Apps Script v7): one email when `delivered-flagged` reaches 10 rows on a
+  site in a day, or `delivered-sheet-failed` / `delivered-email-failed` / `delivery-failed`
+  reach 10 (sheet failures: 3). Bot floods never trigger it.
+- **Bounce alerts:** Resend webhook (`email.bounced`, `email.complained`) →
+  `https://roundhouse-cms.vercel.app/api/resend-webhook` (verifies the signature with
+  `RESEND_WEBHOOK_SECRET`) → the central log script → an urgent row + immediate email.
+
 ## Where blocked submissions go, and who hears about it
 
 `logBlocked()` writes one row to the central Roundhouse **Blocked Submissions** sheet

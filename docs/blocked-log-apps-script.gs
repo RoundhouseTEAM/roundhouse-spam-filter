@@ -40,6 +40,22 @@
  *   the form posted with an empty _ts. The lead WAS delivered, flagged for review.
  *   These rows only exist to show how many submissions arrive without JS.
  *
+ * ── Spike alerts (v7) ───────────────────────────────────────────
+ * One email the moment one delivery-related rule (SPIKE_LAYERS) reaches SPIKE_THRESHOLD
+ * rows on one site in a day (SHEET_FAILED_SPIKE_THRESHOLD for delivered-sheet-failed).
+ * Bot floods never trigger it. A config mistake — a
+ * domain missing from allowedOrigins, a broken client Apps Script, a rule suddenly
+ * catching real customers — produces many rows of one kind, and used to show up only
+ * as a count in the next morning's digest. Sent once per site + rule per day.
+ *
+ * ── Resend bounce alerts (v7) ───────────────────────────────────
+ * Resend accepting a lead email doesn't mean the client received it: a mistyped
+ * recipient, a full mailbox or a server rejecting our domain bounces minutes later.
+ * Point a Resend webhook at this script's /exec URL for email.bounced and
+ * email.complained. Each one becomes an urgent row + immediate email with the lead's
+ * subject, so it can be forwarded and the address fixed. Repeat deliveries of the
+ * same event are ignored.
+ *
  * ── Deploy ──────────────────────────────────────────────────────
  * The sheet exists and its ID is already filled in below — nothing to edit.
  *
@@ -56,7 +72,7 @@
  *    (First time only: Deploy -> New deployment -> Web app, Execute as Me,
  *    Who has access Anyone, then set the /exec URL as BLOCKED_LOG_WEBHOOK.)
  * 6. Check: opening the /exec URL in a browser returns
- *    {"ok":true,"status":"listening",...} with version v5-delivered-column.
+ *    {"ok":true,"status":"listening",...} with the current VERSION below.
  *    sendDailyDigest() can be run by hand any time to see the digest immediately.
  *
  * ── Redeploy after editing ──────────────────────────────────────
@@ -67,7 +83,7 @@
 
 // Bump whenever this script changes. The health check reports it, so you can tell
 // which version is actually deployed rather than assuming the last paste went live.
-var VERSION = 'v6-delivery-wording';
+var VERSION = 'v7-spikes-bounces';
 
 // The Blocked Submissions sheet, already created:
 // https://docs.google.com/spreadsheets/d/1LIcJM6u41o_z3OwH2hEZQ6-9naCtcoImtXokjUoOu0g/edit
@@ -86,6 +102,21 @@ var DEFAULT_ALERT_TO = 'support@getroundhouse.com';
  * what other invocations have already sent.
  */
 var MAX_IMMEDIATE_PER_SITE_PER_DAY = 3;
+
+/** Rows of one rule on one site in one day that trigger a spike alert. */
+var SPIKE_THRESHOLD = 10;
+/** A client sheet failing is serious sooner — every lead is missing from their sheet. */
+var SHEET_FAILED_SPIKE_THRESHOLD = 3;
+/**
+ * Only rows about leads that reached — or failed to reach — a client. A flood of bot
+ * blocks (the 2026-09-08 sqlmap run) is the filter working and must stay silent; a
+ * misconfiguration shows up here instead (a domain missing from allowedOrigins is
+ * delivered-flagged, a broken client sheet is delivered-sheet-failed).
+ */
+var SPIKE_LAYERS = {
+  'delivered-flagged': true, 'delivered-sheet-failed': true,
+  'delivered-email-failed': true, 'delivery-failed': true
+};
 
 /** Hour (local) the digest is sent. */
 var DIGEST_HOUR = 7;
@@ -269,6 +300,11 @@ function doPost(e) {
     var ss = SpreadsheetApp.openById(SHEET_ID);
     var sheet = getTab_(ss, true);
 
+    // A Resend webhook event rather than a row from a contact route.
+    if (p && typeof p.type === 'string' && p.type.indexOf('email.') === 0) {
+      return jsonOut_(recordResendEvent_(sheet, p));
+    }
+
     // The route sends an ISO timestamp; re-render it in local time so the sheet is
     // readable, and fall back to now if it is missing or unparseable.
     var when;
@@ -309,6 +345,11 @@ function doPost(e) {
         console.error('immediate alert failed: ' + mailErr);
       }
     }
+    try {
+      maybeSendSpike_(sheet, p);
+    } catch (spikeErr) {
+      console.error('spike alert failed: ' + spikeErr);
+    }
 
     return ContentService
       .createTextOutput(JSON.stringify({ ok: true, version: VERSION, urgent: urgent, alerted: alerted }))
@@ -318,6 +359,133 @@ function doPost(e) {
       .createTextOutput(JSON.stringify({ ok: false, version: VERSION, error: String(err) }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+function jsonOut_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ── Resend webhook events ────────────────────────────────────────
+
+var RESEND_LAYERS = { 'email.bounced': 'email-bounced', 'email.complained': 'email-complained' };
+
+/**
+ * Records a bounced or spam-reported lead email. Other event types (sent, delivered,
+ * opened…) are acknowledged and ignored, so subscribing to extra events is harmless.
+ * Resend retries a webhook it thinks failed, so an event already in the log is skipped.
+ */
+function recordResendEvent_(sheet, p) {
+  var layer = RESEND_LAYERS[p.type];
+  if (!layer) return { ok: true, version: VERSION, ignored: p.type };
+  var d = p.data || {};
+  var emailId = String(d.email_id || '');
+  var marker = '[' + emailId + ']';
+
+  if (emailId) {
+    var rows = recentRows_(sheet);
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i][COL.LAYER]) === layer && String(rows[i][COL.MATCHED]).indexOf(marker) !== -1) {
+        return { ok: true, version: VERSION, duplicate: true };
+      }
+    }
+  }
+
+  var to = [].concat(d.to || []).join(', ');
+  var from = String(d.from || '');
+  // "Power Construction Leads <leads@…>" → "Power Construction Leads"
+  var site = from.replace(/\s*<[^>]*>\s*$/, '').replace(/"/g, '') || '(resend)';
+  var reason = d.bounce ? [d.bounce.type, d.bounce.subType, d.bounce.message].filter(Boolean).join(' — ') : '';
+  var p2 = {
+    site: site,
+    layer: layer,
+    matched: 'to ' + to + (reason ? ' | ' + reason : '') + ' ' + marker,
+    message: String(d.subject || ''),
+    source: 'Resend webhook'
+  };
+  var stamp = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd HH:mm:ss');
+  sheet.appendRow([stamp, p2.site, p2.layer, p2.matched, '', '', '', p2.message, p2.source,
+                   '', '', '', '', '', 'yes', '']);
+
+  var alerted = false;
+  try {
+    if (MailApp.getRemainingDailyQuota() >= 5) {
+      MailApp.sendEmail({
+        to: alertRecipient_(),
+        subject: (layer === 'email-bounced' ? 'Lead email BOUNCED' : 'Lead email marked as spam') + ' — ' + site,
+        htmlBody:
+          '<div style="font-family:-apple-system,Segoe UI,sans-serif;font-size:14px;color:#0f172a;">' +
+          '<h2 style="margin:0 0 4px;">' + (layer === 'email-bounced' ? 'A lead email bounced' : 'A lead email was reported as spam') + '</h2>' +
+          '<p style="margin:0 0 16px;color:#64748b;">' +
+            (layer === 'email-bounced'
+              ? 'Resend accepted this email but the receiving server rejected it, so the client never got it. ' +
+                'Find the lead in the client\'s sheet (or the Vercel logs), forward it, then fix the recipient address or the client\'s mail setup.'
+              : 'The recipient marked a lead email as spam. Future lead emails to them may be filtered — ask the client to mark our sender as safe.') +
+          '</p>' +
+          detailTable_({ 'Subject': d.subject, 'To': to, 'From': from, 'Reason': reason, 'Resend email id': emailId, 'When': p.created_at }) +
+          '</div>'
+      });
+      alerted = true;
+    }
+  } catch (mailErr) {
+    console.error('bounce alert failed: ' + mailErr);
+  }
+  return { ok: true, version: VERSION, recorded: layer, alerted: alerted };
+}
+
+// ── Spike alerts ─────────────────────────────────────────────────
+
+/**
+ * Emails once when one rule on one site reaches its threshold today. Counts the row
+ * just appended, and fires only on exactly the threshold, so a flood sends one email.
+ */
+function maybeSendSpike_(sheet, p) {
+  var layer = String(p.layer || '');
+  var site = String(p.site || '(unknown)');
+  if (!SPIKE_LAYERS[layer]) return false;
+  var threshold = layer === 'delivered-sheet-failed' ? SHEET_FAILED_SPIKE_THRESHOLD : SPIKE_THRESHOLD;
+
+  var today = dayKey_(new Date());
+  var rows = recentRows_(sheet);
+  var count = 0;
+  var matchedCounts = {};
+  for (var i = 0; i < rows.length; i++) {
+    var d = rowDate_(rows[i][COL.TIMESTAMP]);
+    if (!d || dayKey_(d) !== today) continue;
+    if (String(rows[i][COL.SITE]) !== site || String(rows[i][COL.LAYER]) !== layer) continue;
+    count++;
+    // Group by the matched text without per-row details (ms, IPs) so the top reasons read cleanly.
+    var key = String(rows[i][COL.MATCHED]).replace(/\d+/g, '#').slice(0, 140);
+    matchedCounts[key] = (matchedCounts[key] || 0) + 1;
+  }
+  if (count !== threshold) return false;
+  if (MailApp.getRemainingDailyQuota() < 5) return false;
+
+  var top = Object.keys(matchedCounts)
+    .sort(function (a, b) { return matchedCounts[b] - matchedCounts[a]; })
+    .slice(0, 5)
+    .map(function (k) { return '<li>' + esc_(k) + ' <strong>×' + matchedCounts[k] + '</strong></li>'; })
+    .join('');
+
+  var advice =
+    layer === 'delivered-sheet-failed'
+      ? 'Leads are reaching the client by email but NOT their sheet. Check the client\'s Apps Script deployment (access must be "Anyone") and its URL in GOOGLE_SHEET_WEBHOOK.'
+      : layer === 'delivered-flagged'
+      ? 'These leads WERE delivered. If the reasons say "origin not in allowedOrigins", the site is being served from a domain missing from its route config. If a keyword keeps matching real customers, remove it from the package.'
+      : 'Lead email delivery is failing repeatedly on this site. Check Resend (quota, API key, sending domain) and the client\'s sheet script today.';
+
+  MailApp.sendEmail({
+    to: alertRecipient_(),
+    subject: 'Spike: ' + layer + ' ×' + count + ' today — ' + site,
+    htmlBody:
+      '<div style="font-family:-apple-system,Segoe UI,sans-serif;font-size:14px;color:#0f172a;">' +
+      '<h2 style="margin:0 0 4px;">' + esc_(site) + ': ' + count + ' "' + esc_(layer) + '" rows today</h2>' +
+      '<p style="margin:0 0 12px;color:#64748b;">' + advice + '</p>' +
+      '<p style="margin:0 0 4px;font-weight:bold;">Most common reasons</p><ul style="margin:0 0 16px;">' + top + '</ul>' +
+      '<p style="margin:0;color:#64748b;">This alert is sent once per site and rule per day.</p>' +
+      '<p style="margin:16px 0 0;"><a href="' + sheetUrl_() + '">Open the Blocked Submissions log</a></p>' +
+      '</div>'
+  });
+  return true;
 }
 
 // ── Immediate alerts ─────────────────────────────────────────────

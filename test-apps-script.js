@@ -158,5 +158,51 @@ reset();
 post({ site: "x", layer: "origin", urgent: "", timestamp: minsAgo(1) });
 ok("the header gained the Urgent column", headerRow()[14] === "Urgent", JSON.stringify(headerRow()));
 
+console.log("\n── Spike alerts (v7) ───────────────────────────────────\n");
+reset();
+for (let i = 0; i < 9; i++) {
+  post({ site: "power-construction-website", layer: "delivered-flagged", urgent: "", delivered: "Yes",
+         matched: `origin not in allowedOrigins (origin="https://newdomain.com") ${i}ms`, timestamp: new Date().toISOString(), ...lead });
+}
+ok("9 flagged leads send nothing yet", sent.length === 0, `sent ${sent.length}`);
+post({ site: "power-construction-website", layer: "delivered-flagged", urgent: "", delivered: "Yes",
+       matched: "origin not in allowedOrigins (origin=\"https://newdomain.com\") 9ms", timestamp: new Date().toISOString(), ...lead });
+ok("the 10th sends exactly one spike alert", sent.length === 1 && /^Spike: delivered-flagged ×10/.test(sent[0].subject), sent[0]?.subject);
+ok("the alert names the reason", sent[0]?.htmlBody.includes("origin not in allowedOrigins"));
+for (let i = 0; i < 15; i++) post({ site: "power-construction-website", layer: "delivered-flagged", urgent: "", delivered: "Yes", timestamp: new Date().toISOString(), ...lead });
+ok("further rows the same day send nothing more", sent.length === 1, `sent ${sent.length}`);
+
+reset();
+for (let i = 0; i < 3; i++) post({ site: "cmm-plumbing-website", layer: "delivered-sheet-failed", urgent: "", delivered: "Yes", timestamp: new Date().toISOString(), ...lead });
+ok("3 sheet failures on one site send a spike alert", sent.length === 1 && /delivered-sheet-failed/.test(sent[0].subject), sent[0]?.subject);
+
+reset();
+for (let i = 0; i < 40; i++) post({ site: "indiana-flow-website", layer: "automation", urgent: "", timestamp: new Date().toISOString() });
+ok("a bot flood never sends a spike alert", sent.length === 0, `sent ${sent.length}`);
+
+console.log("\n── Resend bounce webhooks (v7) ─────────────────────────\n");
+reset();
+const bounce = {
+  type: "email.bounced",
+  created_at: new Date().toISOString(),
+  data: {
+    email_id: "4ef9a417-02e9-4d39-ad75-9611e0fcc33c",
+    from: "Power Construction Leads <leads@resend.getroundhouse.com>",
+    to: ["ofice@powerconstructioninc.com"],
+    subject: "New Lead — Sarah Mitchell | Power Construction",
+    bounce: { type: "Permanent", subType: "General", message: "The recipient's email address does not exist" },
+  },
+};
+const bounceRes = JSON.parse(post(bounce));
+ok("a bounce is recorded as an urgent row", dataRows.length === 1 && dataRows[0][2] === "email-bounced" && dataRows[0][14] === "yes", JSON.stringify(dataRows[0]));
+ok("the row names the recipient and reason", String(dataRows[0][3]).includes("ofice@powerconstructioninc.com") && String(dataRows[0][3]).includes("does not exist"));
+ok("the row keeps the lead's subject", String(dataRows[0][7]).includes("Sarah Mitchell"));
+ok("an immediate bounce email goes out", sent.length === 1 && /BOUNCED/.test(sent[0].subject), sent[0]?.subject);
+ok("the webhook gets {ok:true}", bounceRes.ok === true);
+post(bounce);
+ok("Resend retrying the same event adds no row and no email", dataRows.length === 1 && sent.length === 1, `rows ${dataRows.length}, sent ${sent.length}`);
+post({ type: "email.delivered", data: { email_id: "x" } });
+ok("other Resend events are ignored", dataRows.length === 1 && sent.length === 1);
+
 console.log(`\n${fails === 0 ? "PASS" : "FAIL"} — Apps Script: ${fails} failure${fails === 1 ? "" : "s"}\n`);
 process.exit(fails === 0 ? 0 : 1);
