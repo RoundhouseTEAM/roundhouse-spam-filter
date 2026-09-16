@@ -108,7 +108,15 @@ export interface LeadFormProps {
   submitLabel?: string;
   sendingLabel?: string;
   classNames?: LeadFormClassNames;
-  /** What replaces the form once the submission is accepted. */
+  /**
+   * Send a DELIVERED lead to this page as `<thankYouPath>?lead=<leadId>`, where
+   * <LeadConversion> (from "@roundhouse/spam-filter/conversion") fires the conversions
+   * once. Blocked spam is never redirected — it gets `success` in place — so the
+   * thank-you page only ever sees real leads. When set, `onDelivered` is not called
+   * (conversions belong on the thank-you page, not racing the navigation).
+   */
+  thankYouPath?: string;
+  /** What replaces the form once the submission is accepted (and not redirected). */
   success: ReactNode;
   /**
    * Called only for a lead the server actually delivered — fire Google Ads / GA
@@ -157,6 +165,7 @@ export default function LeadForm({
   submitLabel = "Send",
   sendingLabel = "Sending…",
   classNames: cn = {},
+  thankYouPath,
   success,
   onDelivered,
 }: LeadFormProps) {
@@ -265,6 +274,12 @@ export default function LeadForm({
       const data = await res.json().catch(() => ({}) as Record<string, unknown>);
 
       if (res.ok && data.ok) {
+        if (thankYouPath && data.delivered && typeof data.leadId === "string") {
+          const sep = thankYouPath.includes("?") ? "&" : "?";
+          // Stay in "sending" while the browser navigates, so the button can't be pressed again.
+          window.location.assign(`${thankYouPath}${sep}lead=${encodeURIComponent(data.leadId)}`);
+          return;
+        }
         if (data.delivered && typeof data.leadId === "string") {
           try {
             onDelivered?.(data.leadId);

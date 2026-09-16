@@ -14,6 +14,13 @@ the gaps between them.
 | `@roundhouse/spam-filter/lead` | `handleLead(req, config)` — the whole API route. |
 | `@roundhouse/spam-filter/validate` | The field rules and messages, shared by both. |
 | `@roundhouse/spam-filter/env` | `checkLeadEnv()` — fails a production build with no delivery settings. |
+| `@roundhouse/spam-filter/conversion` | `<LeadConversion onLead>` — on the thank-you page: fires conversions once per delivered lead (`?lead=` id → Ads `transaction_id`), never on a bare visit. |
+
+**Thank-you page (standard, 2026-09-16):** pass `thankYouPath="/thank-you"` to `<LeadForm>`.
+Only a delivered lead is sent there, as `/thank-you?lead=<id>`; blocked spam keeps the
+in-place `success`. The thank-you page renders `<LeadConversion onLead={…}>` with the site's
+GA events and Google Ads conversion (`transaction_id: leadId`), leads with a prominent call
+button, is `noindex`, and is not in the sitemap. Never fire a conversion on a bare page load.
 
 **Rules (Philip, 2026-09-16):** name, phone, email and message are all required. Phone
 must be exactly 10 US digits (a leading 1 is dropped). Message max 600 characters; links

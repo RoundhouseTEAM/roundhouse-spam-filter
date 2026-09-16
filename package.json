@@ -1,6 +1,6 @@
 {
   "name": "@roundhouse/spam-filter",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Shared contact-form spam filter, lead handler and lead form for Roundhouse client sites",
   "type": "module",
   "main": "index.js",
@@ -23,6 +23,7 @@
       "default": "./env-check.js"
     },
     "./form": "./form.tsx",
+    "./conversion": "./conversion.tsx",
     "./package.json": "./package.json"
   },
   "files": [
@@ -35,7 +36,8 @@
     "lead.d.ts",
     "env-check.js",
     "env-check.d.ts",
-    "form.tsx"
+    "form.tsx",
+    "conversion.tsx"
   ],
   "scripts": {
     "test": "node test.js && node test-log-blocked.js && node test-apps-script.js && node test-validate.js && node test-lead.js"
