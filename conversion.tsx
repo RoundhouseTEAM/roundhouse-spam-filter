@@ -60,10 +60,11 @@ export default function LeadConversion({ onLead, param = "lead", waitForGtag = t
       // Storage blocked (private window): fire anyway — transaction_id still dedupes in Ads.
     }
 
-    let cancelled = false;
+    // Deliberately no cleanup/cancel: React's dev double-effect would cancel this run, and
+    // the second run can't fire because the id is already stripped. Firing after an
+    // unmount is harmless.
     const started = Date.now();
     const fire = () => {
-      if (cancelled) return;
       if (waitForGtag && !gtagReady() && Date.now() - started < GTAG_WAIT_MS) {
         window.setTimeout(fire, GTAG_POLL_MS);
         return;
@@ -75,9 +76,6 @@ export default function LeadConversion({ onLead, param = "lead", waitForGtag = t
       }
     };
     fire();
-    return () => {
-      cancelled = true;
-    };
     // Runs once per page load by design.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
