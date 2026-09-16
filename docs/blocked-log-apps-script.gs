@@ -56,7 +56,7 @@
  *    (First time only: Deploy -> New deployment -> Web app, Execute as Me,
  *    Who has access Anyone, then set the /exec URL as BLOCKED_LOG_WEBHOOK.)
  * 6. Check: opening the /exec URL in a browser returns
- *    {"ok":true,"status":"listening",...} with version v4.
+ *    {"ok":true,"status":"listening",...} with version v5-delivered-column.
  *    sendDailyDigest() can be run by hand any time to see the digest immediately.
  *
  * ── Redeploy after editing ──────────────────────────────────────
@@ -67,7 +67,7 @@
 
 // Bump whenever this script changes. The health check reports it, so you can tell
 // which version is actually deployed rather than assuming the last paste went live.
-var VERSION = 'v4-digest-alerting';
+var VERSION = 'v5-delivered-column';
 
 // The Blocked Submissions sheet, already created:
 // https://docs.google.com/spreadsheets/d/1LIcJM6u41o_z3OwH2hEZQ6-9naCtcoImtXokjUoOu0g/edit
