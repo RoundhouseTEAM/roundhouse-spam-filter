@@ -33,6 +33,7 @@ const nextConfig = { transpilePackages: ["@roundhouse/spam-filter"], /* … */ }
 import { handleLead, type LeadConfig } from "@roundhouse/spam-filter/lead";
 const LEAD_CONFIG: LeadConfig = { site, businessName, phone, allowedOrigins, recipients,
   leadsSheetUrl, brandColor, extraFields, successPath };
+export const maxDuration = 60; // Apps Script can take 10s+ to answer
 export function POST(req: Request) { return handleLead(req, LEAD_CONFIG); }
 
 // app/components/LeadForm.tsx — a thin wrapper: labels, classNames, success notice,

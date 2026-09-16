@@ -47,8 +47,12 @@ import {
 const MIN_FILL_MS = 1500;
 const AUTOFILL_MIN_OPEN_MS = 3000;
 const DUPLICATE_WINDOW_MS = 2 * 60 * 1000;
-const SHEET_TIMEOUT_MS = 6000;
-const EMAIL_TIMEOUT_MS = 8000;
+// Generous on purpose. Apps Script routinely takes 5–15s (cold start, script lock), and
+// the 6s limit shipped in 2.0.0 aborted a real Power Construction sheet write on
+// 2026-09-16. The pre-package routes had no timeout at all. These only stop a truly hung
+// request from holding the visitor forever; routes set maxDuration = 60 to allow them.
+const SHEET_TIMEOUT_MS = 25000;
+const EMAIL_TIMEOUT_MS = 15000;
 
 /**
  * Double-click guard. In-memory on purpose: a repeat click lands a second or two later

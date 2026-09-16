@@ -102,7 +102,8 @@ function isUrgent(row) {
 /** Sheets tops out at 50k chars per cell; stay well clear and keep rows readable. */
 const MAX_FIELD = 4000;
 
-const WEBHOOK_TIMEOUT_MS = 3000;
+// Apps Script cold starts regularly exceed 3s — the old limit aborted rows on 2026-09-16.
+const WEBHOOK_TIMEOUT_MS = 12000;
 
 function clip(value, limit = MAX_FIELD) {
   const s = String(value ?? "").trim();
