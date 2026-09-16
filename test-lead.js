@@ -305,6 +305,28 @@ await test("a hidden per-page value (declared as an extra field) reaches sheet a
   assert.ok(calls.email[0].html.includes("Water heater replacement"));
 });
 
+await test("consent checkbox: unchecked → visible 400; checked → 'Yes' in sheet and email", async () => {
+  const cfg = {
+    ...CONFIG,
+    extraFields: [...CONFIG.extraFields, { name: "consent", label: "Consent to contact", checkbox: true, required: true }],
+  };
+  const bad = await handleLead(jsonReq(goodLead()), cfg);
+  assert.equal(bad.status, 400);
+  assert.ok((await bad.json()).errors.consent);
+  assert.equal(calls.email.length, 0);
+
+  reset();
+  const ok = await handleLead(jsonReq(goodLead({ consent: "yes" })), cfg);
+  assert.equal((await ok.json()).delivered, true);
+  assert.equal(calls.sheet[0].consent, "Yes");
+  assert.ok(calls.email[0].html.includes("Consent to contact"));
+});
+
+await test("subjectPrefix is prepended to the email subject", async () => {
+  await handleLead(jsonReq(goodLead()), { ...CONFIG, subjectPrefix: "[TEST] " });
+  assert.ok(calls.email[0].subject.startsWith("[TEST] New Lead — "));
+});
+
 // ── Native (no-JavaScript) posts ─────────────────────────────────
 await test("native post: delivered lead redirects to the success page with the leadId", async () => {
   const { _ts, ...fields } = goodLead();

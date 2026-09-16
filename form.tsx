@@ -65,6 +65,11 @@ export interface LeadFormClassNames {
   error?: string;
   /** The "Did you mean …?" email suggestion. */
   hint?: string;
+  /** Wrapper around a checkbox field (e.g. consent). Falls back to `group`. */
+  checkboxGroup?: string;
+  /** The <label> wrapping a checkbox and its text. */
+  checkboxLabel?: string;
+  checkbox?: string;
   /** The "0 / 600" message counter. */
   counter?: string;
   /** The whole-form error (offline / delivery failed). */
@@ -171,7 +176,15 @@ export default function LeadForm({
   }, []);
 
   const layout =
-    rows ?? [["name"], ["phone"], ["email"], ...extraFields.map((f) => [f.name]), ["message"]];
+    rows ?? [
+      ["name"],
+      ["phone"],
+      ["email"],
+      ...extraFields.filter((f) => !f.checkbox).map((f) => [f.name]),
+      ["message"],
+      // Checkboxes (consent) read naturally last, just above the button.
+      ...extraFields.filter((f) => f.checkbox).map((f) => [f.name]),
+    ];
   const extraByName = Object.fromEntries(extraFields.map((f) => [f.name, f]));
 
   const labelFor = (name: string) =>
@@ -279,6 +292,32 @@ export default function LeadForm({
     const errorId = `${id}-error`;
     const required = isRequired(name);
     const fieldClass = [cn.field, error ? cn.fieldInvalid : ""].filter(Boolean).join(" ") || undefined;
+
+    if (extra?.checkbox) {
+      return (
+        <div key={name} className={cn.checkboxGroup ?? cn.group}>
+          <label htmlFor={id} className={cn.checkboxLabel}>
+            <input
+              id={id}
+              name={name}
+              type="checkbox"
+              value="yes"
+              required={required}
+              className={cn.checkbox}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? errorId : undefined}
+              onChange={(ev) => onFieldInput(name, ev.currentTarget.checked ? "yes" : "")}
+            />{" "}
+            <span>{labelFor(name)}</span>
+          </label>
+          {error ? (
+            <p id={errorId} className={cn.error} style={cn.error ? undefined : ERROR_FALLBACK_STYLE} role="alert">
+              {error}
+            </p>
+          ) : null}
+        </div>
+      );
+    }
     const common = {
       id,
       name,

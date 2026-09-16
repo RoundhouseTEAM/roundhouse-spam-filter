@@ -11,6 +11,10 @@ export interface ExtraField {
   /** Rendered as a textarea instead of a single-line input. */
   multiline?: boolean;
   autoComplete?: string;
+  /** Rendered as a checkbox; `label` is the text beside it. Arrives as "Yes" or "". */
+  checkbox?: boolean;
+  /** Overrides the default "Please enter your …" / consent message when required and missing. */
+  requiredMessage?: string;
 }
 
 export declare const MESSAGE_MAX: number;
@@ -22,6 +26,7 @@ export declare const MESSAGES: Record<string, string>;
 
 export declare function offlineMessage(phone: string): string;
 export declare function deliveryFailedMessage(phone: string): string;
+export declare function isChecked(value: unknown): boolean;
 export declare function normalizePhone(raw: unknown): string;
 export declare function validateField(name: string, value: unknown, extraFields?: ExtraField[]): string;
 export declare function validateLead(values?: Record<string, unknown>, extraFields?: ExtraField[]): Record<string, string>;

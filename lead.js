@@ -40,6 +40,7 @@ import { checkOrigin, checkContent, checkSpam, logBlocked } from "./index.js";
 import {
   validateLead,
   normalizePhone,
+  isChecked,
   deliveryFailedMessage,
   STANDARD_FIELDS,
 } from "./validate.js";
@@ -188,7 +189,9 @@ export async function handleLead(req, config) {
       // page the browser says it came from.
       source: str(body.source) || (native ? req.headers.get("referer") ?? "" : ""),
     };
-    for (const f of extraFields) lead[f.name] = str(body[f.name]);
+    for (const f of extraFields) {
+      lead[f.name] = f.checkbox ? (isChecked(body[f.name]) ? "Yes" : "") : str(body[f.name]);
+    }
     lead.phoneDigits = normalizePhone(lead.phone);
 
     const logFields = {
@@ -329,7 +332,7 @@ export async function handleLead(req, config) {
               from: config.from ?? `${businessName} Leads <leads@resend.getroundhouse.com>`,
               to: recipients,
               reply_to: lead.email,
-              subject: `New Lead — ${lead.name} | ${businessName}`,
+              subject: `${config.subjectPrefix ?? ""}New Lead — ${lead.name} | ${businessName}`,
               html: emailHtml(lead, config),
             }),
           },

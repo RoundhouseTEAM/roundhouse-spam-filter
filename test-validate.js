@@ -117,6 +117,18 @@ test("extra fields: optional, required, max length, options", () => {
   });
 });
 
+test("checkbox (consent): required means checked; custom message allowed", () => {
+  const extras = [{ name: "consent", label: "I agree", checkbox: true, required: true }];
+  assert.deepEqual(validateLead(good, extras), { consent: MESSAGES.consentMissing });
+  assert.deepEqual(validateLead({ ...good, consent: "yes" }, extras), {});
+  assert.deepEqual(validateLead({ ...good, consent: "on" }, extras), {}, "native post sends 'on'");
+  assert.deepEqual(
+    validateLead(good, [{ ...extras[0], requiredMessage: "Please agree first." }]),
+    { consent: "Please agree first." }
+  );
+  assert.deepEqual(validateLead(good, [{ ...extras[0], required: false }]), {});
+});
+
 test("every error is reported at once, keyed by field", () => {
   assert.deepEqual(Object.keys(validateLead({})).sort(), ["email", "message", "name", "phone"]);
 });

@@ -36,7 +36,13 @@ export const MESSAGES = {
   emailInvalid: "Please enter a valid email address, like name@example.com.",
   messageMissing: "Please tell us a little about what you need.",
   messageTooLong: `Please keep your message under ${MESSAGE_MAX} characters.`,
+  consentMissing: "Please check the box to agree to be contacted.",
 };
+
+/** How a checked checkbox arrives: "yes" from the shared form, "on" from a native post. */
+export function isChecked(value) {
+  return /^(yes|on|true|1)$/i.test(String(value ?? "").trim());
+}
 
 /** Shown when the request never reached the server (visitor offline, network drop). */
 export function offlineMessage(phone) {
@@ -102,8 +108,12 @@ function validateMessage(value) {
 function validateExtra(field, value) {
   const v = String(value ?? "").trim();
   const label = field.label || field.name;
+  if (field.checkbox) {
+    // e.g. an express-consent checkbox (Proverbs, carried over from Duda).
+    return field.required && !isChecked(v) ? field.requiredMessage || MESSAGES.consentMissing : "";
+  }
   if (!v) {
-    return field.required ? `Please enter your ${label.toLowerCase()}.` : "";
+    return field.required ? field.requiredMessage || `Please enter your ${label.toLowerCase()}.` : "";
   }
   const max = field.maxLength ?? EXTRA_FIELD_MAX;
   if (v.length > max) return `Please keep your ${label.toLowerCase()} under ${max} characters.`;

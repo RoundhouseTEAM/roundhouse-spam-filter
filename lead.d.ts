@@ -15,6 +15,8 @@ export interface LeadConfig {
   from?: string;
   /** The client's leads sheet — linked as a button in every lead email. */
   leadsSheetUrl?: string;
+  /** Prepended to the email subject, e.g. "[TEST] " for a site that hasn't launched. */
+  subjectPrefix?: string;
   /** Heading and button colour in the lead email. */
   brandColor?: string;
   /** Fields beyond name / phone / email / message, e.g. address. */
