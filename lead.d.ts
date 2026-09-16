@@ -49,6 +49,8 @@ export interface LeadConfig {
 
 /** The entire server side of a Roundhouse contact form. */
 export declare const MAX_BODY_BYTES: number;
+export declare const MONITOR_EMAIL_SINK: string;
+export declare function isMonitorRequest(req: Request): boolean;
 export declare function readOpenTime(body: Record<string, unknown>): { jsRan: boolean; openMs: number | null };
 export declare function automationSignals(input: {
   body: Record<string, unknown>;

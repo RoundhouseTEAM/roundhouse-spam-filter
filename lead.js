@@ -44,6 +44,16 @@
  * Withheld submissions return exactly the same response as a real lead EXCEPT
  * `delivered`, which is what conversions fire on.
  *
+ * MONITOR MODE (2.7.0)
+ * ────────────────────
+ * The daily monitor submits a real lead through each live form with the header
+ * `x-roundhouse-monitor: <LEAD_MONITOR_SECRET>`. It runs every check above for real —
+ * the live domain against allowedOrigins, validation, classification, the env vars,
+ * the Resend key, quota and sending domain — but it never reaches the client: the
+ * email goes to Resend's test inbox (delivered@resend.dev), the client's sheet is not
+ * written, nothing is logged centrally, and `delivered` is false so no conversion can
+ * fire. The response carries a `monitor` block saying exactly what happened.
+ *
  * Works with both a fetch() JSON post (the shared form) and a native form post (a
  * visitor whose JavaScript never ran): JSON in → JSON out, form post in → redirect or a
  * plain HTML page out.
@@ -77,6 +87,19 @@ const DUPLICATE_WINDOW_MS = 2 * 60 * 1000;
 // plus ~12s of logging — well inside the routes' maxDuration = 60.
 const SHEET_TIMEOUT_MS = 25000;
 const EMAIL_TIMEOUT_MS = 15000;
+
+/** Resend's sink address: a real send through the real key and domain, delivered nowhere. */
+export const MONITOR_EMAIL_SINK = "delivered@resend.dev";
+
+/** Whether this request is the daily monitor, proven by the shared secret. */
+export function isMonitorRequest(req) {
+  const secret = process.env.LEAD_MONITOR_SECRET ?? "";
+  const given = req.headers.get("x-roundhouse-monitor") ?? "";
+  if (secret.length < 16 || given.length !== secret.length) return false;
+  let diff = 0;
+  for (let i = 0; i < secret.length; i++) diff |= secret.charCodeAt(i) ^ given.charCodeAt(i);
+  return diff === 0;
+}
 
 /** Checks whose failure means the request did not come from a person on our form. */
 const WITHHELD_CONTENT_RULES = new Set(["email-domain", "phone"]);
@@ -392,6 +415,7 @@ export async function handleLead(req, config) {
 
   let native = false;
   let lead = {};
+  const monitor = isMonitorRequest(req);
 
   try {
     const parsed = await readBody(req);
@@ -429,6 +453,7 @@ export async function handleLead(req, config) {
     };
 
     const withhold = async (layer, matched = "") => {
+      if (monitor) return json({ ok: true, monitor: { withheld: layer, matched } });
       await logBlocked({ ...logFields, layer, matched });
       return native ? redirect(successPath) : json({ ok: true });
     };
@@ -454,6 +479,7 @@ export async function handleLead(req, config) {
     // 3. Validation — visible, per field.
     const errors = validateLead(lead, extraFields);
     if (Object.keys(errors).length) {
+      if (monitor) return json({ ok: false, errors, monitor: { validation: errors } }, 400);
       await logBlocked({
         ...logFields,
         layer: "validation",
@@ -502,7 +528,7 @@ export async function handleLead(req, config) {
     // that would reach the client count. An office, a property manager or a client
     // testing their own site can pass `limit`; that is flagged, not withheld. Only a
     // flood is withheld. The limiter allows the lead whenever it can't decide.
-    if (config.rateLimit !== false) {
+    if (config.rateLimit !== false && !monitor) {
       const ip = clientIp(req);
       const limit = config.rateLimit?.limit ?? DEFAULT_LIMIT;
       const floodLimit = Math.max(config.rateLimit?.floodLimit ?? DEFAULT_FLOOD_LIMIT, limit);
@@ -519,7 +545,24 @@ export async function handleLead(req, config) {
     const leadId = newLeadId();
     const record = { leadId, ...lead };
     delete record.phoneDigits;
-    console.log(`[lead] RECEIVED ${site}`, JSON.stringify({ ...record, flags }));
+    console.log(`[lead] ${monitor ? "MONITOR" : "RECEIVED"} ${site}`, JSON.stringify({ ...record, flags }));
+
+    if (monitor) {
+      const sheetConfigured = Boolean(config.sheetWebhook ?? process.env.GOOGLE_SHEET_WEBHOOK);
+      const email = await deliverByEmail(site, { ...config, recipients: [MONITOR_EMAIL_SINK], subjectPrefix: "[MONITOR] " }, lead);
+      return json({
+        ok: true,
+        delivered: false,
+        monitor: {
+          flags,
+          email: email.ok ? "sent" : email.detail,
+          emailId: email.id ?? "",
+          sheetConfigured,
+          blockedLogConfigured: Boolean(process.env.BLOCKED_LOG_WEBHOOK),
+          clientRecipients: (config.recipients ?? []).length,
+        },
+      });
+    }
 
     // 8. Deliver — in parallel, so a slow Apps Script can't eat the email's time.
     const [sheet, email] = await Promise.all([

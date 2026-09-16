@@ -1,5 +1,5 @@
 {
-  "_comment": "Every live Roundhouse site on the shared lead package. Add a site's form pages (every landing page too) and its thank-you page when it launches; remove it if it leaves. The monitor never submits a lead — see check.mjs.",
+  "_comment": "Every live Roundhouse site on the shared lead package. Add a site's form pages (every landing page too) and its thank-you page when it launches; remove it if it leaves. \"e2e\": true sends one daily test lead through the first form page to Resend's test inbox — only for sites on package 2.7.0+ with LEAD_MONITOR_SECRET set in Vercel, otherwise it would be a REAL lead. See check.mjs.",
   "sites": [
     {
       "name": "Power Construction",
@@ -8,7 +8,8 @@
         "https://www.powerconstructioninc.com/lp",
         "https://www.powerconstructioninc.com/lp/mullica-hill"
       ],
-      "thankYou": "https://www.powerconstructioninc.com/thank-you"
+      "thankYou": "https://www.powerconstructioninc.com/thank-you",
+      "e2e": true
     },
     {
       "name": "CM&M Plumbing",
@@ -17,22 +18,32 @@
         "https://www.cmmplumbing.com/lp/water-heater",
         "https://www.cmmplumbing.com/lp/commercial-jetting"
       ],
-      "thankYou": "https://www.cmmplumbing.com/thank-you"
+      "thankYou": "https://www.cmmplumbing.com/thank-you",
+      "e2e": true
     },
     {
       "name": "Indiana Flow",
-      "formPages": ["https://www.indianaflow.com/contact/"],
-      "thankYou": "https://www.indianaflow.com/contact/success/"
+      "formPages": [
+        "https://www.indianaflow.com/contact/"
+      ],
+      "thankYou": "https://www.indianaflow.com/contact/success/",
+      "e2e": true
     },
     {
       "name": "Adair Plumbing",
-      "formPages": ["https://www.adairplumbing.com/contact/"],
-      "thankYou": "https://www.adairplumbing.com/thank-you/"
+      "formPages": [
+        "https://www.adairplumbing.com/contact/"
+      ],
+      "thankYou": "https://www.adairplumbing.com/thank-you/",
+      "e2e": true
     },
     {
       "name": "Alpha Omega Plumbing",
-      "formPages": ["https://aoplumbinghi.com/contact/"],
-      "thankYou": "https://aoplumbinghi.com/contact/success/"
+      "formPages": [
+        "https://aoplumbinghi.com/contact/"
+      ],
+      "thankYou": "https://aoplumbinghi.com/contact/success/",
+      "e2e": true
     },
     {
       "name": "Alpha Omega Drains (landing pages)",
@@ -41,12 +52,16 @@
         "https://drains.alphaomegahi.com/plumber",
         "https://drains.alphaomegahi.com/pipe-lining"
       ],
-      "thankYou": "https://drains.alphaomegahi.com/thank-you"
+      "thankYou": "https://drains.alphaomegahi.com/thank-you",
+      "e2e": true
     },
     {
       "name": "Newman's Plumbing",
-      "formPages": ["https://www.newmansplumbingservice.com/contact-us"],
-      "thankYou": "https://www.newmansplumbingservice.com/thank-you"
+      "formPages": [
+        "https://www.newmansplumbingservice.com/contact-us"
+      ],
+      "thankYou": "https://www.newmansplumbingservice.com/thank-you",
+      "e2e": true
     },
     {
       "name": "IrriGators",
@@ -55,27 +70,40 @@
         "https://www.irrigatorsfl.com/lp/well-pump-service",
         "https://www.irrigatorsfl.com/lp/water-softener-installation"
       ],
-      "thankYou": "https://www.irrigatorsfl.com/thank-you"
+      "thankYou": "https://www.irrigatorsfl.com/thank-you",
+      "e2e": true
     },
     {
       "name": "IrriGators Brandon (landing page)",
-      "formPages": ["https://brandon.irrigatorsfl.com/"],
-      "thankYou": "https://brandon.irrigatorsfl.com/thank-you"
+      "formPages": [
+        "https://brandon.irrigatorsfl.com/"
+      ],
+      "thankYou": "https://brandon.irrigatorsfl.com/thank-you",
+      "e2e": true
     },
     {
       "name": "7 Kings Landscaping",
-      "formPages": ["https://www.7kingslandscaping.com/contact"],
-      "thankYou": "https://www.7kingslandscaping.com/thank-you"
+      "formPages": [
+        "https://www.7kingslandscaping.com/contact"
+      ],
+      "thankYou": "https://www.7kingslandscaping.com/thank-you",
+      "e2e": true
     },
     {
       "name": "Integrated Plumbing",
-      "formPages": ["https://integrated-plumbing.com/contact"],
-      "thankYou": "https://integrated-plumbing.com/thank-you"
+      "formPages": [
+        "https://integrated-plumbing.com/contact"
+      ],
+      "thankYou": "https://integrated-plumbing.com/thank-you",
+      "e2e": true
     },
     {
       "name": "Proverbs Plumbing (pre-launch, Vercel URL)",
-      "formPages": ["https://proverbs-plumbing-website.vercel.app/contact"],
-      "thankYou": "https://proverbs-plumbing-website.vercel.app/thank-you"
+      "formPages": [
+        "https://proverbs-plumbing-website.vercel.app/contact"
+      ],
+      "thankYou": "https://proverbs-plumbing-website.vercel.app/thank-you",
+      "e2e": false
     }
   ]
 }

@@ -1,7 +1,8 @@
 name: Daily contact form check
 
 # Every morning, load every live Roundhouse contact form in a real browser and confirm it
-# works — without submitting a lead. Emails ALERT_TO only when something is broken.
+# works, and send one test lead per site through the real server to Resend's test inbox
+# (never the client). Emails ALERT_TO only when something is broken.
 # Site list: monitor/sites.json. Details: monitor/check.mjs.
 on:
   schedule:
@@ -28,3 +29,4 @@ jobs:
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           ALERT_TO: ${{ secrets.ALERT_TO }}
+          LEAD_MONITOR_SECRET: ${{ secrets.LEAD_MONITOR_SECRET }}

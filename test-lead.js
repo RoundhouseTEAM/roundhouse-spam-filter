@@ -660,6 +660,72 @@ await test("native post: withheld submission redirects to the success page with 
   assert.equal(res.headers.get("location"), "/thank-you");
 });
 
+// ── Monitor mode ─────────────────────────────────────────────────
+const SECRET = "monitor-secret-0123456789";
+async function withSecret(fn) {
+  process.env.LEAD_MONITOR_SECRET = SECRET;
+  try {
+    await fn();
+  } finally {
+    delete process.env.LEAD_MONITOR_SECRET;
+  }
+}
+
+await test("monitor: runs the real checks and email, never reaches the client", async () => {
+  await withSecret(async () => {
+    const res = await handleLead(jsonReq(goodLead(), { "x-roundhouse-monitor": SECRET }), CONFIG);
+    const data = await res.json();
+    assert.equal(data.ok, true);
+    assert.equal(data.delivered, false, "no conversion can fire");
+    assert.equal(data.monitor.email, "sent");
+    assert.equal(data.monitor.emailId, "email_123");
+    assert.deepEqual(data.monitor.flags, []);
+    assert.equal(data.monitor.sheetConfigured, true);
+    assert.equal(calls.sheet.length, 0, "client sheet untouched");
+    assert.deepEqual(calls.email[0].to, ["delivered@resend.dev"], "email goes to Resend's sink only");
+    assert.ok(calls.email[0].subject.startsWith("[MONITOR] "));
+    assert.equal(calls.blocked.length, 0, "nothing in the central log");
+  });
+});
+
+await test("monitor: a misconfigured domain shows up as a flag", async () => {
+  await withSecret(async () => {
+    const res = await handleLead(
+      jsonReq(goodLead(), { "x-roundhouse-monitor": SECRET, origin: "https://www.newdomain.com" }),
+      CONFIG
+    );
+    assert.match((await res.json()).monitor.flags.join(" "), /origin not in allowedOrigins/);
+  });
+});
+
+await test("monitor: a withheld submission and a Resend failure are reported, not hidden", async () => {
+  await withSecret(async () => {
+    const withheld = await handleLead(
+      jsonReq(goodLead({ email: "x@vettedvas.com" }), { "x-roundhouse-monitor": SECRET }),
+      CONFIG
+    );
+    assert.equal((await withheld.json()).monitor.withheld, "email-domain");
+    reset();
+    emailBehaviour = "reject";
+    const failed = await handleLead(jsonReq(goodLead(), { "x-roundhouse-monitor": SECRET }), CONFIG);
+    assert.match((await failed.json()).monitor.email, /Resend 429/);
+    assert.equal(calls.blocked.length, 0);
+  });
+});
+
+await test("monitor: a wrong or missing secret is treated as a normal lead", async () => {
+  await withSecret(async () => {
+    const res = await handleLead(jsonReq(goodLead(), { "x-roundhouse-monitor": "monitor-secret-WRONG56789" }), CONFIG);
+    const data = await res.json();
+    assert.equal(data.delivered, true);
+    assert.equal(data.monitor, undefined);
+    assert.deepEqual(calls.email[0].to, ["owner@testplumbing.com"]);
+  });
+  reset();
+  const noSecretSet = await handleLead(jsonReq(goodLead(), { "x-roundhouse-monitor": "" }), CONFIG);
+  assert.equal((await noSecretSet.json()).delivered, true, "no LEAD_MONITOR_SECRET → monitor mode can't be enabled");
+});
+
 console.warn = quiet.warn;
 console.error = quiet.error;
 console.log = quiet.log;
