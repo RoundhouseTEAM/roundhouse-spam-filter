@@ -1,0 +1,81 @@
+{
+  "_comment": "Every live Roundhouse site on the shared lead package. Add a site's form pages (every landing page too) and its thank-you page when it launches; remove it if it leaves. The monitor never submits a lead — see check.mjs.",
+  "sites": [
+    {
+      "name": "Power Construction",
+      "formPages": [
+        "https://www.powerconstructioninc.com/contact",
+        "https://www.powerconstructioninc.com/lp",
+        "https://www.powerconstructioninc.com/lp/mullica-hill"
+      ],
+      "thankYou": "https://www.powerconstructioninc.com/thank-you"
+    },
+    {
+      "name": "CM&M Plumbing",
+      "formPages": [
+        "https://www.cmmplumbing.com/contact-us",
+        "https://www.cmmplumbing.com/lp/water-heater",
+        "https://www.cmmplumbing.com/lp/commercial-jetting"
+      ],
+      "thankYou": "https://www.cmmplumbing.com/thank-you"
+    },
+    {
+      "name": "Indiana Flow",
+      "formPages": ["https://www.indianaflow.com/contact/"],
+      "thankYou": "https://www.indianaflow.com/contact/success/"
+    },
+    {
+      "name": "Adair Plumbing",
+      "formPages": ["https://www.adairplumbing.com/contact/"],
+      "thankYou": "https://www.adairplumbing.com/thank-you/"
+    },
+    {
+      "name": "Alpha Omega Plumbing",
+      "formPages": ["https://aoplumbinghi.com/contact/"],
+      "thankYou": "https://aoplumbinghi.com/contact/success/"
+    },
+    {
+      "name": "Alpha Omega Drains (landing pages)",
+      "formPages": [
+        "https://drains.alphaomegahi.com/",
+        "https://drains.alphaomegahi.com/plumber",
+        "https://drains.alphaomegahi.com/pipe-lining"
+      ],
+      "thankYou": "https://drains.alphaomegahi.com/thank-you"
+    },
+    {
+      "name": "Newman's Plumbing",
+      "formPages": ["https://www.newmansplumbingservice.com/contact-us"],
+      "thankYou": "https://www.newmansplumbingservice.com/thank-you"
+    },
+    {
+      "name": "IrriGators",
+      "formPages": [
+        "https://www.irrigatorsfl.com/contact",
+        "https://www.irrigatorsfl.com/lp/well-pump-service",
+        "https://www.irrigatorsfl.com/lp/water-softener-installation"
+      ],
+      "thankYou": "https://www.irrigatorsfl.com/thank-you"
+    },
+    {
+      "name": "IrriGators Brandon (landing page)",
+      "formPages": ["https://brandon.irrigatorsfl.com/"],
+      "thankYou": "https://brandon.irrigatorsfl.com/thank-you"
+    },
+    {
+      "name": "7 Kings Landscaping",
+      "formPages": ["https://www.7kingslandscaping.com/contact"],
+      "thankYou": "https://www.7kingslandscaping.com/thank-you"
+    },
+    {
+      "name": "Integrated Plumbing",
+      "formPages": ["https://integrated-plumbing.com/contact"],
+      "thankYou": "https://integrated-plumbing.com/thank-you"
+    },
+    {
+      "name": "Proverbs Plumbing (pre-launch, Vercel URL)",
+      "formPages": ["https://proverbs-plumbing-website.vercel.app/contact"],
+      "thankYou": "https://proverbs-plumbing-website.vercel.app/thank-you"
+    }
+  ]
+}

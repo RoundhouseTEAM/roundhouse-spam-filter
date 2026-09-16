@@ -1,0 +1,12 @@
+{
+  "name": "roundhouse-form-monitor",
+  "private": true,
+  "type": "module",
+  "description": "Daily browser check that every live Roundhouse contact form loads and works. Never submits a lead.",
+  "scripts": {
+    "check": "node check.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}

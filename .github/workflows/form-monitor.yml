@@ -1,0 +1,30 @@
+name: Daily contact form check
+
+# Every morning, load every live Roundhouse contact form in a real browser and confirm it
+# works — without submitting a lead. Emails ALERT_TO only when something is broken.
+# Site list: monitor/sites.json. Details: monitor/check.mjs.
+on:
+  schedule:
+    # 12:00 UTC = 7am US Central (6am during standard time)
+    - cron: "0 12 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: monitor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Check every contact form
+        run: node check.mjs
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_TO: ${{ secrets.ALERT_TO }}
