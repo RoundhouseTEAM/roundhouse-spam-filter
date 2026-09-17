@@ -98,11 +98,12 @@
       "e2e": true
     },
     {
-      "name": "Proverbs Plumbing (pre-launch, Vercel URL)",
+      "name": "Proverbs Plumbing",
       "formPages": [
-        "https://proverbs-plumbing-website.vercel.app/contact"
+        "https://www.proverbsplumbing.com/",
+        "https://www.proverbsplumbing.com/contact"
       ],
-      "thankYou": "https://proverbs-plumbing-website.vercel.app/thank-you",
+      "thankYou": "https://www.proverbsplumbing.com/thank-you",
       "e2e": false
     }
   ]
