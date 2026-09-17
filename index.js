@@ -36,6 +36,14 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "mailturk.xyz",
   "tidyhome.info", // guest-post pitch, IrriGators 2026-08-20
   "svarklar.com", // "AI employee" pitch, Newmans 2026-08-28 (covers mail.svarklar.com)
+  "zacharyjackson.rocks", // Philip, 2026-09-17
+];
+
+// Websites confirmed spammers promote. A lead that MENTIONS one of these (or any
+// BLOCKED_EMAIL_DOMAINS entry) in its name or message is withheld, whatever address
+// it was sent from. Bare domain, lowercase — subdomains and "www." are covered.
+export const BLOCKED_SITES = [
+  "adsmogul.com", // ad-agency pitch, Philip 2026-09-17
 ];
 
 // TLDs no real customer sends from.
@@ -45,6 +53,7 @@ export const BLOCKED_TLDS = [".bid", ".xyz", ".top", ".click", ".loan"];
 // Digits only — the checker strips formatting before comparing.
 export const BLOCKED_PHONES = [
   "3072076448", // SEO spam: "Brown Miller" (Alpha Omega), "Anette Smith" (Newmans)
+  "8058008141", // AdsMogul pitch, Philip 2026-09-17
 ];
 
 // ── Keyword phrases ──────────────────────────────────────────────
@@ -198,6 +207,25 @@ function containsPhrase(haystack, phrase) {
 }
 
 /**
+ * A blocklisted domain or phone number mentioned in free text. Domains match on a
+ * label boundary ("www.adsmogul.com", "https://AdsMogul.com/x") but not inside a
+ * longer name ("notadsmogul.com"). Phone numbers match in any common US format.
+ */
+function findBlockedMention(text) {
+  const value = String(text ?? "").toLowerCase();
+  for (const domain of [...BLOCKED_SITES, ...BLOCKED_EMAIL_DOMAINS]) {
+    const re = new RegExp(`(^|[^a-z0-9-])${escapeRegex(domain)}(?![a-z0-9-]|\\.[a-z0-9])`);
+    if (re.test(value)) return domain;
+  }
+  const phones = value.match(/(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g) ?? [];
+  for (const raw of phones) {
+    const digits = raw.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+    if (BLOCKED_PHONES.includes(digits)) return digits;
+  }
+  return null;
+}
+
+/**
  * Catches keyboard-mash submissions like "NAEWTRER365118NEYHRTGE" —
  * one long unbroken token mixing letters and digits, mostly uppercase.
  */
@@ -241,6 +269,11 @@ export function checkSpam(input = {}) {
   if (phoneDigits && BLOCKED_PHONES.includes(phoneDigits)) {
     return { blocked: true, rule: "phone", reason: phoneDigits };
   }
+
+  // A blocklisted site or number written INTO the name or message. Spammers put
+  // their own number in the text and a real one in the phone field.
+  const mention = findBlockedMention(`${name} ${message}`);
+  if (mention) return { blocked: true, rule: "mention", reason: mention };
 
   // Name and message only. Never scan the phone or email for keywords —
   // an address or company name in an email would cause false positives.

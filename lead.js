@@ -105,7 +105,7 @@ export function isMonitorRequest(req) {
 }
 
 /** Checks whose failure means the request did not come from a person on our form. */
-const WITHHELD_CONTENT_RULES = new Set(["email-domain", "phone"]);
+const WITHHELD_CONTENT_RULES = new Set(["email-domain", "phone", "mention"]);
 
 /**
  * Double-click guard. In-memory on purpose: a repeat click lands a second or two later

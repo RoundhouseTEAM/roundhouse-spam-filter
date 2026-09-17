@@ -190,6 +190,31 @@ const MUST_BLOCK = [
     message: "I found you through your website and your Google listing. What I do with your details: example.com/privacy",
   },
   {
+    label: "AdsMogul — site mentioned in the message, clean gmail (2026-09-17)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Want more calls this month? See what we did for other contractors at www.AdsMogul.com",
+  },
+  {
+    label: "AdsMogul — link with https and a path",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Details here: https://adsmogul.com/plumbers",
+  },
+  {
+    label: "AdsMogul — their number in the message, a clean one in the field",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Call or text me at (805) 800-8141 to talk.",
+  },
+  {
+    label: "AdsMogul — their number in the phone field",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "805-800-8141",
+    message: "Quick question about your ads.",
+  },
+  {
+    label: "zacharyjackson.rocks email domain (2026-09-17)",
+    name: "Zachary Jackson", email: "zach@zacharyjackson.rocks", phone: "5551234567",
+    message: "Hi there",
+  },
+  {
     label: "Suspicious TLD (.bid)",
     name: "Redacted Sender",
     email: "sender@example.bid",
@@ -198,6 +223,12 @@ const MUST_BLOCK = [
 ];
 
 const MUST_PASS = [
+  // A look-alike domain or a number sharing digits must not trip the mention check.
+  {
+    label: "Real lead — look-alike domain and a different 805 number",
+    name: "Dana Ruiz", email: "dana@notadsmogul.com", phone: "8058008142",
+    message: "Our site is notadsmogul.com, call me back at 805-800-8142 about a slab leak.",
+  },
   // ── The 2026-08-31 regression guards ──────────────────────────────
   // Seven coldOutreach phrases were blocking these exact openings. Each is how a
   // real customer actually starts a contact form, and a fake success meant they
