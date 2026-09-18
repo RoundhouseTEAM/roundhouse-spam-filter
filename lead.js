@@ -18,7 +18,8 @@
  *
  *  - WITHHELD (silent success, logged in full) only on evidence a customer can't produce:
  *      an oversized body, a request posted from another website (Sec-Fetch-Site),
- *      a confirmed spammer's email domain or phone number, a flood from one IP, or TWO
+ *      a confirmed spammer's email domain or phone number, HTML/BBCode link markup
+ *      (`<a href=`, `[url=`), a flood from one IP, or TWO
  *      automation signals together (see AUTOMATION below).
  *  - DELIVERED AND FLAGGED everything else that used to block: keyword phrases, odd TLDs,
  *      gibberish, Cyrillic/Greek, a wrong origin, a too-fast submit or a filled honeypot
@@ -31,6 +32,7 @@
  * ─────
  *  1. Size / cross-site         withheld
  *  2. Automation signals        collected; withheld only when two line up
+ *     Link markup (<a href>)    withheld — only a link-spam bot writes it
  *  3. Validation                visible per-field messages
  *  4. Content (non-Latin, list) blocklisted domain/phone withheld; the rest flagged
  *  5. Double-click              same lead within 2 minutes → the first lead's id
@@ -59,7 +61,7 @@
  * plain HTML page out.
  */
 
-import { checkSpam, checkContent, logBlocked } from "./index.js";
+import { checkSpam, checkContent, findLinkMarkup, logBlocked } from "./index.js";
 import { callAppsScript, afterResponse } from "./apps-script.js";
 import { checkRateLimit, clientIp, DEFAULT_LIMIT, DEFAULT_WINDOW_MS, DEFAULT_FLOOD_LIMIT } from "./ratelimit.js";
 import {
@@ -105,7 +107,7 @@ export function isMonitorRequest(req) {
 }
 
 /** Checks whose failure means the request did not come from a person on our form. */
-const WITHHELD_CONTENT_RULES = new Set(["email-domain", "phone", "mention"]);
+const WITHHELD_CONTENT_RULES = new Set(["email-domain", "phone", "mention", "link-markup"]);
 
 /**
  * Double-click guard. In-memory on purpose: a repeat click lands a second or two later
@@ -488,6 +490,13 @@ export async function handleLead(req, config) {
       return withhold("automation", [...auto.strong, ...auto.weak].join(" | "));
     }
     flags.push(...auto.strong, ...auto.weak);
+
+    // 2b. HTML/BBCode link markup in any field — only a link-spam bot writes it. Checked
+    // before validation so the bot gets the same silent success, not a list of fixes.
+    const markup = findLinkMarkup(
+      Object.entries(lead).filter(([k]) => k !== "source").map(([, v]) => v).join(" ")
+    );
+    if (markup) return withhold("link-markup", markup);
 
     // 3. Validation — visible, per field.
     const errors = validateLead(lead, extraFields);

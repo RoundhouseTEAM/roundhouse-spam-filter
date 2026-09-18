@@ -226,6 +226,19 @@ function findBlockedMention(text) {
 }
 
 /**
+ * HTML or BBCode link markup — `<a href=…>`, `[url=…]`, `[link=…]`. Link-spam bots paste
+ * it hoping the text gets published somewhere it renders; a person typing into a
+ * contact form never writes it. Philip, 2026-09-18, after a Power Construction lead
+ * carried ten `<a href=https://dog-house.sbs/>` casino links.
+ *
+ * @returns {string} the markup that matched, or "" when there is none.
+ */
+export function findLinkMarkup(text) {
+  const m = String(text ?? "").match(/<a\s[^>]*href|\[(?:url|link)[=\]]/i);
+  return m ? m[0] : "";
+}
+
+/**
  * Catches keyboard-mash submissions like "NAEWTRER365118NEYHRTGE" —
  * one long unbroken token mixing letters and digits, mostly uppercase.
  */
@@ -274,6 +287,9 @@ export function checkSpam(input = {}) {
   // their own number in the text and a real one in the phone field.
   const mention = findBlockedMention(`${name} ${message}`);
   if (mention) return { blocked: true, rule: "mention", reason: mention };
+
+  const markup = findLinkMarkup(`${name} ${message}`);
+  if (markup) return { blocked: true, rule: "link-markup", reason: markup };
 
   // Name and message only. Never scan the phone or email for keywords —
   // an address or company name in an email would cause false positives.

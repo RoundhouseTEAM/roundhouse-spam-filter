@@ -20,6 +20,8 @@ export declare const BLOCKED_TLDS: string[];
 export declare const BLOCKED_PHONES: string[];
 export declare const SPAM_PHRASES: Record<string, string[]>;
 
+/** HTML/BBCode link markup (`<a href=`, `[url=`) in the text, or "" when there is none. */
+export declare function findLinkMarkup(text: unknown): string;
 export declare function checkSpam(input?: SpamCheckInput): SpamVerdict;
 export default checkSpam;
 

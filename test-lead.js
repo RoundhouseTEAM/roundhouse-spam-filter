@@ -211,6 +211,8 @@ for (const [label, body, headers, layer] of [
   ["blocklisted phone", goodLead({ phone: "307-207-6448" }), {}, "phone"],
   ["blocklisted email domain", goodLead({ email: "sam@vettedvas.com" }), {}, "email-domain"],
   ["blocklisted site mentioned in message", goodLead({ message: "See www.AdsMogul.com for details" }), {}, "mention"],
+  ["link markup: <a href> in the message (Power Construction, 2026-09-18)", goodLead({ message: "<a href=https://dog-house.sbs/>dog house casino</a>" }), {}, "link-markup"],
+  ["link markup: BBCode [url=] in the message", goodLead({ message: "[url=https://spam.example]cheap[/url]" }), {}, "link-markup"],
   ["sqlmap: referer is the API path, no JavaScript", goodLead({ _elapsed: undefined }), { origin: "", referer: "https://www.testplumbing.com/api/contact" }, "automation"],
   ["script: no origin/referer headers, no JavaScript", goodLead({ _elapsed: undefined }), { origin: "" }, "automation"],
   ["form bot: honeypot filled, no JavaScript", goodLead({ _elapsed: undefined, referral_code: "http://spam" }), {}, "automation"],

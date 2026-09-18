@@ -20,6 +20,8 @@ export const MESSAGE_MAX = 600;
 export const NAME_MAX = 100;
 export const EMAIL_MAX = 254;
 export const EXTRA_FIELD_MAX = 200;
+/** Links allowed in the message. A customer needs one (a Maps pin, a listing). Philip, 2026-09-18. */
+export const MESSAGE_MAX_LINKS = 1;
 
 /** The four fields every Roundhouse lead form has, all required. */
 export const STANDARD_FIELDS = ["name", "phone", "email", "message"];
@@ -36,6 +38,7 @@ export const MESSAGES = {
   emailInvalid: "Please enter a valid email address, like name@example.com.",
   messageMissing: "Please tell us a little about what you need.",
   messageTooLong: `Please keep your message under ${MESSAGE_MAX} characters.`,
+  messageTooManyLinks: "Please include no more than one link in your message.",
   consentMissing: "Please check the box to agree to be contacted.",
 };
 
@@ -68,6 +71,8 @@ export function normalizePhone(raw) {
 }
 
 const LINK = /https?:\/\/|www\.|\.(com|net|org|io|co|info|biz|xyz)\b/i;
+/** One match per link: "https://www.x.com" counts once, not twice. */
+const MESSAGE_LINK = /(?:https?:\/\/|www\.)[^\s<>"']+/gi;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function validateName(value) {
@@ -100,8 +105,9 @@ function validateMessage(value) {
   const v = String(value ?? "").trim();
   if (!v) return MESSAGES.messageMissing;
   // Links ARE allowed in the message (Philip, 2026-09-16) — customers paste Maps and
-  // listing links. Only the name rejects them.
+  // listing links. Only the name rejects them. One is plenty (Philip, 2026-09-18).
   if (v.length > MESSAGE_MAX) return MESSAGES.messageTooLong;
+  if ((v.match(MESSAGE_LINK) ?? []).length > MESSAGE_MAX_LINKS) return MESSAGES.messageTooManyLinks;
   return "";
 }
 

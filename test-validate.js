@@ -101,6 +101,17 @@ test("message: links are allowed", () => {
   );
 });
 
+test("message: one link is fine, two or more get a visible message", () => {
+  assert.equal(validateField("message", "Listing: https://www.zillow.com/homedetails/123"), "");
+  assert.equal(
+    validateField("message", "Pics at https://imgur.com/a/1 and https://imgur.com/a/2"),
+    MESSAGES.messageTooManyLinks
+  );
+  assert.equal(validateField("message", "www.a.com and www.b.com"), MESSAGES.messageTooManyLinks);
+  // An email address in the message is not a link.
+  assert.equal(validateField("message", "Email me at sam@gmail.com, see https://maps.app.goo.gl/x"), "");
+});
+
 // ── Extra fields ─────────────────────────────────────────────────
 test("extra fields: visible ones are required by default; hidden never; explicit false honoured", () => {
   assert.deepEqual(validateLead(good, [{ name: "address", label: "Address" }]), {

@@ -17,6 +17,13 @@ import { checkSpam, checkOrigin, checkContent } from "./index.js";
 
 const MUST_BLOCK = [
   {
+    label: "casino link spam with <a href> markup — Power Construction, 2026-09-18",
+    name: "Nouicap",
+    email: "nfwmcukf@bientotmail.com",
+    phone: "12167870000",
+    message: "<a href=https://dog-house.sbs/>dog house megaways</a> https://dog-house.sbs",
+  },
+  {
     label: "VA/MAVIS pitch (blocked domain)",
     name: "Redacted Sender",
     email: "sender@vettedvas.com",
@@ -223,6 +230,13 @@ const MUST_BLOCK = [
 ];
 
 const MUST_PASS = [
+  {
+    label: "customer writing 'a href' in plain words is not markup",
+    name: "Redacted Customer",
+    email: "customer@gmail.com",
+    phone: "5551234567",
+    message: "Is there a href or link I can use to pay? Also need a quote on the gutters <soon>.",
+  },
   // A look-alike domain or a number sharing digits must not trip the mention check.
   {
     label: "Real lead — look-alike domain and a different 805 number",

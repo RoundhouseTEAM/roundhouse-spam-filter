@@ -23,8 +23,8 @@ GA events and Google Ads conversion (`transaction_id: leadId`), leads with a pro
 button, is `noindex`, and is not in the sitemap. Never fire a conversion on a bare page load.
 
 **Rules (Philip, 2026-09-16):** name, phone, email and message are all required. Phone
-must be exactly 10 US digits (a leading 1 is dropped). Message max 600 characters; links
-allowed in the message, not the name. Every mistake a person can make gets a specific
+must be exactly 10 US digits (a leading 1 is dropped). Message max 600 characters; one
+link allowed in the message (2.10.0 — two or more get a visible message), none in the name. Every mistake a person can make gets a specific
 visible message. No "Unverified" subject line.
 
 **When in doubt, deliver it (2.6.0, Philip 2026-09-16).** A real lead silently withheld
@@ -33,6 +33,7 @@ costs a client a job; a spam email costs them a delete. So `handleLead` **withho
 
 - an oversized body, or `Sec-Fetch-Site: cross-site`
 - a blocklisted email domain or phone number (confirmed repeat spammers), or a blocklisted site (`BLOCKED_SITES`) or number written into the name or message
+- HTML/BBCode link markup (`<a href=`, `[url=`, `[link=`) in any field (2.10.0) — link-spam bots paste it, people don't
 - a flood: over 30 deliverable submissions from one IP in 10 minutes
 - **two automation signals together**, at least one strong — strong: honeypot filled
   without autofill, submitted under 1.5s, no Origin/Referer at all, Referer is an

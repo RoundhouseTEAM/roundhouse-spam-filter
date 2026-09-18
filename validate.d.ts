@@ -27,6 +27,7 @@ export declare const MESSAGE_MAX: number;
 export declare const NAME_MAX: number;
 export declare const EMAIL_MAX: number;
 export declare const EXTRA_FIELD_MAX: number;
+export declare const MESSAGE_MAX_LINKS: number;
 export declare const STANDARD_FIELDS: string[];
 export declare const MESSAGES: Record<string, string>;
 
