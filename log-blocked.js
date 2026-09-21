@@ -81,6 +81,9 @@ const NEVER_URGENT_LAYERS = new Set([
   "too-large",
   // Posted from another website's page — never our own form.
   "fetch-metadata",
+  // A known bot template (BLOCKED_MESSAGES) with a fake 555-01xx phone. Always a bot, and
+  // it arrives several times a day across sites — the digest is enough (2026-09-21).
+  "template",
 ]);
 
 /** Rows that record a lead the client DID receive — shown as "Yes" in the Delivered column. */
