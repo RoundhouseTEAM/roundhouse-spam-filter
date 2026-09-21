@@ -16,6 +16,7 @@ export interface SpamVerdict {
 
 export declare const BLOCKED_EMAIL_DOMAINS: string[];
 export declare const BLOCKED_SITES: string[];
+export declare const BLOCKED_MESSAGES: string[];
 export declare const BLOCKED_TLDS: string[];
 export declare const BLOCKED_PHONES: string[];
 export declare const SPAM_PHRASES: Record<string, string[]>;

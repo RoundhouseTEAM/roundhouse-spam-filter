@@ -17,6 +17,16 @@ import { checkSpam, checkOrigin, checkContent } from "./index.js";
 
 const MUST_BLOCK = [
   {
+    label: "bot template message — Indiana Flow, Sept 2026",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "I would like more information. Please contact me by email",
+  },
+  {
+    label: "bot template message — different case/punctuation/spacing",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "  i would like more information,  please contact me by email. ",
+  },
+  {
     label: "casino link spam with <a href> markup — Power Construction, 2026-09-18",
     name: "Nouicap",
     email: "nfwmcukf@bientotmail.com",
@@ -230,6 +240,11 @@ const MUST_BLOCK = [
 ];
 
 const MUST_PASS = [
+  {
+    label: "similar request with job details is not the bot template",
+    name: "Redacted Customer", email: "customer@gmail.com", phone: "5551234567",
+    message: "I would like more information on a tankless water heater. Please contact me by email, I work nights.",
+  },
   {
     label: "customer writing 'a href' in plain words is not markup",
     name: "Redacted Customer",

@@ -46,6 +46,15 @@ export const BLOCKED_SITES = [
   "adsmogul.com", // ad-agency pitch, Philip 2026-09-17
 ];
 
+// Bot template messages. A submission whose WHOLE message is one of these (case,
+// punctuation and spacing ignored) is withheld. Only the whole message: a person who
+// writes the same words and then describes a job is delivered (flagged, via the
+// botTemplate phrases below).
+export const BLOCKED_MESSAGES = [
+  // Indiana Flow, several in Sept 2026 — every one with an invalid phone or email. Philip, 2026-09-21
+  "I would like more information. Please contact me by email",
+];
+
 // TLDs no real customer sends from.
 export const BLOCKED_TLDS = [".bid", ".xyz", ".top", ".click", ".loan"];
 
@@ -162,6 +171,10 @@ export const SPAM_PHRASES = {
     "never miss another call",
     // "on autopilot" removed 2026-09-16: "our sprinklers run on autopilot but zone 3 is broken".
   ],
+  // A longer message that contains a BLOCKED_MESSAGES template — flagged, not withheld.
+  botTemplate: [
+    "i would like more information. please contact me by email",
+  ],
   offTopic: [
     "deneme bonusu",
     "bonus veren",
@@ -238,6 +251,18 @@ export function findLinkMarkup(text) {
   return m ? m[0] : "";
 }
 
+/** Letters, digits and single spaces only, so punctuation can't defeat an exact match. */
+function bareWords(value) {
+  return normalize(value).replace(/[^a-z0-9' ]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** @returns {string} the BLOCKED_MESSAGES entry the whole message matches, or "". */
+function matchBlockedMessage(message) {
+  const bare = bareWords(message);
+  if (!bare) return "";
+  return BLOCKED_MESSAGES.find((m) => bareWords(m) === bare) ?? "";
+}
+
 /**
  * Catches keyboard-mash submissions like "NAEWTRER365118NEYHRTGE" —
  * one long unbroken token mixing letters and digits, mostly uppercase.
@@ -290,6 +315,9 @@ export function checkSpam(input = {}) {
 
   const markup = findLinkMarkup(`${name} ${message}`);
   if (markup) return { blocked: true, rule: "link-markup", reason: markup };
+
+  const template = matchBlockedMessage(message);
+  if (template) return { blocked: true, rule: "template", reason: template };
 
   // Name and message only. Never scan the phone or email for keywords —
   // an address or company name in an email would cause false positives.

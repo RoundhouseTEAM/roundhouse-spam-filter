@@ -33,6 +33,7 @@ costs a client a job; a spam email costs them a delete. So `handleLead` **withho
 
 - an oversized body, or `Sec-Fetch-Site: cross-site`
 - a blocklisted email domain or phone number (confirmed repeat spammers), or a blocklisted site (`BLOCKED_SITES`) or number written into the name or message
+- a message that is, in full, a known bot template (`BLOCKED_MESSAGES`, 2.11.0) — e.g. "I would like more information. Please contact me by email". The same words inside a longer message are only flagged
 - HTML/BBCode link markup (`<a href=`, `[url=`, `[link=`) in any field (2.10.0) — link-spam bots paste it, people don't
 - a flood: over 30 deliverable submissions from one IP in 10 minutes
 - **two automation signals together**, at least one strong — strong: honeypot filled
