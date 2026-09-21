@@ -61,7 +61,7 @@
  * plain HTML page out.
  */
 
-import { checkSpam, checkContent, findLinkMarkup, logBlocked } from "./index.js";
+import { checkSpam, checkContent, findLinkMarkup, findBlockedTemplate, logBlocked } from "./index.js";
 import { callAppsScript, afterResponse } from "./apps-script.js";
 import { checkRateLimit, clientIp, DEFAULT_LIMIT, DEFAULT_WINDOW_MS, DEFAULT_FLOOD_LIMIT } from "./ratelimit.js";
 import {
@@ -526,6 +526,12 @@ export async function handleLead(req, config) {
       allowMessageUrls: true,
     });
     if (content.blocked) flags.push(`${content.layer}: ${content.reason}`);
+
+    // A known bot template anywhere in a typed field — extra fields included — is withheld.
+    const template = findBlockedTemplate(
+      [lead.name, lead.message, ...extraFields.map((f) => lead[f.name] ?? "")].join("\n")
+    );
+    if (template) return withhold("template", template);
 
     const verdict = checkSpam({ name: lead.name, email: lead.email, phone: lead.phone, message: lead.message });
     if (verdict.blocked) {

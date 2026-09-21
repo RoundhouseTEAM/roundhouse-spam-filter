@@ -33,7 +33,7 @@ costs a client a job; a spam email costs them a delete. So `handleLead` **withho
 
 - an oversized body, or `Sec-Fetch-Site: cross-site`
 - a blocklisted email domain or phone number (confirmed repeat spammers), or a blocklisted site (`BLOCKED_SITES`) or number written into the name or message
-- a known bot template (`BLOCKED_MESSAGES`, 2.11.1) plus at most 8 other words — e.g. "I would like more information. Please contact me by email — contact indiana flow." The same words followed by a real job description are only flagged
+- a known bot template phrase (`BLOCKED_MESSAGES`, 2.12.0) **anywhere** in the name, message or an extra field, whatever else is written — e.g. "I would like more information. Please contact me by email". A deliberate exception to deliver-when-in-doubt (Philip, 2026-09-21)
 - HTML/BBCode link markup (`<a href=`, `[url=`, `[link=`) in any field (2.10.0) — link-spam bots paste it, people don't
 - a flood: over 30 deliverable submissions from one IP in 10 minutes
 - **two automation signals together**, at least one strong — strong: honeypot filled

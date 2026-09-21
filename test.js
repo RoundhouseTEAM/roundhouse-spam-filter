@@ -32,6 +32,16 @@ const MUST_BLOCK = [
     message: "I would like more information. Please contact me by email — contact alpha omega plumbing.",
   },
   {
+    label: "bot template in the middle of a long message",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Hello! I would like more information, please contact me by email. We have a slab leak under the kitchen and the water bill doubled last month.",
+  },
+  {
+    label: "bot template in the name field",
+    name: "I would like more information please contact me by email", email: "sender@gmail.com", phone: "5551234567",
+    message: "Need a quote",
+  },
+  {
     label: "bot template message — different case/punctuation/spacing",
     name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
     message: "  i would like more information,  please contact me by email. ",
