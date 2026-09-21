@@ -212,6 +212,7 @@ for (const [label, body, headers, layer] of [
   ["blocklisted email domain", goodLead({ email: "sam@vettedvas.com" }), {}, "email-domain"],
   ["blocklisted site mentioned in message", goodLead({ message: "See www.AdsMogul.com for details" }), {}, "mention"],
   ["bot template message (Indiana Flow, 2026-09)", goodLead({ message: "I would like more information.  Please contact me by email!" }), {}, "template"],
+  ["bot template + business name (Alpha Omega, 2026-09-21)", goodLead({ message: "I would like more information. Please contact me by email — contact alpha omega plumbing." }), {}, "template"],
   ["link markup: <a href> in the message (Power Construction, 2026-09-18)", goodLead({ message: "<a href=https://dog-house.sbs/>dog house casino</a>" }), {}, "link-markup"],
   ["link markup: BBCode [url=] in the message", goodLead({ message: "[url=https://spam.example]cheap[/url]" }), {}, "link-markup"],
   ["sqlmap: referer is the API path, no JavaScript", goodLead({ _elapsed: undefined }), { origin: "", referer: "https://www.testplumbing.com/api/contact" }, "automation"],
@@ -241,6 +242,7 @@ for (const [label, body, headers, flag] of [
   ["keyword phrase", goodLead({ message: "My virtual assistant will schedule, need a plumber at our office" }), {}, /keyword:virtualAssistant/],
   ["unusual TLD", goodLead({ email: "owner@smith.top" }), {}, /email-tld/],
   ["gibberish", goodLead({ message: "NAEWTRER365118NEYHRTGE" }), {}, /gibberish/],
+  ["bot template words followed by a real job", goodLead({ message: "I would like more information. Please contact me by email. Our kitchen sink drains slowly and the garbage disposal hums but won't turn." }), {}, /keyword:botTemplate/],
 ]) {
   await test(`delivered + flagged: ${label}`, async () => {
     const res = await handleLead(jsonReq(body, headers), CONFIG);

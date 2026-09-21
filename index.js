@@ -46,14 +46,16 @@ export const BLOCKED_SITES = [
   "adsmogul.com", // ad-agency pitch, Philip 2026-09-17
 ];
 
-// Bot template messages. A submission whose WHOLE message is one of these (case,
-// punctuation and spacing ignored) is withheld. Only the whole message: a person who
-// writes the same words and then describes a job is delivered (flagged, via the
-// botTemplate phrases below).
+// Bot template messages. A message that is one of these plus at most
+// TEMPLATE_EXTRA_WORDS other words (case, punctuation and spacing ignored) is withheld.
+// The bot tacks on the business name — "… by email — contact indiana flow." — so an
+// exact whole-message match missed every one (2.11.0). A person who writes the same
+// words and then describes a job is delivered (flagged, via botTemplate below).
 export const BLOCKED_MESSAGES = [
-  // Indiana Flow, several in Sept 2026 — every one with an invalid phone or email. Philip, 2026-09-21
+  // Indiana Flow + Alpha Omega, Sept 2026 — every one with a fake (202) 555-01xx phone. Philip, 2026-09-21
   "I would like more information. Please contact me by email",
 ];
+const TEMPLATE_EXTRA_WORDS = 8;
 
 // TLDs no real customer sends from.
 export const BLOCKED_TLDS = [".bid", ".xyz", ".top", ".click", ".loan"];
@@ -256,11 +258,18 @@ function bareWords(value) {
   return normalize(value).replace(/[^a-z0-9' ]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
-/** @returns {string} the BLOCKED_MESSAGES entry the whole message matches, or "". */
+/** @returns {string} the BLOCKED_MESSAGES entry the message is built from, or "". */
 function matchBlockedMessage(message) {
-  const bare = bareWords(message);
-  if (!bare) return "";
-  return BLOCKED_MESSAGES.find((m) => bareWords(m) === bare) ?? "";
+  const bare = ` ${bareWords(message)} `;
+  if (!bare.trim()) return "";
+  return (
+    BLOCKED_MESSAGES.find((m) => {
+      const t = ` ${bareWords(m)} `;
+      if (!bare.includes(t)) return false;
+      const rest = bare.replace(t, " ").trim();
+      return (rest ? rest.split(" ").length : 0) <= TEMPLATE_EXTRA_WORDS;
+    }) ?? ""
+  );
 }
 
 /**
