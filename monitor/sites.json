@@ -105,6 +105,14 @@
       ],
       "thankYou": "https://www.proverbsplumbing.com/thank-you",
       "e2e": false
+    },
+    {
+      "name": "TAWS",
+      "formPages": [
+        "https://texaswatersheds.org/contact"
+      ],
+      "thankYou": "https://texaswatersheds.org/thank-you",
+      "e2e": true
     }
   ]
 }
