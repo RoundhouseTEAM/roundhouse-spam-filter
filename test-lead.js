@@ -212,6 +212,8 @@ for (const [label, body, headers, layer] of [
   ["blocklisted email domain", goodLead({ email: "sam@vettedvas.com" }), {}, "email-domain"],
   ["blocklisted site mentioned in message", goodLead({ message: "See www.AdsMogul.com for details" }), {}, "mention"],
   ["bot template message (Indiana Flow, 2026-09)", goodLead({ message: "I would like more information.  Please contact me by email!" }), {}, "template"],
+  ["SEO in the message (Philip, 2026-09-22)", goodLead({ message: "Your SEO needs work, I can fix it." }), {}, "blocked-keyword"],
+  ["digital marketing in an extra field", goodLead({ address: "Digital marketing for your company" }), {}, "blocked-keyword"],
   ["bot template in an extra field (address)", goodLead({ address: "12 Main St. I would like more information. Please contact me by email" }), {}, "template"],
   ["bot template with a long job description around it", goodLead({ message: "Hi there. I would like more information. Please contact me by email. Our kitchen sink drains slowly and the garbage disposal hums but won't turn." }), {}, "template"],
   ["bot template + business name (Alpha Omega, 2026-09-21)", goodLead({ message: "I would like more information. Please contact me by email — contact alpha omega plumbing." }), {}, "template"],
@@ -660,7 +662,7 @@ await test("native post: validation errors render a plain page listing them", as
 });
 
 await test("native post: a keyword match is still delivered", async () => {
-  const { _elapsed, ...fields } = goodLead({ message: "seo audit for your site" });
+  const { _elapsed, ...fields } = goodLead({ message: "need backlinks help, and a leak fixed" });
   const res = await handleLead(nativeReq(fields), CONFIG);
   assert.equal(res.status, 303);
   assert.match(res.headers.get("location"), /^\/thank-you\?lead=/);

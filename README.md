@@ -33,6 +33,7 @@ costs a client a job; a spam email costs them a delete. So `handleLead` **withho
 
 - an oversized body, or `Sec-Fetch-Site: cross-site`
 - a blocklisted email domain or phone number (confirmed repeat spammers), or a blocklisted site (`BLOCKED_SITES`) or number written into the name or message
+- `seo` or `digital marketing` as a whole word in the message or a typed extra field (`BLOCKED_KEYWORDS`, 2.13.0 — never the name)
 - a known bot template phrase (`BLOCKED_MESSAGES`, 2.12.0) **anywhere** in the name, message or an extra field, whatever else is written — e.g. "I would like more information. Please contact me by email". A deliberate exception to deliver-when-in-doubt (Philip, 2026-09-21)
 - HTML/BBCode link markup (`<a href=`, `[url=`, `[link=`) in any field (2.10.0) — link-spam bots paste it, people don't
 - a flood: over 30 deliverable submissions from one IP in 10 minutes
@@ -225,7 +226,11 @@ These all appear in **real paying leads** and must never be added:
 | `business` | "my business has a clogged drain" |
 | `scope of work` | Used in a real federal contract inquiry (Hickam AFB) |
 | `google` | Customers mention finding you on Google |
-| `marketing`, `seo` alone | Too broad — use the longer phrases instead |
+| `marketing` alone | Too broad — use the longer phrases instead |
+
+**Exception (Philip, 2026-09-22):** `seo` and `digital marketing` are in `BLOCKED_KEYWORDS`
+and are **withheld**, not flagged — whole words, message and typed extra fields only, never
+the name (Seo is a surname). Philip's call: an SEO/marketing pitch is never a client's lead.
 
 Prefer **multi-word phrases** over single words, and prefer the **domain list** over
 keywords when a sender is clearly a known spammer — it is exact and has no false-positive risk.

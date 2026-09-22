@@ -37,6 +37,16 @@ const MUST_BLOCK = [
     message: "Hello! I would like more information, please contact me by email. We have a slab leak under the kitchen and the water bill doubled last month.",
   },
   {
+    label: "SEO alone in a message (Philip, 2026-09-22)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Hi, I can get you more calls with local SEO. Can we talk this week?",
+  },
+  {
+    label: "digital marketing in a message (Philip, 2026-09-22)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "We are a Digital-Marketing firm helping plumbers grow.",
+  },
+  {
     label: "bot template in the name field",
     name: "I would like more information please contact me by email", email: "sender@gmail.com", phone: "5551234567",
     message: "Need a quote",
@@ -260,6 +270,11 @@ const MUST_BLOCK = [
 ];
 
 const MUST_PASS = [
+  {
+    label: "customer surnamed Seo, and Seoul in the message",
+    name: "Jin Seo", email: "customer@gmail.com", phone: "5551234567",
+    message: "Just moved here from Seoul, the kitchen faucet drips nonstop. Can someone come Friday?",
+  },
   {
     label: "similar request with job details is not the bot template",
     name: "Redacted Customer", email: "customer@gmail.com", phone: "5551234567",

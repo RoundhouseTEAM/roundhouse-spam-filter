@@ -123,7 +123,7 @@ for (const layer of [
 }
 
 // Bot-certain layers carry no urgency — they are digest material at most.
-for (const layer of ["origin", "timing", "missing-fields", "delivered-no-js", "template"]) {
+for (const layer of ["origin", "timing", "missing-fields", "delivered-no-js", "template", "blocked-keyword"]) {
   await withHarness({ env: FULL_ENV }, async (calls) => {
     await logBlocked({ ...lead, layer });
     check(`"${layer}" is not urgent even from a real-looking entry`, rowOf(calls).urgent === "");

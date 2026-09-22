@@ -61,7 +61,7 @@
  * plain HTML page out.
  */
 
-import { checkSpam, checkContent, findLinkMarkup, findBlockedTemplate, logBlocked } from "./index.js";
+import { checkSpam, checkContent, findLinkMarkup, findBlockedTemplate, findBlockedKeyword, logBlocked } from "./index.js";
 import { callAppsScript, afterResponse } from "./apps-script.js";
 import { checkRateLimit, clientIp, DEFAULT_LIMIT, DEFAULT_WINDOW_MS, DEFAULT_FLOOD_LIMIT } from "./ratelimit.js";
 import {
@@ -107,7 +107,7 @@ export function isMonitorRequest(req) {
 }
 
 /** Checks whose failure means the request did not come from a person on our form. */
-const WITHHELD_CONTENT_RULES = new Set(["email-domain", "phone", "mention", "link-markup", "template"]);
+const WITHHELD_CONTENT_RULES = new Set(["email-domain", "phone", "mention", "link-markup", "template", "blocked-keyword"]);
 
 /**
  * Double-click guard. In-memory on purpose: a repeat click lands a second or two later
@@ -532,6 +532,13 @@ export async function handleLead(req, config) {
       [lead.name, lead.message, ...extraFields.map((f) => lead[f.name] ?? "")].join("\n")
     );
     if (template) return withhold("template", template);
+
+    // SEO / digital-marketing pitches: message and the extra fields a visitor types into.
+    // Not the name (a surname), and not hidden or dropdown fields — the site supplies those.
+    const keyword = findBlockedKeyword(
+      [lead.message, ...extraFields.filter((f) => !f.hidden && !f.options).map((f) => lead[f.name] ?? "")].join("\n")
+    );
+    if (keyword) return withhold("blocked-keyword", keyword);
 
     const verdict = checkSpam({ name: lead.name, email: lead.email, phone: lead.phone, message: lead.message });
     if (verdict.blocked) {

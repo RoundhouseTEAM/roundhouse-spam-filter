@@ -59,6 +59,15 @@ export const BLOCKED_MESSAGES = [
   "I would like more information. Please contact me by email",
 ];
 
+// Withheld keywords (Philip, 2026-09-22). Any of these as a whole word in the MESSAGE or a
+// typed extra field — never the name ("Seo" is a Korean surname) — and the lead is not
+// sent to the client, only recorded in the central sheet. A deliberate exception to
+// deliver-when-in-doubt: Philip judged SEO/marketing pitches are never a client's lead.
+export const BLOCKED_KEYWORDS = [
+  "seo",
+  "digital marketing",
+];
+
 // TLDs no real customer sends from.
 export const BLOCKED_TLDS = [".bid", ".xyz", ".top", ".click", ".loan"];
 
@@ -267,6 +276,16 @@ export function findBlockedTemplate(text) {
 }
 
 /**
+ * A BLOCKED_KEYWORDS term as a whole word ("seo" never fires inside "Seoul").
+ * @returns {string} the keyword that matched, or "".
+ */
+export function findBlockedKeyword(text) {
+  const bare = ` ${bareWords(text)} `;
+  if (!bare.trim()) return "";
+  return BLOCKED_KEYWORDS.find((k) => bare.includes(` ${bareWords(k)} `)) ?? "";
+}
+
+/**
  * Catches keyboard-mash submissions like "NAEWTRER365118NEYHRTGE" —
  * one long unbroken token mixing letters and digits, mostly uppercase.
  */
@@ -321,6 +340,9 @@ export function checkSpam(input = {}) {
 
   const template = findBlockedTemplate(`${name}\n${message}`);
   if (template) return { blocked: true, rule: "template", reason: template };
+
+  const keyword = findBlockedKeyword(message);
+  if (keyword) return { blocked: true, rule: "blocked-keyword", reason: keyword };
 
   // Name and message only. Never scan the phone or email for keywords —
   // an address or company name in an email would cause false positives.

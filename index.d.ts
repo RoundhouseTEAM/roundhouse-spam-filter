@@ -19,6 +19,9 @@ export declare const BLOCKED_SITES: string[];
 export declare const BLOCKED_MESSAGES: string[];
 /** The BLOCKED_MESSAGES phrase found anywhere in the text, or "". */
 export declare function findBlockedTemplate(text: string): string;
+export declare const BLOCKED_KEYWORDS: string[];
+/** The BLOCKED_KEYWORDS term found as a whole word in the text, or "". */
+export declare function findBlockedKeyword(text: string): string;
 export declare const BLOCKED_TLDS: string[];
 export declare const BLOCKED_PHONES: string[];
 export declare const SPAM_PHRASES: Record<string, string[]>;

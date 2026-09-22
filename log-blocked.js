@@ -84,6 +84,8 @@ const NEVER_URGENT_LAYERS = new Set([
   // A known bot template (BLOCKED_MESSAGES) with a fake 555-01xx phone. Always a bot, and
   // it arrives several times a day across sites — the digest is enough (2026-09-21).
   "template",
+  // SEO / digital-marketing pitch (BLOCKED_KEYWORDS). Philip, 2026-09-22: record it, don't alert.
+  "blocked-keyword",
 ]);
 
 /** Rows that record a lead the client DID receive — shown as "Yes" in the Delivered column. */
