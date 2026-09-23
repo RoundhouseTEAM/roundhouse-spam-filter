@@ -212,6 +212,9 @@ for (const [label, body, headers, layer] of [
   ["blocklisted email domain", goodLead({ email: "sam@vettedvas.com" }), {}, "email-domain"],
   ["blocklisted site mentioned in message", goodLead({ message: "See www.AdsMogul.com for details" }), {}, "mention"],
   ["bot template message (Indiana Flow, 2026-09)", goodLead({ message: "I would like more information.  Please contact me by email!" }), {}, "template"],
+  ["VAs 4 Hire in the message (Philip, 2026-09-23)", goodLead({ message: "VAs 4 Hire — trained assistants from $6/hr." }), {}, "blocked-keyword"],
+  ["VAs4Hire in the name field", goodLead({ name: "VAs4Hire Team" }), {}, "blocked-keyword"],
+  ["virtual assistant in the message", goodLead({ message: "A virtual assistant can answer your phones." }), {}, "blocked-keyword"],
   ["SEO in the message (Philip, 2026-09-22)", goodLead({ message: "Your SEO needs work, I can fix it." }), {}, "blocked-keyword"],
   ["digital marketing in an extra field", goodLead({ address: "Digital marketing for your company" }), {}, "blocked-keyword"],
   ["bot template in an extra field (address)", goodLead({ address: "12 Main St. I would like more information. Please contact me by email" }), {}, "template"],
@@ -243,7 +246,7 @@ for (const [label, body, headers, flag] of [
   ["wrong origin alone (domain missing from allowedOrigins)", goodLead(), { origin: "https://www.newdomain.com", referer: "https://www.newdomain.com/contact" }, /origin not in allowedOrigins/],
   ["too fast alone", goodLead({ _elapsed: 200 }), {}, /submitted 200ms/],
   ["Cyrillic name", goodLead({ name: "Олена Коваль" }), {}, /non-latin/],
-  ["keyword phrase", goodLead({ message: "My virtual assistant will schedule, need a plumber at our office" }), {}, /keyword:virtualAssistant/],
+  ["keyword phrase", goodLead({ message: "Our outsourcing team needs a plumber at the office" }), {}, /keyword:virtualAssistant/],
   ["unusual TLD", goodLead({ email: "owner@smith.top" }), {}, /email-tld/],
   ["gibberish", goodLead({ message: "NAEWTRER365118NEYHRTGE" }), {}, /gibberish/],
 ]) {

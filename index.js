@@ -66,6 +66,9 @@ export const BLOCKED_MESSAGES = [
 export const BLOCKED_KEYWORDS = [
   "seo",
   "digital marketing",
+  "vas 4 hire", // VA pitch, Philip 2026-09-23 — also matches "VAs4Hire"
+  "virtual assistant",
+  "virtual assistants",
 ];
 
 // TLDs no real customer sends from.
@@ -82,8 +85,7 @@ export const BLOCKED_PHONES = [
 // Matched case-insensitively against name + message, with word boundaries.
 export const SPAM_PHRASES = {
   virtualAssistant: [
-    "virtual assistant",
-    "virtual assistants",
+    // "virtual assistant"/"virtual assistants" moved to BLOCKED_KEYWORDS (withheld) 2026-09-23.
     "my advanced virtual intelligent system",
     "20 man team",
     "20-person team",
@@ -279,10 +281,22 @@ export function findBlockedTemplate(text) {
  * A BLOCKED_KEYWORDS term as a whole word ("seo" never fires inside "Seoul").
  * @returns {string} the keyword that matched, or "".
  */
-export function findBlockedKeyword(text) {
+export function findBlockedKeyword(text, options = {}) {
+  const multiWordOnly = options.multiWordOnly === true;
   const bare = ` ${bareWords(text)} `;
   if (!bare.trim()) return "";
-  return BLOCKED_KEYWORDS.find((k) => bare.includes(` ${bareWords(k)} `)) ?? "";
+  // A multi-word keyword also matches run together, so "VAs4Hire" and "VAs 4 Hire" both
+  // hit. Single words are left alone: collapsing would fire "seo" inside another word.
+  const squashed = bare.replace(/ /g, "");
+  return (
+    BLOCKED_KEYWORDS.find((k) => {
+      const bareK = bareWords(k);
+      // The NAME is only scanned for multi-word phrases: "Seo" is a Korean surname.
+      if (multiWordOnly && !bareK.includes(" ")) return false;
+      if (bare.includes(` ${bareK} `)) return true;
+      return bareK.includes(" ") && squashed.includes(bareK.replace(/ /g, ""));
+    }) ?? ""
+  );
 }
 
 /**
@@ -341,7 +355,7 @@ export function checkSpam(input = {}) {
   const template = findBlockedTemplate(`${name}\n${message}`);
   if (template) return { blocked: true, rule: "template", reason: template };
 
-  const keyword = findBlockedKeyword(message);
+  const keyword = findBlockedKeyword(message) || findBlockedKeyword(name, { multiWordOnly: true });
   if (keyword) return { blocked: true, rule: "blocked-keyword", reason: keyword };
 
   // Name and message only. Never scan the phone or email for keywords —

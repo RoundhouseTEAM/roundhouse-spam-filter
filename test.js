@@ -47,6 +47,21 @@ const MUST_BLOCK = [
     message: "We are a Digital-Marketing firm helping plumbers grow.",
   },
   {
+    label: "VAs 4 Hire pitch in the message (Philip, 2026-09-23)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "VAs 4 Hire can staff your front desk for $6/hour.",
+  },
+  {
+    label: "VAs4Hire run together, in the name field",
+    name: "VAs4Hire Team", email: "sender@gmail.com", phone: "5551234567",
+    message: "Can we send over some candidate profiles?",
+  },
+  {
+    label: "virtual assistant pitch (Philip, 2026-09-23)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Our Virtual Assistants handle scheduling and dispatch for contractors.",
+  },
+  {
     label: "bot template in the name field",
     name: "I would like more information please contact me by email", email: "sender@gmail.com", phone: "5551234567",
     message: "Need a quote",

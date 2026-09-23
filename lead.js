@@ -535,9 +535,11 @@ export async function handleLead(req, config) {
 
     // SEO / digital-marketing pitches: message and the extra fields a visitor types into.
     // Not the name (a surname), and not hidden or dropdown fields — the site supplies those.
-    const keyword = findBlockedKeyword(
-      [lead.message, ...extraFields.filter((f) => !f.hidden && !f.options).map((f) => lead[f.name] ?? "")].join("\n")
-    );
+    const typed = [lead.message, ...extraFields.filter((f) => !f.hidden && !f.options).map((f) => lead[f.name] ?? "")];
+    const keyword =
+      findBlockedKeyword(typed.join("\n")) ||
+      // The name too, but only for multi-word phrases — "VAs 4 Hire" arrives as a company name.
+      findBlockedKeyword(lead.name, { multiWordOnly: true });
     if (keyword) return withhold("blocked-keyword", keyword);
 
     const verdict = checkSpam({ name: lead.name, email: lead.email, phone: lead.phone, message: lead.message });
