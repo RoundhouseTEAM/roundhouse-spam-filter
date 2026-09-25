@@ -26,6 +26,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "getdandynow.com",
   "dandyaisoftware.com",
   "vettedvas.com",
+  "freeb2bdata.com", // Philip 2026-09-25
   "toptalentvas.com",
   "vasdirect.com",
   "virtualhelpdesk.pro",
@@ -69,6 +70,8 @@ export const BLOCKED_KEYWORDS = [
   "vas 4 hire", // VA pitch, Philip 2026-09-23 — also matches "VAs4Hire"
   "virtual assistant",
   "virtual assistants",
+  "wikipedia", // "get your business a Wikipedia page" pitch, Philip 2026-09-25
+  "free b2b data", // Philip 2026-09-25 — also matches "FreeB2BData" and freeb2bdata.com
 ];
 
 // TLDs no real customer sends from.

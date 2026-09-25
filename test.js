@@ -62,6 +62,26 @@ const MUST_BLOCK = [
     message: "Our Virtual Assistants handle scheduling and dispatch for contractors.",
   },
   {
+    label: "Wikipedia page pitch (Philip, 2026-09-25)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Your company qualifies for a Wikipedia page. We write and publish it for you.",
+  },
+  {
+    label: "FreeB2BData in the message (Philip, 2026-09-25)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Get 10,000 verified contractor leads at FreeB2BData.com today.",
+  },
+  {
+    label: "FreeB2BData as the name",
+    name: "FreeB2BData", email: "sender@gmail.com", phone: "5551234567",
+    message: "Can we send over a sample list?",
+  },
+  {
+    label: "freeb2bdata.com sender address",
+    name: "Redacted Sender", email: "sales@freeb2bdata.com", phone: "5551234567",
+    message: "Quick question about your customer list.",
+  },
+  {
     label: "bot template in the name field",
     name: "I would like more information please contact me by email", email: "sender@gmail.com", phone: "5551234567",
     message: "Need a quote",
