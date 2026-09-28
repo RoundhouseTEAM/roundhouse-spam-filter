@@ -40,7 +40,8 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "zacharyjackson.rocks", // Philip, 2026-09-17
   "hpmarketingpros.com", // Philip, 2026-09-28
   "decentgears.com", // Philip, 2026-09-28
-  "flick.caredogbest.com", // Philip, 2026-09-28
+  "caredogbest.com", // Philip, 2026-09-28 — widened from flick.caredogbest.com; covers every subdomain
+  "helixnovabiotech.com", // Philip, 2026-09-28
   "netconeniterprise.com", // Philip, 2026-09-28
   "trustedvirtualteam.com", // Philip, 2026-09-28
   "getlevelcore.com", // Philip, 2026-09-28

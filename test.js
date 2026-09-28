@@ -97,6 +97,21 @@ const MUST_BLOCK = [
     message: "Need a quote for a water heater.",
   },
   {
+    label: "info@caredogbest.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@caredogbest.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "info@mail.caredogbest.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@mail.caredogbest.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "info@helixnovabiotech.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@helixnovabiotech.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
     label: "netconeniterprise.com sender address (Philip, 2026-09-28)",
     name: "Redacted Sender", email: "info@netconeniterprise.com", phone: "5551234567",
     message: "Need a quote for a water heater.",
