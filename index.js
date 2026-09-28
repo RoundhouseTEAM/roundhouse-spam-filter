@@ -38,6 +38,8 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "tidyhome.info", // guest-post pitch, IrriGators 2026-08-20
   "svarklar.com", // "AI employee" pitch, Newmans 2026-08-28 (covers mail.svarklar.com)
   "zacharyjackson.rocks", // Philip, 2026-09-17
+  "hpmarketingpros.com", // Philip, 2026-09-28
+  "decentgears.com", // Philip, 2026-09-28
 ];
 
 // Websites confirmed spammers promote. A lead that MENTIONS one of these (or any
