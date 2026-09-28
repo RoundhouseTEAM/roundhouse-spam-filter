@@ -40,6 +40,19 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "zacharyjackson.rocks", // Philip, 2026-09-17
   "hpmarketingpros.com", // Philip, 2026-09-28
   "decentgears.com", // Philip, 2026-09-28
+  "flick.caredogbest.com", // Philip, 2026-09-28
+  "netconeniterprise.com", // Philip, 2026-09-28
+  "trustedvirtualteam.com", // Philip, 2026-09-28
+  "getlevelcore.com", // Philip, 2026-09-28
+  "aicontractor.shop", // Philip, 2026-09-28
+  "freeb2bdata.org", // Philip, 2026-09-28
+  "theprofessionalprofiles.com", // Philip, 2026-09-28
+  "businesscoachvas.com", // Philip, 2026-09-28
+  "getgatherup.com", // Philip, 2026-09-28
+  "propageprofiles.com", // Philip, 2026-09-28
+  "digitalmarketingvas.com", // Philip, 2026-09-28
+  "virtualeaseservice.com", // Philip, 2026-09-28
+  "broadtradegroups.com", // Philip, 2026-09-28
 ];
 
 // Websites confirmed spammers promote. A lead that MENTIONS one of these (or any

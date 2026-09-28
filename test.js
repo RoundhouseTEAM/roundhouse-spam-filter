@@ -92,6 +92,71 @@ const MUST_BLOCK = [
     message: "Need a quote for a water heater.",
   },
   {
+    label: "flick.caredogbest.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@flick.caredogbest.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "netconeniterprise.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@netconeniterprise.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "trustedvirtualteam.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@trustedvirtualteam.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "getlevelcore.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@getlevelcore.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "aicontractor.shop sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@aicontractor.shop", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "freeb2bdata.org sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@freeb2bdata.org", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "theprofessionalprofiles.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@theprofessionalprofiles.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "businesscoachvas.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@businesscoachvas.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "getgatherup.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@getgatherup.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "propageprofiles.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@propageprofiles.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "digitalmarketingvas.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@digitalmarketingvas.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "virtualeaseservice.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@virtualeaseservice.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "broadtradegroups.com sender address (Philip, 2026-09-28)",
+    name: "Redacted Sender", email: "info@broadtradegroups.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
     label: "bot template in the name field",
     name: "I would like more information please contact me by email", email: "sender@gmail.com", phone: "5551234567",
     message: "Need a quote",
