@@ -83,7 +83,10 @@ export interface LeadFormClassNames {
 export interface LeadFormProps {
   /** Defaults to "/api/contact". */
   endpoint?: string;
-  /** The business phone, shown in the offline / delivery-failed messages. */
+  /**
+   * The business phone, shown in the offline / delivery-failed messages. A site that
+   * publishes no phone passes an email address; the messages then say "email us at".
+   */
   phone: string;
   /** Fields beyond the standard four, e.g. [{ name: "address", label: "Address" }]. */
   extraFields?: ExtraField[];

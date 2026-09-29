@@ -5,7 +5,10 @@ export interface LeadConfig {
   site: string;
   /** Shown in the email subject and heading, e.g. "Power Construction". */
   businessName: string;
-  /** Display phone, used in the "please call us" messages, e.g. "(609) 555-0100". */
+  /**
+   * Display phone, used in the "please call us" messages, e.g. "(609) 555-0100". A site that
+   * publishes no phone passes an email address instead; the messages then say "email us at".
+   */
   phone: string;
   /** Domain fragments. ALWAYS include "localhost" and ".vercel.app". */
   allowedOrigins: string[];

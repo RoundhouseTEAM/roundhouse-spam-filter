@@ -9,6 +9,8 @@ import {
   suggestEmail,
   MESSAGES,
   MESSAGE_MAX,
+  offlineMessage,
+  deliveryFailedMessage,
 } from "./validate.js";
 
 let passed = 0;
@@ -155,6 +157,13 @@ test("checkbox (consent): required means checked; custom message allowed", () =>
 
 test("every error is reported at once, keyed by field", () => {
   assert.deepEqual(Object.keys(validateLead({})).sort(), ["email", "message", "name", "phone"]);
+});
+
+test("fallback messages: a phone says call, an email says email", () => {
+  assert.match(deliveryFailedMessage("(512) 555-0100"), /Please call us at \(512\) 555-0100 and/);
+  assert.match(offlineMessage("(512) 555-0100"), /or call us at \(512\) 555-0100\.$/);
+  assert.match(deliveryFailedMessage("sue@example.org"), /Please email us at sue@example\.org and/);
+  assert.match(offlineMessage("sue@example.org"), /or email us at sue@example\.org\.$/);
 });
 
 console.log(`validate: ${passed} passed`);

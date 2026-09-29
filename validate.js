@@ -47,14 +47,22 @@ export function isChecked(value) {
   return /^(yes|on|true|1)$/i.test(String(value ?? "").trim());
 }
 
+/**
+ * "call us at (512) 555-0100" — or "email us at x@y.org" when a site publishes no phone
+ * (TAWS, 2026-09-29: its officers took their numbers off the site for security).
+ */
+function reachUs(contact) {
+  return String(contact).includes("@") ? `email us at ${contact}` : `call us at ${contact}`;
+}
+
 /** Shown when the request never reached the server (visitor offline, network drop). */
 export function offlineMessage(phone) {
-  return `We couldn't reach our server. Check your connection and try again, or call us at ${phone}.`;
+  return `We couldn't reach our server. Check your connection and try again, or ${reachUs(phone)}.`;
 }
 
 /** Shown when the lead reached the server but could not be recorded anywhere. */
 export function deliveryFailedMessage(phone) {
-  return `We couldn't send your request. Please call us at ${phone} and we'll take care of it.`;
+  return `We couldn't send your request. Please ${reachUs(phone)} and we'll take care of it.`;
 }
 
 /**

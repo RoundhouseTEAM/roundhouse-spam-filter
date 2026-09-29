@@ -31,6 +31,7 @@ export declare const MESSAGE_MAX_LINKS: number;
 export declare const STANDARD_FIELDS: string[];
 export declare const MESSAGES: Record<string, string>;
 
+/** `phone` may be an email address, for a site that publishes no phone. */
 export declare function offlineMessage(phone: string): string;
 export declare function deliveryFailedMessage(phone: string): string;
 export declare function isChecked(value: unknown): boolean;
