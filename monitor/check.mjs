@@ -13,7 +13,8 @@
  *      message — proving the form hydrated and its submit handler runs.
  *   4. Nothing was sent: no request to /api/contact. Client-side validation stops the
  *      submit, so no lead, email, sheet row or blocked-log row is ever created.
- * And per site: the thank-you page loads with a click-to-call link.
+ * And per site: the thank-you page loads with a click-to-call link (a site with
+ * "noPhone": true only has to load — TAWS asked for no phone number on its site).
  *
  * END-TO-END (sites with "e2e": true, package 2.7.0+): it also submits ONE valid lead through
  * the first form page, in the real browser, with the `x-roundhouse-monitor` secret header.
@@ -236,12 +237,12 @@ async function checkEndToEnd(browser, siteName, url) {
   }
 }
 
-async function checkThankYou(siteName, url) {
+async function checkThankYou(siteName, url, noPhone) {
   try {
     const res = await fetch(url, { headers: { "User-Agent": "RoundhouseFormMonitor/1.0" }, redirect: "follow" });
     if (res.status !== 200) throw new Error(`thank-you page returned HTTP ${res.status}`);
     const html = await res.text();
-    if (!html.includes("tel:")) throw new Error("thank-you page has no click-to-call link");
+    if (!noPhone && !html.includes("tel:")) throw new Error("thank-you page has no click-to-call link");
     passes.push(`${siteName}: ${url}`);
   } catch (err) {
     failures.push({ site: siteName, url, problem: err.message });
@@ -253,7 +254,7 @@ try {
   for (const site of selected) {
     for (const url of site.formPages) await checkFormPage(browser, site.name, url);
     if (site.e2e) await checkEndToEnd(browser, site.name, site.formPages[0]);
-    if (site.thankYou) await checkThankYou(site.name, site.thankYou);
+    if (site.thankYou) await checkThankYou(site.name, site.thankYou, site.noPhone);
   }
 } finally {
   await browser.close();
