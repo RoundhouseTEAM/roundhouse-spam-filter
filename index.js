@@ -74,6 +74,8 @@ export const BLOCKED_SITES = [
 export const BLOCKED_MESSAGES = [
   // Indiana Flow + Alpha Omega, Sept 2026 — every one with a fake (202) 555-01xx phone.
   "I would like more information. Please contact me by email",
+  // Philip, 2026-10-12 — newsletter sign-up bot; no plumbing site has a newsletter.
+  "I'm interested in your newsletter. I want to stay informed",
 ];
 
 // Withheld keywords (Philip, 2026-09-22). Any of these as a whole word in the MESSAGE or a
