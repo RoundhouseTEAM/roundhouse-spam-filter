@@ -114,6 +114,20 @@
       "thankYou": "https://texaswatersheds.org/thank-you",
       "noPhone": true,
       "e2e": true
+    },
+    {
+      "name": "Simply Plumbing",
+      "formPages": [
+        "https://simplyplumbingtn.com/contact/",
+        "https://simplyplumbingtn.com/lp/plumber/",
+        "https://simplyplumbingtn.com/lp/franklin/",
+        "https://simplyplumbingtn.com/lp/water-heaters/",
+        "https://simplyplumbingtn.com/lp/tankless-water-heaters/",
+        "https://simplyplumbingtn.com/lp/gas-lines/",
+        "https://simplyplumbingtn.com/lp/drain-cleaning/"
+      ],
+      "thankYou": "https://simplyplumbingtn.com/contact/success/",
+      "e2e": true
     }
   ]
 }
