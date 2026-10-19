@@ -187,6 +187,11 @@ const MUST_BLOCK = [
     message: "Need a quote for a water heater.",
   },
   {
+    label: "jadetradeapp.com sender address (Philip, 2026-10-19)",
+    name: "Redacted Sender", email: "info@jadetradeapp.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
     label: "bot template in the name field",
     name: "I would like more information please contact me by email", email: "sender@gmail.com", phone: "5551234567",
     message: "Need a quote",

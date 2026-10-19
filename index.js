@@ -55,6 +55,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "virtualeaseservice.com", // Philip, 2026-09-28
   "broadtradegroups.com", // Philip, 2026-09-28
   "buildmyshoptech.com", // Philip, 2026-10-19
+  "jadetradeapp.com", // Philip, 2026-10-19
 ];
 
 // Websites confirmed spammers promote. A lead that MENTIONS one of these (or any
