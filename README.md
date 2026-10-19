@@ -145,6 +145,64 @@ Because **every rejection path returns a fake success**, a form can never be ver
 by submitting it and seeing "thanks". Confirm a real email arrived, or read the
 Vercel runtime logs.
 
+## Facebook / Instagram lead forms — `meta-lead` (2.24.0)
+
+Meta never emails instant-form leads; they sit in the Page's Leads Center. `handleMetaLead`
+is a webhook that turns each one into an ordinary lead and sends it down **the same delivery
+path** as the contact form (`deliverLead` in lead.js): full lead in the Vercel logs first,
+then the client sheet + Resend email in parallel, then the central log for flags and partial
+failures. Subject "New Lead — Name | Business"; the email shows Source "Facebook lead form ·
+form … · ad …" plus the ad name, campaign, platform and Meta lead id.
+
+```ts
+// app/api/meta-lead/route.ts — config only; reuse the contact route's LEAD_CONFIG
+import { handleMetaLead, type MetaLeadConfig } from "@roundhouse/spam-filter/meta-lead";
+import { LEAD_CONFIG } from "../contact/route"; // or a shared app/lib module
+export const runtime = "nodejs";
+export const maxDuration = 60;
+const META_CONFIG: MetaLeadConfig = {
+  ...LEAD_CONFIG,
+  // Question key (or its text) → lead field. Everything unmapped, ZIP included, becomes a
+  // "Question: answer" line in the message, so the client's sheet columns hold it all.
+  metaFields: { what_do_you_need_help_with: "service" },
+  // Delivered AND flagged — never withheld.
+  metaFlagAnswers: { is_this_for_your_home: ["No, a business"] },
+};
+export const GET = (req: Request) => handleMetaLead(req, META_CONFIG);  // verify handshake
+export const POST = (req: Request) => handleMetaLead(req, META_CONFIG); // leads
+```
+
+Env vars (Production + Preview): `META_APP_SECRET` (app → Settings → Basic), `META_VERIFY_TOKEN`
+(any long random string, typed into the app's Webhooks settings too), `META_LEAD_TOKEN`
+(system-user token — or the Page token it yields from `GET /{page-id}?fields=access_token` —
+with `leads_retrieval`, `pages_manage_metadata`, `pages_show_list`, `pages_read_engagement`,
+`pages_manage_ads`, `ads_management`; the system user also needs access in the Page's Leads
+Access Manager), `META_PAGE_ID` (the client's Page id — leads for any other Page are
+skipped, because one Meta app has ONE webhook URL for every Page it's subscribed to).
+`checkLeadEnv(META_LEAD_ENV_VARS)` in next.config makes a production build fail without them.
+
+**When in doubt, deliver it** applies in full:
+
+| Situation | Result |
+|---|---|
+| Normal lead | Delivered |
+| A flagged answer ("No, a business"), a phone that isn't 10 digits, a blank answer | Delivered + `delivered-flagged` |
+| Lead Ads Testing Tool dummy data | Delivered + flagged "Meta test lead" |
+| Signature doesn't verify, lead fetches fine | Delivered + flagged (a wrong `META_APP_SECRET` can't drop leads) |
+| Signature doesn't verify AND the lead id can't be read | 403, `meta-signature` row (not from Meta) |
+| Lead can't be fetched (token, permission, Graph down) | `meta-fetch-failed` row — **always urgent**, with every id to find it in Leads Center; 500 so Meta retries |
+| Sheet and email both fail | `delivery-failed` (urgent), 500 so Meta retries |
+| Blocklisted email domain/phone, bot template, `BLOCKED_KEYWORDS`, link markup | Withheld, logged in full (same rules as the form) |
+| Lead for another Page | Skipped, `meta-other-page` row |
+
+Meta retries a webhook that doesn't get a 200; a lead already captured on the warm instance
+is not sent twice. Automation signals, origin, honeypot and per-IP limits don't apply — the
+request is Meta's server, not a browser. No conversions fire (Meta counts its own leads).
+
+**Verify with Meta's Lead Ads Testing Tool** (developers.facebook.com/tools/lead-ads-testing),
+then confirm the email and the sheet row actually arrived — or read `[lead] RECEIVED … (Facebook
+lead form)` in the Vercel logs. A 200 alone proves nothing.
+
 ## Daily monitor, spike alerts and bounce alerts (2.7.0)
 
 - **End-to-end test lead.** `monitor/check.mjs` (GitHub Action, 12:00 UTC) submits one valid

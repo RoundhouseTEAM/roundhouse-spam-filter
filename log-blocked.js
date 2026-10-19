@@ -86,7 +86,17 @@ const NEVER_URGENT_LAYERS = new Set([
   "template",
   // SEO / digital-marketing pitch (BLOCKED_KEYWORDS). Philip, 2026-09-22: record it, don't alert.
   "blocked-keyword",
+  // A POST to /api/meta-lead whose signature didn't verify AND whose lead id our token
+  // couldn't read — not from Meta, and there is no lead behind it.
+  "meta-signature",
 ]);
+
+/**
+ * Layers that always alert, whatever the row holds. A Facebook lead whose details
+ * couldn't be fetched from Meta arrives with no name or phone to judge by, yet a real
+ * person is waiting in Meta's Leads Center.
+ */
+const ALWAYS_URGENT_LAYERS = new Set(["meta-fetch-failed"]);
 
 /** Rows that record a lead the client DID receive — shown as "Yes" in the Delivered column. */
 function isDelivered(layer) {
@@ -110,6 +120,7 @@ export function looksLikeRealEnquiry(row) {
  * Everything is logged either way — this only decides the urgency of the read.
  */
 function isUrgent(row) {
+  if (ALWAYS_URGENT_LAYERS.has(row.layer)) return true;
   if (NEVER_URGENT_LAYERS.has(row.layer)) return false;
   // The client HAS a delivered lead, so there is nothing to rescue — except when only
   // the sheet caught it: a client who works from their inbox won't see it, and a

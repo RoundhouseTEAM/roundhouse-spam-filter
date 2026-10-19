@@ -63,5 +63,18 @@ export declare function automationSignals(input: {
   openMs: number | null;
 }): { strong: string[]; weak: string[]; honeypot: string };
 export declare function sheetAccepted(res: Response): Promise<{ ok: boolean; detail: string }>;
+/** Rules whose match withholds a lead (logged in full) rather than flagging it. */
+export declare const WITHHELD_CONTENT_RULES: Set<string>;
+/** Steps 8–9: client sheet + Resend email in parallel, then the central log. Shared with meta-lead. */
+export declare function deliverLead(input: {
+  site: string;
+  config: LeadConfig;
+  lead: Record<string, string>;
+  leadId: string;
+  record: Record<string, unknown>;
+  flags?: string[];
+  logFields: Record<string, unknown>;
+  emailOpts?: { heading?: string; sourceLabel?: string; details?: Array<[string, string]> };
+}): Promise<{ captured: boolean; sheet: unknown; email: unknown }>;
 export declare function handleLead(req: Request, config: LeadConfig): Promise<Response>;
 export default handleLead;

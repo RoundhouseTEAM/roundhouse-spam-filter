@@ -107,7 +107,7 @@ export function isMonitorRequest(req) {
 }
 
 /** Checks whose failure means the request did not come from a person on our form. */
-const WITHHELD_CONTENT_RULES = new Set(["email-domain", "phone", "mention", "link-markup", "template", "blocked-keyword"]);
+export const WITHHELD_CONTENT_RULES = new Set(["email-domain", "phone", "mention", "link-markup", "template", "blocked-keyword"]);
 
 /**
  * Double-click guard. In-memory on purpose: a repeat click lands a second or two later
@@ -303,7 +303,7 @@ export async function sheetAccepted(res) {
   return { ok: true, detail: "" };
 }
 
-function emailHtml(lead, config) {
+function emailHtml(lead, config, opts = {}) {
   const color = config.brandColor || "#10244C";
   const cell = "padding:8px 10px;border:1px solid #e2e8f0;vertical-align:top;";
   const row = (label, value) =>
@@ -312,18 +312,26 @@ function emailHtml(lead, config) {
     .filter((f) => lead[f.name])
     .map((f) => row(f.label || f.name, esc(lead[f.name])))
     .join("");
+  // Rows the caller adds below the lead, e.g. the Meta form and ad ids.
+  const details = (opts.details ?? []).map(([label, value]) => row(label, esc(value))).join("");
   const sheet = config.leadsSheetUrl
     ? `<p style="margin:24px 0 0;"><a href="${esc(config.leadsSheetUrl)}" style="display:inline-block;background:${esc(color)};color:#fff;padding:12px 22px;font-weight:bold;text-decoration:none;border-radius:6px;">View all leads</a></p>`
     : "";
+  const source = !lead.source
+    ? "Unknown"
+    : /^https?:\/\//i.test(lead.source)
+      ? `<a href="${esc(lead.source)}">${esc(lead.source)}</a>`
+      : esc(lead.source);
   return `<div style="font-family:Arial,sans-serif;max-width:560px;color:#111827;">
-  <h2 style="color:${esc(color)};margin:0 0 16px;">New lead from the ${esc(config.businessName)} website</h2>
+  <h2 style="color:${esc(color)};margin:0 0 16px;">${esc(opts.heading ?? `New lead from the ${config.businessName} website`)}</h2>
   <table style="border-collapse:collapse;width:100%;">
     ${row("Name", esc(lead.name))}
     ${row("Phone", `<a href="tel:+1${esc(lead.phoneDigits)}" style="font-weight:bold;">${esc(lead.phone)}</a>`)}
     ${row("Email", `<a href="mailto:${esc(lead.email)}">${esc(lead.email)}</a>`)}
     ${extras}
     ${row("Message", `<span style="white-space:pre-wrap;">${esc(lead.message)}</span>`)}
-    ${row("Page", lead.source ? `<a href="${esc(lead.source)}">${esc(lead.source)}</a>` : "Unknown")}
+    ${row(opts.sourceLabel ?? "Page", source)}
+    ${details}
   </table>
   ${sheet}
 </div>`;
@@ -379,7 +387,7 @@ async function deliverToSheet(site, config, lead, leadId) {
   }
 }
 
-async function deliverByEmail(site, config, lead) {
+async function deliverByEmail(site, config, lead, emailOpts) {
   const apiKey = config.resendApiKey ?? process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.error(`[lead] ${site}: RESEND_API_KEY is not set — lead email not sent`);
@@ -394,9 +402,9 @@ async function deliverByEmail(site, config, lead) {
         body: JSON.stringify({
           from: config.from ?? `${config.businessName} Leads <leads@resend.getroundhouse.com>`,
           to: config.recipients,
-          reply_to: lead.email,
-          subject: `${config.subjectPrefix ?? ""}New Lead — ${lead.name} | ${config.businessName}`,
-          html: emailHtml(lead, config),
+          ...(lead.email ? { reply_to: lead.email } : {}),
+          subject: `${config.subjectPrefix ?? ""}New Lead — ${lead.name || "(no name)"} | ${config.businessName}`,
+          html: emailHtml(lead, config, emailOpts),
         }),
       },
       EMAIL_TIMEOUT_MS
@@ -411,6 +419,66 @@ async function deliverByEmail(site, config, lead) {
     console.error(`[lead] ${site}: Resend send error`, err);
     return { ok: false, detail: `request failed: ${String(err?.name === "AbortError" ? "timed out" : err).slice(0, 160)}` };
   }
+}
+
+/**
+ * Steps 8–9, shared by handleLead and handleMetaLead: the client sheet and the Resend
+ * email in parallel (each counts only on a verified answer), then the central log for
+ * flags and any partial failure. The caller has already written the full lead to the
+ * Vercel logs (step 7). Never throws.
+ *
+ * @returns {Promise<{ captured: boolean, sheet: object, email: object }>}
+ */
+export async function deliverLead({ site, config, lead, leadId, record, flags = [], logFields, emailOpts }) {
+  // 8. Deliver — in parallel, so a slow Apps Script can't eat the email's time.
+  const [sheet, email] = await Promise.all([
+    deliverToSheet(site, config, lead, leadId),
+    deliverByEmail(site, config, lead, emailOpts),
+  ]);
+
+  // 9. Log what happened — after the response where the platform allows, so the
+  // visitor never waits on the central log. Delivered rows carry Delivered = Yes.
+  // A sheet that ran but couldn't confirm still counts as captured for the visitor
+  // (the script finished), but is always logged so someone checks.
+  const captured = email.ok || sheet.ok || sheet.unconfirmed;
+  const logs = [];
+  if (!captured) {
+    console.error(`[lead] UNDELIVERED LEAD ${site}`, JSON.stringify(record));
+    logs.push(
+      logBlocked({
+        ...logFields,
+        layer: "delivery-failed",
+        matched: `sheet: ${sheet.detail} | email: ${email.detail} — recover the lead from this row`,
+      })
+    );
+  } else {
+    if (!email.ok) {
+      logs.push(
+        logBlocked({
+          ...logFields,
+          layer: "delivered-email-failed",
+          matched: sheet.ok
+            ? `email failed (${email.detail}) — the client's sheet confirmed the row`
+            : `email failed (${email.detail}) — the sheet script ran but its answer couldn't be read: CHECK the client's sheet for this lead`,
+        })
+      );
+    }
+    if (email.ok && !sheet.ok && sheet.configured) {
+      logs.push(
+        logBlocked({
+          ...logFields,
+          layer: sheet.unconfirmed ? "delivered-sheet-unconfirmed" : "delivered-sheet-failed",
+          matched: `${sheet.unconfirmed ? "sheet unconfirmed" : "sheet failed"} (${sheet.detail}) — the email was sent`,
+        })
+      );
+    }
+    if (flags.length) {
+      logs.push(logBlocked({ ...logFields, layer: "delivered-flagged", matched: flags.join(" | ") }));
+    }
+  }
+  await afterResponse(Promise.all(logs));
+
+  return { captured, sheet, email };
 }
 
 /**
@@ -603,53 +671,8 @@ export async function handleLead(req, config) {
       });
     }
 
-    // 8. Deliver — in parallel, so a slow Apps Script can't eat the email's time.
-    const [sheet, email] = await Promise.all([
-      deliverToSheet(site, config, lead, leadId),
-      deliverByEmail(site, config, lead),
-    ]);
-
-    // 9. Log what happened — after the response where the platform allows, so the
-    // visitor never waits on the central log. Delivered rows carry Delivered = Yes.
-    // A sheet that ran but couldn't confirm still counts as captured for the visitor
-    // (the script finished), but is always logged so someone checks.
-    const captured = email.ok || sheet.ok || sheet.unconfirmed;
-    const logs = [];
-    if (!captured) {
-      console.error(`[lead] UNDELIVERED LEAD ${site}`, JSON.stringify(record));
-      logs.push(
-        logBlocked({
-          ...logFields,
-          layer: "delivery-failed",
-          matched: `sheet: ${sheet.detail} | email: ${email.detail} — recover the lead from this row`,
-        })
-      );
-    } else {
-      if (!email.ok) {
-        logs.push(
-          logBlocked({
-            ...logFields,
-            layer: "delivered-email-failed",
-            matched: sheet.ok
-              ? `email failed (${email.detail}) — the client's sheet confirmed the row`
-              : `email failed (${email.detail}) — the sheet script ran but its answer couldn't be read: CHECK the client's sheet for this lead`,
-          })
-        );
-      }
-      if (email.ok && !sheet.ok && sheet.configured) {
-        logs.push(
-          logBlocked({
-            ...logFields,
-            layer: sheet.unconfirmed ? "delivered-sheet-unconfirmed" : "delivered-sheet-failed",
-            matched: `${sheet.unconfirmed ? "sheet unconfirmed" : "sheet failed"} (${sheet.detail}) — the email was sent`,
-          })
-        );
-      }
-      if (flags.length) {
-        logs.push(logBlocked({ ...logFields, layer: "delivered-flagged", matched: flags.join(" | ") }));
-      }
-    }
-    await afterResponse(Promise.all(logs));
+    // 8–9. Deliver and log.
+    const { captured } = await deliverLead({ site, config, lead, leadId, record, flags, logFields });
 
     if (!captured) {
       const msg = deliveryFailedMessage(businessPhone);

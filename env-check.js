@@ -14,6 +14,9 @@
  */
 export const LEAD_ENV_VARS = ["RESEND_API_KEY", "GOOGLE_SHEET_WEBHOOK", "BLOCKED_LOG_WEBHOOK"];
 
+/** Also required on a site with a Meta lead-form webhook (app/api/meta-lead): checkLeadEnv(META_LEAD_ENV_VARS). */
+export const META_LEAD_ENV_VARS = [...LEAD_ENV_VARS, "META_APP_SECRET", "META_VERIFY_TOKEN", "META_LEAD_TOKEN", "META_PAGE_ID"];
+
 export function checkLeadEnv(required = LEAD_ENV_VARS) {
   const missing = required.filter((k) => !process.env[k]);
   if (!missing.length) return;
