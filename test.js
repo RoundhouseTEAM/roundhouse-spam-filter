@@ -82,6 +82,26 @@ const MUST_BLOCK = [
     message: "Get 10,000 verified contractor leads at FreeB2BData.com today.",
   },
   {
+    label: "freelance writer pitch (Philip, 2026-10-20)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Hi, I'm a freelance writer and would love to contribute blog posts to your site.",
+  },
+  {
+    label: "freelance writers, plural, hyphenated",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Our team of Freelance-Writers can keep your blog updated every week.",
+  },
+  {
+    label: "melottogroup.com sender address (Philip, 2026-10-20)",
+    name: "Redacted Sender", email: "info@melottogroup.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "lifebaselabs.com sender address (Philip, 2026-10-20)",
+    name: "Redacted Sender", email: "hello@mail.LifeBaseLabs.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
     label: "FreeB2BData as the name",
     name: "FreeB2BData", email: "sender@gmail.com", phone: "5551234567",
     message: "Can we send over a sample list?",

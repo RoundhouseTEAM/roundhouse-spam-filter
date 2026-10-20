@@ -58,6 +58,8 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "jadetradeapp.com", // Philip, 2026-10-19
   "jmailservice.com", // Philip, 2026-10-19
   "getproestimations.com", // Philip, 2026-10-19
+  "melottogroup.com", // Philip, 2026-10-20
+  "lifebaselabs.com", // Philip, 2026-10-20
 ];
 
 // Websites confirmed spammers promote. A lead that MENTIONS one of these (or any
@@ -94,6 +96,8 @@ export const BLOCKED_KEYWORDS = [
   "virtual assistants",
   "wikipedia", // "get your business a Wikipedia page" pitch, Philip 2026-09-25
   "free b2b data", // Philip 2026-09-25 — also matches "FreeB2BData" and freeb2bdata.com
+  "freelance writer", // content/guest-post pitch, Philip 2026-10-20
+  "freelance writers",
 ];
 
 // TLDs no real customer sends from.
