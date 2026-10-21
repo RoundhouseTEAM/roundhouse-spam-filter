@@ -98,6 +98,7 @@ export const BLOCKED_KEYWORDS = [
   "free b2b data", // Philip 2026-09-25 — also matches "FreeB2BData" and freeb2bdata.com
   "freelance writer", // content/guest-post pitch, Philip 2026-10-20
   "freelance writers",
+  "true review", // TrueReview pitch, Philip 2026-10-21 — also matches "TrueReview"
 ];
 
 // TLDs no real customer sends from.

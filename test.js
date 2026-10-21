@@ -92,6 +92,21 @@ const MUST_BLOCK = [
     message: "Our team of Freelance-Writers can keep your blog updated every week.",
   },
   {
+    label: "TrueReview pitch (Philip, 2026-10-21)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Hi! TrueReview helps local businesses collect more reviews on autopilot.",
+  },
+  {
+    label: "True Review, spaced",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "With True Review you can double your Google rating in 30 days.",
+  },
+  {
+    label: "TrueReview as the name",
+    name: "TrueReview", email: "sender@gmail.com", phone: "5551234567",
+    message: "Quick question about your reviews.",
+  },
+  {
     label: "melottogroup.com sender address (Philip, 2026-10-20)",
     name: "Redacted Sender", email: "info@melottogroup.com", phone: "5551234567",
     message: "Need a quote for a water heater.",

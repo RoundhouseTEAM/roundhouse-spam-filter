@@ -33,7 +33,7 @@ costs a client a job; a spam email costs them a delete. So `handleLead` **withho
 
 - an oversized body, or `Sec-Fetch-Site: cross-site`
 - a blocklisted email domain or phone number (confirmed repeat spammers), or a blocklisted site (`BLOCKED_SITES`) or number written into the name or message
-- a `BLOCKED_KEYWORDS` term in the message or a typed extra field (2.13.0): `seo`, `digital marketing`, `vas 4 hire`, `virtual assistant(s)`, `wikipedia`, `free b2b data` (2.15.0), `freelance writer(s)` (2.26.0). Multi-word terms also match run together ("VAs4Hire") and are checked in the name; single words like `seo` never are (Seo is a surname)
+- a `BLOCKED_KEYWORDS` term in the message or a typed extra field (2.13.0): `seo`, `digital marketing`, `vas 4 hire`, `virtual assistant(s)`, `wikipedia`, `free b2b data` (2.15.0), `freelance writer(s)` (2.26.0), `true review` (2.27.0, also "TrueReview"). Multi-word terms also match run together ("VAs4Hire") and are checked in the name; single words like `seo` never are (Seo is a surname)
 - a known bot template phrase (`BLOCKED_MESSAGES`, 2.12.0) **anywhere** in the name, message or an extra field, whatever else is written — e.g. "I would like more information. Please contact me by email". A deliberate exception to deliver-when-in-doubt (Philip, 2026-09-21)
 - HTML/BBCode link markup (`<a href=`, `[url=`, `[link=`) in any field (2.10.0) — link-spam bots paste it, people don't
 - a flood: over 30 deliverable submissions from one IP in 10 minutes
@@ -286,9 +286,9 @@ These all appear in **real paying leads** and must never be added:
 | `google` | Customers mention finding you on Google |
 | `marketing` alone | Too broad — use the longer phrases instead |
 
-**Exception (Philip, 2026-09-22, extended 2026-09-23, 2026-09-25 and 2026-10-20):** `BLOCKED_KEYWORDS` — `seo`,
+**Exception (Philip, 2026-09-22, extended 2026-09-23, 2026-09-25, 2026-10-20 and 2026-10-21):** `BLOCKED_KEYWORDS` — `seo`,
 `digital marketing`, `vas 4 hire`, `virtual assistant`, `virtual assistants`, `wikipedia`,
-`free b2b data` (also "FreeB2BData"), `freelance writer`, `freelance writers` — are
+`free b2b data` (also "FreeB2BData"), `freelance writer`, `freelance writers`, `true review` (also "TrueReview") — are
 **withheld**, not flagged. Whole words in the message and typed extra fields; multi-word
 terms also match run together and are checked in the name, single words never are
 (Seo is a surname). Philip's call: these pitches are never a client's lead.
