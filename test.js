@@ -117,6 +117,16 @@ const MUST_BLOCK = [
     message: "Need a quote for a water heater.",
   },
   {
+    label: "spiritaerospace.com sender address (Philip, 2026-10-22)",
+    name: "Redacted Sender", email: "info@SpiritAerospace.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
+    label: "copyspire.com sender address (Philip, 2026-10-22)",
+    name: "Redacted Sender", email: "hello@mail.copyspire.com", phone: "5551234567",
+    message: "Need a quote for a water heater.",
+  },
+  {
     label: "FreeB2BData as the name",
     name: "FreeB2BData", email: "sender@gmail.com", phone: "5551234567",
     message: "Can we send over a sample list?",

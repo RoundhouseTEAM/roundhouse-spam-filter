@@ -60,6 +60,8 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "getproestimations.com", // Philip, 2026-10-19
   "melottogroup.com", // Philip, 2026-10-20
   "lifebaselabs.com", // Philip, 2026-10-20
+  "spiritaerospace.com", // Philip, 2026-10-22
+  "copyspire.com", // Philip, 2026-10-22
 ];
 
 // Websites confirmed spammers promote. A lead that MENTIONS one of these (or any
