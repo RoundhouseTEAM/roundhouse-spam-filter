@@ -133,7 +133,9 @@
       "name": "The Dam Plumber",
       "formPages": [
         "https://thedamplumber.net/contact",
-        "https://thedamplumber.net/"
+        "https://thedamplumber.net/",
+        "https://thedamplumber.net/lp/commercial-plumbing/",
+        "https://thedamplumber.net/lp/sewer-jetting/"
       ],
       "thankYou": "https://thedamplumber.net/thank-you",
       "e2e": true
