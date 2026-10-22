@@ -62,6 +62,8 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "lifebaselabs.com", // Philip, 2026-10-20
   "spiritaerospace.com", // Philip, 2026-10-22
   "copyspire.com", // Philip, 2026-10-22
+  "onehello.site", // Philip, 2026-10-22
+  "mariasites.com", // Philip, 2026-10-22
 ];
 
 // Websites confirmed spammers promote. A lead that MENTIONS one of these (or any

@@ -224,6 +224,8 @@ for (const [label, body, headers, layer] of [
   ["melottogroup.com sender address (Philip, 2026-10-20)", goodLead({ email: "info@melottogroup.com" }), {}, "email-domain"],
   ["spiritaerospace.com sender address (Philip, 2026-10-22)", goodLead({ email: "info@spiritaerospace.com" }), {}, "email-domain"],
   ["copyspire.com sender address (Philip, 2026-10-22)", goodLead({ email: "info@copyspire.com" }), {}, "email-domain"],
+  ["onehello.site sender address (Philip, 2026-10-22)", goodLead({ email: "info@onehello.site" }), {}, "email-domain"],
+  ["mariasites.com sender address (Philip, 2026-10-22)", goodLead({ email: "info@mariasites.com" }), {}, "email-domain"],
   ["SEO in the message (Philip, 2026-09-22)", goodLead({ message: "Your SEO needs work, I can fix it." }), {}, "blocked-keyword"],
   ["digital marketing in an extra field", goodLead({ address: "Digital marketing for your company" }), {}, "blocked-keyword"],
   ["bot template in an extra field (address)", goodLead({ address: "12 Main St. I would like more information. Please contact me by email" }), {}, "template"],
