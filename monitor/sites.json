@@ -46,13 +46,13 @@
       "e2e": true
     },
     {
-      "name": "Alpha Omega Drains (landing pages)",
+      "name": "Alpha Omega Plumbing (ad landing pages)",
       "formPages": [
-        "https://drains.alphaomegahi.com/",
-        "https://drains.alphaomegahi.com/plumber",
-        "https://drains.alphaomegahi.com/pipe-lining"
+        "https://aoplumbinghi.com/lp/drain-cleaning/",
+        "https://aoplumbinghi.com/lp/plumber/",
+        "https://aoplumbinghi.com/lp/pipe-lining/"
       ],
-      "thankYou": "https://drains.alphaomegahi.com/thank-you",
+      "thankYou": "https://aoplumbinghi.com/contact/success/",
       "e2e": true
     },
     {
