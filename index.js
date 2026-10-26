@@ -103,6 +103,7 @@ export const BLOCKED_KEYWORDS = [
   "freelance writer", // content/guest-post pitch, Philip 2026-10-20
   "freelance writers",
   "true review", // TrueReview pitch, Philip 2026-10-21 — also matches "TrueReview"
+  "fine touch marketing", // Philip 2026-10-26 — also matches "FineTouchMarketing"
 ];
 
 // TLDs no real customer sends from.
@@ -113,6 +114,7 @@ export const BLOCKED_TLDS = [".bid", ".xyz", ".top", ".click", ".loan"];
 export const BLOCKED_PHONES = [
   "3072076448", // SEO spam: "Brown Miller" (Alpha Omega), "Anette Smith" (Newmans)
   "8058008141", // AdsMogul pitch, Philip 2026-09-17
+  "5164186310", // Fine Touch Marketing, Philip 2026-10-26
 ];
 
 // ── Keyword phrases ──────────────────────────────────────────────

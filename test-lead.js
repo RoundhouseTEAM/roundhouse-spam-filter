@@ -221,6 +221,8 @@ for (const [label, body, headers, layer] of [
   ["freelance writer in the message (Philip, 2026-10-20)", goodLead({ message: "I am a freelance writer offering guest posts for your blog." }), {}, "blocked-keyword"],
   ["TrueReview in the message (Philip, 2026-10-21)", goodLead({ message: "TrueReview can get your business more 5-star Google reviews." }), {}, "blocked-keyword"],
   ["TrueReview in the name field", goodLead({ name: "TrueReview" }), {}, "blocked-keyword"],
+  ["Fine Touch Marketing in the message (Philip, 2026-10-26)", goodLead({ message: "Fine Touch Marketing can get your phone ringing." }), {}, "blocked-keyword"],
+  ["Fine Touch Marketing in the name field", goodLead({ name: "Fine Touch Marketing" }), {}, "blocked-keyword"],
   ["melottogroup.com sender address (Philip, 2026-10-20)", goodLead({ email: "info@melottogroup.com" }), {}, "email-domain"],
   ["spiritaerospace.com sender address (Philip, 2026-10-22)", goodLead({ email: "info@spiritaerospace.com" }), {}, "email-domain"],
   ["copyspire.com sender address (Philip, 2026-10-22)", goodLead({ email: "info@copyspire.com" }), {}, "email-domain"],

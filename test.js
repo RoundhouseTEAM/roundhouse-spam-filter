@@ -107,6 +107,21 @@ const MUST_BLOCK = [
     message: "Quick question about your reviews.",
   },
   {
+    label: "Fine Touch Marketing pitch (Philip, 2026-10-26)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Hi, this is Fine Touch Marketing — we help plumbers get more calls.",
+  },
+  {
+    label: "FineTouchMarketing, run together",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Visit FineTouchMarketing to see our packages.",
+  },
+  {
+    label: "Fine Touch Marketing as the name",
+    name: "Fine Touch Marketing", email: "sender@gmail.com", phone: "5551234567",
+    message: "Quick question about your website.",
+  },
+  {
     label: "melottogroup.com sender address (Philip, 2026-10-20)",
     name: "Redacted Sender", email: "info@melottogroup.com", phone: "5551234567",
     message: "Need a quote for a water heater.",
@@ -465,6 +480,16 @@ const MUST_BLOCK = [
     label: "AdsMogul — their number in the phone field",
     name: "Redacted Sender", email: "sender@gmail.com", phone: "805-800-8141",
     message: "Quick question about your ads.",
+  },
+  {
+    label: "Fine Touch Marketing — their number in the phone field (2026-10-26)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "(516) 418-6310",
+    message: "Quick question about your website.",
+  },
+  {
+    label: "Fine Touch Marketing — their number in the message",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Call me back at 516-418-6310 when you have a minute.",
   },
   {
     label: "zacharyjackson.rocks email domain (2026-09-17)",
