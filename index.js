@@ -109,6 +109,7 @@ export const BLOCKED_KEYWORDS = [
   "freelance writers",
   "true review", // TrueReview pitch, Philip 2026-10-21 — also matches "TrueReview"
   "fine touch marketing", // Philip 2026-10-26 — also matches "FineTouchMarketing"
+  "ai receptionist", // KENVIX pitch to Dam Plumber, Philip 2026-10-27 — was a flag before
 ];
 
 // TLDs no real customer sends from.
@@ -216,7 +217,7 @@ export const SPAM_PHRASES = {
   aiAutomation: [
     "ai employee",
     "ai employees",
-    "ai receptionist",
+    // "ai receptionist" moved to BLOCKED_KEYWORDS (withheld) 2026-10-27.
     "ai voice agent",
     "ai chatbot",
     "ai agent for your business",

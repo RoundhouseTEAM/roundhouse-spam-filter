@@ -167,6 +167,16 @@ const MUST_BLOCK = [
     message: "Can we send over a sample list?",
   },
   {
+    label: "AI receptionist pitch (KENVIX → Dam Plumber, Philip 2026-10-27)",
+    name: "Sam Ashborn", email: "sam.hark.tasks@mailbox.org", phone: "8728709495",
+    message: "Saw you're a family-owned plumber out of Boulder City, NV. I'm Sam with KENVIX. Ava's a 24/7 AI receptionist that answers every call, books the job and sends you the details. Reply here and I'll set it up.",
+  },
+  {
+    label: "AI receptionist run together",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Try our AIReceptionist free for 14 days.",
+  },
+  {
     label: "werrex.com sender address (Philip, 2026-10-27)",
     name: "Redacted Sender", email: "sales@werrex.com", phone: "5551234567",
     message: "We help home service companies get more booked jobs every month.",
