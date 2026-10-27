@@ -167,6 +167,26 @@ const MUST_BLOCK = [
     message: "Can we send over a sample list?",
   },
   {
+    label: "werrex.com sender address (Philip, 2026-10-27)",
+    name: "Redacted Sender", email: "sales@werrex.com", phone: "5551234567",
+    message: "We help home service companies get more booked jobs every month.",
+  },
+  {
+    label: "werrex.com mentioned in the message, sent from gmail",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Can we talk this week? See www.werrex.com for what we do.",
+  },
+  {
+    label: "reply STOP opt-out footer (Philip, 2026-10-27)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "We can get your trucks wrapped for half price this month. To stop receiving these messages, reply STOP.",
+  },
+  {
+    label: "reply STOP footer, lowercase and no punctuation",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Quick question about your fleet. to stop receiving these messages reply stop",
+  },
+  {
     label: "freeb2bdata.com sender address",
     name: "Redacted Sender", email: "sales@freeb2bdata.com", phone: "5551234567",
     message: "Quick question about your customer list.",
@@ -515,6 +535,11 @@ const MUST_BLOCK = [
 ];
 
 const MUST_PASS = [
+  {
+    label: "customer who asks to stop texts but has a job",
+    name: "Redacted Customer", email: "customer@gmail.com", phone: "5551234567",
+    message: "Please stop texting my old number and call this one instead. The water heater is leaking in the garage.",
+  },
   {
     label: "customer who mentions company news but asks for a job",
     name: "Redacted Customer", email: "customer@gmail.com", phone: "5551234567",

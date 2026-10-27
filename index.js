@@ -64,6 +64,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "copyspire.com", // Philip, 2026-10-22
   "onehello.site", // Philip, 2026-10-22
   "mariasites.com", // Philip, 2026-10-22
+  "werrex.com", // Philip, 2026-10-27
 ];
 
 // Websites confirmed spammers promote. A lead that MENTIONS one of these (or any
@@ -88,6 +89,8 @@ export const BLOCKED_MESSAGES = [
   "I'm interested in your newsletter. I want to stay informed",
   // Philip, 2026-10-27 — "company news" subscription bot, same family as the newsletter one.
   "I'm interested in company news. Please let me know when I am subscribed",
+  // Philip, 2026-10-27 — SMS-style opt-out footer on bulk pitches.
+  "To stop receiving these messages, reply STOP",
 ];
 
 // Withheld keywords (Philip, 2026-09-22). Any of these as a whole word in the MESSAGE or a
