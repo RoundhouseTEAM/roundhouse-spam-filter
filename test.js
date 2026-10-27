@@ -47,6 +47,16 @@ const MUST_BLOCK = [
     message: "I’m interested in your newsletter.  I want to stay informed!",
   },
   {
+    label: "company news subscription bot template (Philip, 2026-10-27)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Hi! I'm interested in company news. Please let me know when I am subscribed. Please send me news and updates by email.",
+  },
+  {
+    label: "company news bot template, curly apostrophe and no greeting",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "I’m interested in company news.  Please let me know when I am subscribed!",
+  },
+  {
     label: "SEO alone in a message (Philip, 2026-09-22)",
     name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
     message: "Hi, I can get you more calls with local SEO. Can we talk this week?",
@@ -505,6 +515,11 @@ const MUST_BLOCK = [
 ];
 
 const MUST_PASS = [
+  {
+    label: "customer who mentions company news but asks for a job",
+    name: "Redacted Customer", email: "customer@gmail.com", phone: "5551234567",
+    message: "Saw your company news about the new truck. Can you send someone to look at our leaking water heater?",
+  },
   {
     label: "customer who mentions a newsletter but asks for a job",
     name: "Redacted Customer", email: "customer@gmail.com", phone: "5551234567",
