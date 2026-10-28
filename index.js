@@ -66,6 +66,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "mariasites.com", // Philip, 2026-10-22
   "werrex.com", // Philip, 2026-10-27
   "bangeshop.com", // Philip, 2026-10-28 — sender address or mentioned in the name/message
+  "elokons.com", // Integrated Plumbing, Philip 2026-10-28
 ];
 
 // Websites confirmed spammers promote. A lead that MENTIONS one of these (or any
