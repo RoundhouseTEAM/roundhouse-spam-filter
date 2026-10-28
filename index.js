@@ -123,6 +123,14 @@ export const BLOCKED_PHONES = [
   "5164186310", // Fine Touch Marketing, Philip 2026-10-26
 ];
 
+// Repeat offenders by name. Matched against the NAME field only, as whole words in order
+// (case, punctuation and spacing ignored), so "Hame Walls", "HAME WALLS." and
+// "Hame Walls - Growth Team" are withheld but "Shame Walls" is not. Only full names —
+// a lone first or last name would catch real customers.
+export const BLOCKED_NAMES = [
+  "hame walls", // Philip, 2026-10-28
+];
+
 // ── Keyword phrases ──────────────────────────────────────────────
 // Matched case-insensitively against name + message, with word boundaries.
 export const SPAM_PHRASES = {
@@ -320,6 +328,23 @@ export function findBlockedTemplate(text) {
 }
 
 /**
+ * A BLOCKED_NAMES entry in the name field, as whole words in order, or run together
+ * ("HameWalls").
+ * @returns {string} the name that matched, or "".
+ */
+export function findBlockedName(name) {
+  const bare = ` ${bareWords(name)} `;
+  if (!bare.trim()) return "";
+  const squashed = bare.replace(/ /g, "");
+  return (
+    BLOCKED_NAMES.find((n) => {
+      const bareN = bareWords(n);
+      return bare.includes(` ${bareN} `) || squashed === bareN.replace(/ /g, "");
+    }) ?? ""
+  );
+}
+
+/**
  * A BLOCKED_KEYWORDS term as a whole word ("seo" never fires inside "Seoul").
  * @returns {string} the keyword that matched, or "".
  */
@@ -385,6 +410,9 @@ export function checkSpam(input = {}) {
   if (phoneDigits && BLOCKED_PHONES.includes(phoneDigits)) {
     return { blocked: true, rule: "phone", reason: phoneDigits };
   }
+
+  const blockedName = findBlockedName(name);
+  if (blockedName) return { blocked: true, rule: "blocked-name", reason: blockedName };
 
   // A blocklisted site or number written INTO the name or message. Spammers put
   // their own number in the text and a real one in the phone field.

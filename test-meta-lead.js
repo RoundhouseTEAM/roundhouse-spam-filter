@@ -376,6 +376,14 @@ await test("hard withhold rules still apply: a blocklisted email domain is withh
   assert.equal(calls.blocked[0].name, "Jane Rivera");
 });
 
+await test("a blocked name (Hame Walls) is withheld from a Meta lead too", async () => {
+  const id = addLead({}, { full_name: "Hame Walls" });
+  const res = await handleMetaLead(post(webhookBody([id])), CONFIG);
+  assert.equal(res.status, 200);
+  assert.equal(calls.email.length, 0);
+  assert.equal(calls.blocked[0].layer, "blocked-name");
+});
+
 await test("non-leadgen webhooks and other objects are acknowledged and ignored", async () => {
   const raw = JSON.stringify({ object: "page", entry: [{ id: PAGE_ID, changes: [{ field: "feed", value: {} }] }] });
   const res = await handleMetaLead(post(raw), CONFIG);

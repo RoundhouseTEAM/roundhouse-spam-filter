@@ -210,6 +210,8 @@ await test("email HTML escapes visitor input", async () => {
 for (const [label, body, headers, layer] of [
   ["blocklisted phone", goodLead({ phone: "307-207-6448" }), {}, "phone"],
   ["blocklisted email domain", goodLead({ email: "sam@vettedvas.com" }), {}, "email-domain"],
+  ["blocklisted name: Hame Walls (Philip, 2026-10-28)", goodLead({ name: "Hame Walls" }), {}, "blocked-name"],
+  ["blocklisted name: HAME WALLS. with a company after it", goodLead({ name: "HAME WALLS. - Growth Team" }), {}, "blocked-name"],
   ["blocklisted site mentioned in message", goodLead({ message: "See www.AdsMogul.com for details" }), {}, "mention"],
   ["bot template message (Indiana Flow, 2026-09)", goodLead({ message: "I would like more information.  Please contact me by email!" }), {}, "template"],
   ["VAs 4 Hire in the message (Philip, 2026-09-23)", goodLead({ message: "VAs 4 Hire — trained assistants from $6/hr." }), {}, "blocked-keyword"],

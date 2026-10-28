@@ -17,6 +17,16 @@ import { checkSpam, checkOrigin, checkContent } from "./index.js";
 
 const MUST_BLOCK = [
   {
+    label: "blocked name: Hame Walls (Philip, 2026-10-28)",
+    name: "Hame Walls", email: "sender@gmail.com", phone: "5551234567",
+    message: "Hi, I need a quote for a water heater replacement.",
+  },
+  {
+    label: "blocked name run together: HameWalls",
+    name: "HameWalls", email: "sender@gmail.com", phone: "5551234567",
+    message: "Can someone call me back today?",
+  },
+  {
     label: "bot template message — Indiana Flow, Sept 2026",
     name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
     message: "I would like more information. Please contact me by email",
@@ -545,6 +555,16 @@ const MUST_BLOCK = [
 ];
 
 const MUST_PASS = [
+  {
+    label: "name that merely contains the blocked name's letters",
+    name: "Shame Wallsworth", email: "customer@gmail.com", phone: "5551234567",
+    message: "Our toilet keeps running, can you come out this week?",
+  },
+  {
+    label: "customer who only shares the blocked surname",
+    name: "Tom Walls", email: "customer@gmail.com", phone: "5551234567",
+    message: "Kitchen sink is backed up.",
+  },
   {
     label: "customer who asks to stop texts but has a job",
     name: "Redacted Customer", email: "customer@gmail.com", phone: "5551234567",

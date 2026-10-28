@@ -27,6 +27,9 @@ export declare function findBlockedKeyword(
 ): string;
 export declare const BLOCKED_TLDS: string[];
 export declare const BLOCKED_PHONES: string[];
+export declare const BLOCKED_NAMES: string[];
+/** The BLOCKED_NAMES entry found in the name field, or "". */
+export declare function findBlockedName(name: string): string;
 export declare const SPAM_PHRASES: Record<string, string[]>;
 
 /** HTML/BBCode link markup (`<a href=`, `[url=`) in the text, or "" when there is none. */
