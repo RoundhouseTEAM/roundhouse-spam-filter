@@ -41,6 +41,25 @@ const SUBMIT_TIMEOUT = 60_000;
 
 // A lead POST: /api/contact, or a per-page route like IrriGators' /api/contact-brandon.
 const isLeadPath = (url) => /^\/api\/contact(-[a-z0-9-]+)?$/.test(new URL(url).pathname.replace(/\/$/, ""));
+
+/*
+ * FAIL CLOSED. On 10/28–10/29/2026 the Brandon test lead reached the client: the page had
+ * moved to a route the monitor did not recognise (/api/contact-brandon), so the secret
+ * header was never attached and the site treated it as a real lead. The monitor therefore
+ * never lets a write request leave the browser unless it is marked as a test:
+ *   - form-page checks (an INVALID lead) abort every write request outright;
+ *   - the end-to-end check stamps the header on every write to the site's own domain and
+ *     aborts writes to any other host (a third-party form service would deliver for real).
+ */
+const isWrite = (req) => !["GET", "HEAD", "OPTIONS"].includes(req.method());
+// Vercel Web Analytics beacons are writes but never a lead.
+const isBeacon = (url) => new URL(url).pathname.startsWith("/_vercel/");
+const siteDomain = (host) => host.replace(/^www\./, "");
+const isSameSite = (reqUrl, pageUrl) => {
+  const host = new URL(reqUrl).hostname;
+  const base = siteDomain(new URL(pageUrl).hostname);
+  return host === base || host.endsWith("." + base);
+};
 /** Never let a monitor visit count in anyone's analytics or ad account. */
 const TRACKING_HOSTS = /googletagmanager\.com|google-analytics\.com|googleadservices\.com|doubleclick\.net|facebook\.(com|net)|clarity\.ms|analytics\.google\.com/;
 const NAV_TIMEOUT = 45_000;
@@ -64,10 +83,17 @@ async function checkFormPage(browser, siteName, url) {
   const page = await context.newPage();
   const leadRequests = [];
   const pageErrors = [];
-  page.on("request", (req) => {
-    if (req.method() === "POST" && isLeadPath(req.url())) {
-      leadRequests.push(req.url());
+  // This check submits an invalid lead and expects the browser to stop it. Should the form
+  // send anyway, the request dies here, so it can never become a lead.
+  await page.route("**/*", (route) => {
+    const req = route.request();
+    if (TRACKING_HOSTS.test(new URL(req.url()).hostname)) return route.abort();
+    if (isWrite(req) && !isBeacon(req.url())) {
+      // A chat or review widget's own writes are dropped quietly; only the site's count.
+      if (isSameSite(req.url(), page.url())) leadRequests.push(new URL(req.url()).pathname);
+      return route.abort();
     }
+    return route.continue();
   });
   page.on("pageerror", (err) => pageErrors.push(String(err.message || err).slice(0, 200)));
 
@@ -121,7 +147,7 @@ async function checkFormPage(browser, siteName, url) {
 
     // Give any (wrong) request a moment to go out before asserting none did.
     await page.waitForTimeout(1500);
-    if (leadRequests.length) throw new Error(`an invalid submission was sent to the server (${leadRequests[0]})`);
+    if (leadRequests.length) throw new Error(`an invalid submission tried to reach the server (${leadRequests[0]}; blocked by the monitor, nothing was delivered)`);
 
     passes.push(`${siteName}: ${url}`);
   } catch (err) {
@@ -143,15 +169,20 @@ async function checkEndToEnd(browser, siteName, url) {
   });
   const page = await context.newPage();
   const pageErrors = [];
+  const otherWrites = []; // same-site writes that are not a known lead route
+  const blockedWrites = []; // writes to another host, aborted
   page.on("pageerror", (err) => pageErrors.push(String(err.message || err).slice(0, 200)));
   try {
     await page.route("**/*", (route) => {
       const req = route.request();
       if (TRACKING_HOSTS.test(new URL(req.url()).hostname)) return route.abort();
-      if (req.method() === "POST" && isLeadPath(req.url())) {
-        return route.continue({ headers: { ...req.headers(), "x-roundhouse-monitor": MONITOR_SECRET } });
+      if (!isWrite(req)) return route.continue();
+      if (!isSameSite(req.url(), page.url())) {
+        blockedWrites.push(req.url());
+        return route.abort();
       }
-      return route.continue();
+      if (!isLeadPath(req.url()) && !isBeacon(req.url())) otherWrites.push(new URL(req.url()).pathname);
+      return route.continue({ headers: { ...req.headers(), "x-roundhouse-monitor": MONITOR_SECRET } });
     });
 
     const res = await page.goto(url, { waitUntil: "load", timeout: NAV_TIMEOUT });
@@ -211,7 +242,10 @@ async function checkEndToEnd(browser, siteName, url) {
     await form.locator('button[type="submit"]').first().click();
     const response = await responsePromise.catch(() => {
       throw new Error(
-        "submitting a valid lead never reached /api/contact" + (pageErrors.length ? ` (page errors: ${pageErrors.join(" | ")})` : "")
+        "submitting a valid lead never reached /api/contact" +
+          (blockedWrites.length ? ` (it posted to another host, blocked so nothing was delivered: ${blockedWrites.join(" | ")})` : "") +
+          (otherWrites.length ? ` (it posted to ${otherWrites.join(" | ")} — add that route to isLeadPath)` : "") +
+          (pageErrors.length ? ` (page errors: ${pageErrors.join(" | ")})` : "")
       );
     });
     const data = await response.json().catch(() => null);
