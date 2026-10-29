@@ -38,6 +38,9 @@ import { chromium } from "playwright";
 const PHONE_MESSAGE = "Please enter a 10-digit phone number.";
 const MONITOR_SECRET = process.env.LEAD_MONITOR_SECRET || "";
 const SUBMIT_TIMEOUT = 60_000;
+
+// A lead POST: /api/contact, or a per-page route like IrriGators' /api/contact-brandon.
+const isLeadPath = (url) => /^\/api\/contact(-[a-z0-9-]+)?$/.test(new URL(url).pathname.replace(/\/$/, ""));
 /** Never let a monitor visit count in anyone's analytics or ad account. */
 const TRACKING_HOSTS = /googletagmanager\.com|google-analytics\.com|googleadservices\.com|doubleclick\.net|facebook\.(com|net)|clarity\.ms|analytics\.google\.com/;
 const NAV_TIMEOUT = 45_000;
@@ -62,7 +65,7 @@ async function checkFormPage(browser, siteName, url) {
   const leadRequests = [];
   const pageErrors = [];
   page.on("request", (req) => {
-    if (req.method() === "POST" && new URL(req.url()).pathname.replace(/\/$/, "") === "/api/contact") {
+    if (req.method() === "POST" && isLeadPath(req.url())) {
       leadRequests.push(req.url());
     }
   });
@@ -145,7 +148,7 @@ async function checkEndToEnd(browser, siteName, url) {
     await page.route("**/*", (route) => {
       const req = route.request();
       if (TRACKING_HOSTS.test(new URL(req.url()).hostname)) return route.abort();
-      if (req.method() === "POST" && new URL(req.url()).pathname.replace(/\/$/, "") === "/api/contact") {
+      if (req.method() === "POST" && isLeadPath(req.url())) {
         return route.continue({ headers: { ...req.headers(), "x-roundhouse-monitor": MONITOR_SECRET } });
       }
       return route.continue();
@@ -202,7 +205,7 @@ async function checkEndToEnd(browser, siteName, url) {
     // A person takes more than a couple of seconds; so does the monitor.
     await page.waitForTimeout(3000);
     const responsePromise = page.waitForResponse(
-      (r) => r.request().method() === "POST" && new URL(r.url()).pathname.replace(/\/$/, "") === "/api/contact",
+      (r) => r.request().method() === "POST" && isLeadPath(r.url()),
       { timeout: SUBMIT_TIMEOUT }
     );
     await form.locator('button[type="submit"]').first().click();
