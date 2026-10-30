@@ -216,6 +216,8 @@ for (const [label, body, headers, layer] of [
   ["elokons.com mentioned in the message", goodLead({ message: "Visit www.Elokons.com today" }), {}, "mention"],
   ["renaissancedatalabs.com sender address (Philip, 2026-10-30)", goodLead({ email: "team@renaissancedatalabs.com" }), {}, "email-domain"],
   ["renaissancedatalabs.com mentioned in the message", goodLead({ message: "Book a demo at www.RenaissanceDataLabs.com" }), {}, "mention"],
+  ["ovbq.com sender address (Philip, 2026-10-30)", goodLead({ email: "info@ovbq.com" }), {}, "email-domain"],
+  ["ovbq.com mentioned in the message", goodLead({ message: "Details at www.OVBQ.com" }), {}, "mention"],
   ["blocklisted name: Hame Walls (Philip, 2026-10-28)", goodLead({ name: "Hame Walls" }), {}, "blocked-name"],
   ["blocklisted name: HAME WALLS. with a company after it", goodLead({ name: "HAME WALLS. - Growth Team" }), {}, "blocked-name"],
   ["blocklisted site mentioned in message", goodLead({ message: "See www.AdsMogul.com for details" }), {}, "mention"],
