@@ -71,6 +71,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "ovbq.com", // Philip, 2026-10-30
   "trygeobit.com", // Philip, 2026-11-02
   "estudiantes.areandina.edu.co", // Philip, 2026-11-02 — the student-mail subdomain only, not the university
+  "fronvia.com", // Philip, 2026-11-02
 ];
 
 // Individual spammer addresses on free mail providers, whose domain can't be blocked.
