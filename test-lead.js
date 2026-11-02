@@ -220,6 +220,8 @@ for (const [label, body, headers, layer] of [
   ["ovbq.com mentioned in the message", goodLead({ message: "Details at www.OVBQ.com" }), {}, "mention"],
   ["trygeobit.com sender address (Philip, 2026-11-02)", goodLead({ email: "hello@trygeobit.com" }), {}, "email-domain"],
   ["trygeobit.com mentioned in the message", goodLead({ message: "Try us at https://TryGeobit.com" }), {}, "mention"],
+  ["estudiantes.areandina.edu.co sender address (Philip, 2026-11-02)", goodLead({ email: "maria.lopez@Estudiantes.Areandina.edu.co" }), {}, "email-domain"],
+  ["estudiantes.areandina.edu.co mentioned in the message", goodLead({ message: "Write to me at estudiantes.areandina.edu.co" }), {}, "mention"],
   ["contractorsranked.com mentioned in the message (Philip, 2026-11-02)", goodLead({ message: "You're listed on www.ContractorsRanked.com - claim it" }), {}, "mention"],
   ["blocked address joannariggs3@gmail.com (Philip, 2026-11-02)", goodLead({ email: "JoannaRiggs3@gmail.com" }), {}, "email-address"],
   ["blocked gmail address with dots and a +tag", goodLead({ email: "joanna.riggs3+leads@gmail.com" }), {}, "email-address"],
