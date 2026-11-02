@@ -16,6 +16,8 @@ export interface SpamVerdict {
 
 export declare const BLOCKED_EMAIL_DOMAINS: string[];
 export declare const BLOCKED_SITES: string[];
+/** Individual spammer addresses on free mail providers (Gmail dots/"+tags" ignored). */
+export declare const BLOCKED_EMAILS: string[];
 export declare const BLOCKED_MESSAGES: string[];
 /** The BLOCKED_MESSAGES phrase found anywhere in the text, or "". */
 export declare function findBlockedTemplate(text: string): string;

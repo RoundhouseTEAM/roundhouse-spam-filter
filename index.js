@@ -69,6 +69,15 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "elokons.com", // Integrated Plumbing, Philip 2026-10-28
   "renaissancedatalabs.com", // Philip, 2026-10-30
   "ovbq.com", // Philip, 2026-10-30
+  "trygeobit.com", // Philip, 2026-11-02
+];
+
+// Individual spammer addresses on free mail providers, whose domain can't be blocked.
+// Lowercase. Gmail ignores dots and "+tags", so for gmail.com those are ignored here too
+// ("joanna.riggs3+x@gmail.com" is the same inbox). Withheld as the sender address or
+// when written into the name or message.
+export const BLOCKED_EMAILS = [
+  "joannariggs3@gmail.com", // Philip, 2026-11-02
 ];
 
 // Websites confirmed spammers promote. A lead that MENTIONS one of these (or any
@@ -76,6 +85,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
 // it was sent from. Bare domain, lowercase — subdomains and "www." are covered.
 export const BLOCKED_SITES = [
   "adsmogul.com", // ad-agency pitch, Philip 2026-09-17
+  "contractorsranked.com", // in the message body, Philip 2026-11-02
 ];
 
 // Bot template phrases. A submission with one of these ANYWHERE in a field a visitor
@@ -284,6 +294,19 @@ function containsPhrase(haystack, phrase) {
   return new RegExp(`${prefix}${escaped}${suffix}`, "i").test(haystack);
 }
 
+/** The BLOCKED_EMAILS entry this address is (Gmail dots and "+tags" ignored), or null. */
+function findBlockedEmail(address) {
+  const canonical = (value) => {
+    const [local = "", domain = ""] = String(value ?? "").trim().toLowerCase().split("@");
+    if (domain === "gmail.com" || domain === "googlemail.com") {
+      return `${local.split("+")[0].replace(/\./g, "")}@gmail.com`;
+    }
+    return `${local}@${domain}`;
+  };
+  const target = canonical(address);
+  return BLOCKED_EMAILS.find((e) => canonical(e) === target) ?? null;
+}
+
 /**
  * A blocklisted domain or phone number mentioned in free text. Domains match on a
  * label boundary ("www.adsmogul.com", "https://AdsMogul.com/x") but not inside a
@@ -291,6 +314,10 @@ function containsPhrase(haystack, phrase) {
  */
 function findBlockedMention(text) {
   const value = String(text ?? "").toLowerCase();
+  for (const address of value.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/g) ?? []) {
+    const hit = findBlockedEmail(address);
+    if (hit) return hit;
+  }
   for (const domain of [...BLOCKED_SITES, ...BLOCKED_EMAIL_DOMAINS]) {
     const re = new RegExp(`(^|[^a-z0-9-])${escapeRegex(domain)}(?![a-z0-9-]|\\.[a-z0-9])`);
     if (re.test(value)) return domain;
@@ -402,6 +429,11 @@ export function checkSpam(input = {}) {
     );
     if (hitDomain) {
       return { blocked: true, rule: "email-domain", reason: hitDomain };
+    }
+
+    const hitEmail = findBlockedEmail(emailNorm);
+    if (hitEmail) {
+      return { blocked: true, rule: "email-address", reason: hitEmail };
     }
 
     const hitTld = BLOCKED_TLDS.find((tld) => domain.endsWith(tld));
