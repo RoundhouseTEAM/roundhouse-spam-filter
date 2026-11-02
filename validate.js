@@ -130,6 +130,25 @@ export function isRequiredExtra(field) {
   return field.required !== false;
 }
 
+const QUESTION_START =
+  /^(are|is|am|do|does|did|have|has|had|was|were|will|would|can|could|should|how|what|which|when|where|who|why)\b/i;
+
+/**
+ * A label phrased as a question ("Are you a new customer?") can't be dropped into
+ * "Choose your …" / "Please enter your …" — it reads "Choose your are you a new customer?".
+ */
+export function isQuestionLabel(label) {
+  const l = String(label ?? "").trim();
+  return l.endsWith("?") || QUESTION_START.test(l);
+}
+
+/** Default text for a select's empty option when the site gives no placeholder. */
+export function selectPlaceholder(label) {
+  const l = String(label ?? "").trim().replace(/[\s:*]+$/, "");
+  if (!l || isQuestionLabel(l)) return "Choose one";
+  return `Choose your ${l.toLowerCase()}`;
+}
+
 function validateExtra(field, value) {
   const v = String(value ?? "").trim();
   const label = field.label || field.name;
@@ -138,13 +157,22 @@ function validateExtra(field, value) {
     // e.g. an express-consent checkbox (Proverbs, carried over from Duda).
     return required && !isChecked(v) ? field.requiredMessage || MESSAGES.consentMissing : "";
   }
+  const question = isQuestionLabel(label);
+  const hasOptions = Array.isArray(field.options) && field.options.length > 0;
   if (!v) {
-    return required ? field.requiredMessage || `Please enter your ${label.toLowerCase()}.` : "";
+    if (!required) return "";
+    if (field.requiredMessage) return field.requiredMessage;
+    if (question) return hasOptions ? "Please choose an answer." : "Please answer this question.";
+    return `Please enter your ${label.toLowerCase()}.`;
   }
   const max = field.maxLength ?? EXTRA_FIELD_MAX;
-  if (v.length > max) return `Please keep your ${label.toLowerCase()} under ${max} characters.`;
-  if (Array.isArray(field.options) && field.options.length && !field.options.includes(v)) {
-    return `Please choose your ${label.toLowerCase()} from the list.`;
+  if (v.length > max) {
+    return `Please keep your ${question ? "answer" : label.toLowerCase()} under ${max} characters.`;
+  }
+  if (hasOptions && !field.options.includes(v)) {
+    return question
+      ? "Please choose an answer from the list."
+      : `Please choose your ${label.toLowerCase()} from the list.`;
   }
   return "";
 }

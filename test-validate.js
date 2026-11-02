@@ -3,6 +3,8 @@
  */
 import assert from "node:assert/strict";
 import {
+  selectPlaceholder,
+  isQuestionLabel,
   validateLead,
   validateField,
   normalizePhone,
@@ -153,6 +155,27 @@ test("checkbox (consent): required means checked; custom message allowed", () =>
     { consent: "Please agree first." }
   );
   assert.deepEqual(validateLead(good, [{ ...extras[0], required: false }]), {});
+});
+
+test("question labels read naturally in the select placeholder and messages", () => {
+  assert.equal(selectPlaceholder("Area"), "Choose your area");
+  assert.equal(selectPlaceholder("Property type:"), "Choose your property type");
+  assert.equal(selectPlaceholder("Are you a new customer?"), "Choose one");
+  assert.equal(selectPlaceholder("How did you hear about us"), "Choose one");
+  assert.equal(selectPlaceholder(""), "Choose one");
+  assert.equal(isQuestionLabel("Issue"), false, "'Issue' is not 'Is …'");
+  assert.equal(isQuestionLabel("Whom to contact"), false);
+
+  const extras = [{ name: "customer", label: "Are you a new customer?", options: ["Yes", "No"] }];
+  assert.deepEqual(validateLead(good, extras), { customer: "Please choose an answer." });
+  assert.deepEqual(validateLead({ ...good, customer: "Maybe" }, extras), {
+    customer: "Please choose an answer from the list.",
+  });
+  assert.deepEqual(validateLead({ ...good, customer: "Yes" }, extras), {});
+  assert.deepEqual(
+    validateLead(good, [{ name: "source", label: "How did you hear about us?" }]),
+    { source: "Please answer this question." }
+  );
 });
 
 test("every error is reported at once, keyed by field", () => {

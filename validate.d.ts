@@ -37,6 +37,10 @@ export declare function deliveryFailedMessage(phone: string): string;
 export declare function isChecked(value: unknown): boolean;
 export declare function normalizePhone(raw: unknown): string;
 export declare function isRequiredExtra(field: ExtraField): boolean;
+/** True for a label phrased as a question, e.g. "Are you a new customer?". */
+export declare function isQuestionLabel(label: string): boolean;
+/** A select's default empty option: "Choose your area", or "Choose one" for a question label. */
+export declare function selectPlaceholder(label: string): string;
 export declare function validateField(name: string, value: unknown, extraFields?: ExtraField[]): string;
 export declare function validateLead(values?: Record<string, unknown>, extraFields?: ExtraField[]): Record<string, string>;
 export declare function suggestEmail(value: unknown): string;

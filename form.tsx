@@ -43,6 +43,7 @@ import {
   validateField,
   validateLead,
   isRequiredExtra,
+  selectPlaceholder,
   suggestEmail,
   offlineMessage,
   deliveryFailedMessage,
@@ -212,8 +213,8 @@ export default function LeadForm({
    * must say so there — otherwise a required box ("Describe your sprinkler issue...")
    * looks optional next to one that shows " *" (Brandon, 2026-09-16).
    */
-  const placeholderFor = (name: string, required: boolean) => {
-    const p = placeholders[name];
+  const placeholderFor = (name: string, required: boolean, fallback?: string) => {
+    const p = placeholders[name] ?? fallback;
     if (!p || !hideLabels || !requiredMark || !required || p.includes("*")) return p;
     return `${p} *`;
   };
@@ -385,7 +386,7 @@ export default function LeadForm({
       control = (
         <select {...common} defaultValue="">
           <option value="" disabled>
-            {placeholderFor(name, required) ?? `Choose your ${labelFor(name).toLowerCase()}`}
+            {placeholderFor(name, required, selectPlaceholder(labelFor(name)))}
           </option>
           {extra.options.map((o) => (
             <option key={o} value={o}>
