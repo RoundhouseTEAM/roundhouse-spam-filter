@@ -139,6 +139,17 @@
       ],
       "thankYou": "https://thedamplumber.net/thank-you",
       "e2e": true
+    },
+    {
+      "name": "Master Pro Plumber",
+      "formPages": [
+        "https://masterproplumber.com/contact/",
+        "https://masterproplumber.com/",
+        "https://masterproplumber.com/lp/plumber/",
+        "https://masterproplumber.com/lp/water-heaters/"
+      ],
+      "thankYou": "https://masterproplumber.com/contact/success/",
+      "e2e": true
     }
   ]
 }
