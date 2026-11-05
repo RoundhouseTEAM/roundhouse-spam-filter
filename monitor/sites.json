@@ -150,6 +150,15 @@
       ],
       "thankYou": "https://masterproplumber.com/contact/success/",
       "e2e": true
+    },
+    {
+      "name": "2 Brothers Plumbing",
+      "formPages": [
+        "https://www.2brosplumbing.com/contact/",
+        "https://www.2brosplumbing.com/"
+      ],
+      "thankYou": "https://www.2brosplumbing.com/contact/success/",
+      "e2e": true
     }
   ]
 }
