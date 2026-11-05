@@ -73,6 +73,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "estudiantes.areandina.edu.co", // Philip, 2026-11-02 — the student-mail subdomain only, not the university
   "fronvia.com", // Philip, 2026-11-02
   "kenvix.online", // Philip, 2026-11-03
+  "clarimart.com", // Philip, 2026-11-05
 ];
 
 // Individual spammer addresses on free mail providers, whose domain can't be blocked.
@@ -127,6 +128,7 @@ export const BLOCKED_KEYWORDS = [
   "true review", // TrueReview pitch, Philip 2026-10-21 — also matches "TrueReview"
   "fine touch marketing", // Philip 2026-10-26 — also matches "FineTouchMarketing"
   "ai receptionist", // KENVIX pitch to Dam Plumber, Philip 2026-10-27 — was a flag before
+  "united marketing", // United Marketing LLC pitch, Philip 2026-11-05 — with or without "LLC", also "UnitedMarketing"
 ];
 
 // TLDs no real customer sends from.

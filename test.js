@@ -142,6 +142,26 @@ const MUST_BLOCK = [
     message: "Quick question about your website.",
   },
   {
+    label: "United Marketing LLC pitch (Philip, 2026-11-05)",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Hello, I'm reaching out from United Marketing LLC about getting you more calls.",
+  },
+  {
+    label: "United Marketing, LLC with punctuation",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "United Marketing, LLC can help your business grow.",
+  },
+  {
+    label: "UnitedMarketing, run together",
+    name: "Redacted Sender", email: "sender@gmail.com", phone: "5551234567",
+    message: "Visit UnitedMarketing for our plans.",
+  },
+  {
+    label: "United Marketing LLC as the name",
+    name: "United Marketing LLC", email: "sender@gmail.com", phone: "5551234567",
+    message: "Quick question about your website.",
+  },
+  {
     label: "melottogroup.com sender address (Philip, 2026-10-20)",
     name: "Redacted Sender", email: "info@melottogroup.com", phone: "5551234567",
     message: "Need a quote for a water heater.",
