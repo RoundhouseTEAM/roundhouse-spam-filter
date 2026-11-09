@@ -34,6 +34,7 @@ export const MESSAGES = {
   phoneMissing: "Please enter your phone number.",
   phoneLength: "Please enter a 10-digit phone number.",
   phoneAreaCode: "That phone number doesn't look right — please check the area code.",
+  phoneNotReal: "That phone number doesn't look right — please enter a number we can call you back on.",
   emailMissing: "Please enter your email address.",
   emailInvalid: "Please enter a valid email address, like name@example.com.",
   messageMissing: "Please tell us a little about what you need.",
@@ -99,6 +100,29 @@ function validatePhone(value) {
   if (digits.length !== 10) return MESSAGES.phoneLength;
   // A US area code never starts with 0 or 1.
   if (/^[01]/.test(digits)) return MESSAGES.phoneAreaCode;
+  return phoneNeverReal(digits);
+}
+
+/**
+ * Numbers that can never be a person's phone, whoever types them — so a visible message is
+ * safe: a real person who mistyped fixes it, and no real lead can be stopped by it.
+ * (Philip, 2026-11-09, after a bot sent 711 and 900 numbers and another a run of
+ * (202) 555-01xx ones. Area codes that are merely UNASSIGNED are not here — a new overlay
+ * opens every year — they are an automation signal in lead.js instead.)
+ *
+ *   - N11 "area codes" (211, 311 … 911) are service codes, never an area code.
+ *   - 555 is not an area code, and 900 is pay-per-call — neither is anyone's phone.
+ *   - An exchange (digits 4–6) never starts with 0 or 1.
+ *   - 555-0100 to 555-0199 is reserved for films and TV in every area code.
+ *
+ * @param {string} digits  the 10 digits from normalizePhone()
+ * @returns {string} the message to show, or "" when the number could be real
+ */
+export function phoneNeverReal(digits) {
+  const area = digits.slice(0, 3);
+  if (/^[2-9]11$/.test(area) || area === "555" || area === "900") return MESSAGES.phoneAreaCode;
+  if (/^[01]/.test(digits.slice(3))) return MESSAGES.phoneNotReal;
+  if (/^55501\d\d$/.test(digits.slice(3))) return MESSAGES.phoneNotReal;
   return "";
 }
 

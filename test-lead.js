@@ -75,7 +75,7 @@ console.log = capture;
 const CONFIG = {
   site: "test-site",
   businessName: "Test Plumbing",
-  phone: "(512) 555-0199",
+  phone: "(512) 555-2199",
   allowedOrigins: ["testplumbing.com", "localhost", ".vercel.app"],
   recipients: ["owner@testplumbing.com"],
   leadsSheetUrl: "https://docs.google.com/spreadsheets/d/x/edit",
@@ -88,7 +88,7 @@ function goodLead(overrides = {}) {
   seq++;
   return {
     name: "Jane Rivera",
-    phone: "(512) 555-0100",
+    phone: "(512) 555-2100",
     email: "jane@example.com",
     // Unique per test so the double-click guard doesn't merge separate tests.
     message: `Water heater leaking, case ${seq}`,
@@ -267,6 +267,16 @@ for (const [label, body, headers, layer] of [
   ["form bot: honeypot filled, no JavaScript", goodLead({ _elapsed: undefined, referral_code: "http://spam" }), {}, "automation"],
   ["bot: honeypot filled AND submitted instantly", goodLead({ _elapsed: 200, referral_code: "x" }), {}, "automation"],
   ["bot: instant submit from a foreign origin", goodLead({ _elapsed: 100 }), { origin: "https://evil.example" }, "automation"],
+  // Power Construction, 2026-11-08 — the "product review" bot, as the Vercel logs recorded it.
+  ["product-review bot: unassigned area code 783 + origin/referer disagree + no JavaScript",
+    goodLead({ _elapsed: undefined, name: "Jan Stoltenberg", phone: "+1 (783) 632-9565", email: "apriledwardslwybc@colmbus.us", message: "My locust loves to play with it.", address: "New York" }),
+    { origin: "https://testplumbing.com", referer: "https://www.testplumbing.com/" }, "automation"],
+  ["product-review bot: unassigned area code 788 + no JavaScript (origin matched)",
+    goodLead({ _elapsed: undefined, name: "Frank Kohler", phone: "+1 (788) 850-8997", email: "dublintakyah15011998@outlook.com", message: "this product is ghetto.", address: "New York" }),
+    { origin: "https://www.testplumbing.com", referer: "https://www.testplumbing.com/" }, "automation"],
+  ["product-review bot: origin/referer disagree + no JavaScript, even with a real area code",
+    goodLead({ _elapsed: undefined }),
+    { origin: "https://testplumbing.com", referer: "https://www.testplumbing.com/" }, "automation"],
 ]) {
   await test(`withheld: ${label}`, async () => {
     const res = await handleLead(jsonReq(body, headers), CONFIG);
@@ -289,6 +299,10 @@ for (const [label, body, headers, flag] of [
   ["keyword phrase", goodLead({ message: "Our outsourcing team needs a plumber at the office" }), {}, /keyword:virtualAssistant/],
   ["unusual TLD", goodLead({ email: "owner@smith.top" }), {}, /email-tld/],
   ["gibberish", goodLead({ message: "NAEWTRER365118NEYHRTGE" }), {}, /gibberish/],
+  // A person on a brand-new overlay our copy of the NANPA list doesn't know yet: their
+  // browser ran the form's JavaScript, so it is the only signal → delivered.
+  ["unassigned area code alone (JS ran)", goodLead({ phone: "(783) 632-9565" }), {}, /phone area code 783 is not assigned/],
+  ["origin/referer disagree alone (JS ran)", goodLead(), { origin: "https://testplumbing.com", referer: "https://www.testplumbing.com/contact" }, /origin and referer disagree/],
 ]) {
   await test(`delivered + flagged: ${label}`, async () => {
     const res = await handleLead(jsonReq(body, headers), CONFIG);
@@ -396,6 +410,38 @@ await test("autofill: honeypot filled, JS ran, open 3s+ → delivered, flagged D
   assert.equal(calls.blocked[0].urgent, "", "a delivered lead never raises an urgent alert");
 });
 
+await test("a real no-JavaScript customer (CM&M, 2026-10-03) is still delivered", async () => {
+  const res = await handleLead(
+    jsonReq(goodLead({ _elapsed: undefined, phone: "951-454-0991", message: "state water heater no hot water is under warranty" }), {
+      origin: "https://www.testplumbing.com",
+      referer: "https://www.testplumbing.com/lp/water-heater?gad_source=1",
+    }),
+    CONFIG
+  );
+  assert.equal((await res.json()).delivered, true);
+  assert.match(calls.blocked[0].matched, /^no JavaScript/);
+});
+
+await test("Origin 'null' (privacy setting, redirect) is not read as a mismatch", async () => {
+  const res = await handleLead(jsonReq(goodLead({ _elapsed: undefined }), { origin: "null", referer: "https://www.testplumbing.com/contact" }), CONFIG);
+  assert.equal((await res.json()).delivered, true);
+  assert.ok(!calls.blocked[0].matched.includes("disagree"));
+});
+
+await test("a fake 555-01xx phone gets a visible message, not a silent block", async () => {
+  const res = await handleLead(jsonReq(goodLead({ phone: "(202) 555-0154" })), CONFIG);
+  assert.equal(res.status, 400);
+  assert.equal((await res.json()).errors.phone, MESSAGES.phoneNotReal);
+  assert.equal(calls.email.length, 0);
+});
+
+await test("central log: a +1 phone is sent as text, not a formula (was #ERROR!)", async () => {
+  await handleLead(jsonReq(goodLead({ _elapsed: undefined, phone: "+1 (512) 555-2100", message: "=HYPERLINK(1) leak" })), CONFIG);
+  assert.equal(calls.blocked[0].phone, "'+1 (512) 555-2100");
+  assert.equal(calls.blocked[0].message, "'=HYPERLINK(1) leak");
+  assert.equal(calls.sheet[0].phone, "+1 (512) 555-2100", "the client's own sheet row is unchanged");
+});
+
 await test("no timing token (JS never ran) → delivered, normal subject, flagged Delivered=Yes", async () => {
   const res = await handleLead(jsonReq(goodLead({ _elapsed: undefined })), CONFIG);
   assert.equal((await res.json()).delivered, true);
@@ -477,7 +523,7 @@ await test("sheet AND email fail → visitor told to call, lead in the blocked l
   const data = await res.json();
   assert.equal(res.status, 500);
   assert.equal(data.ok, false);
-  assert.match(data.error, /\(512\) 555-0199/);
+  assert.match(data.error, /\(512\) 555-2199/);
   assert.equal(calls.blocked[0].layer, "delivery-failed");
 });
 
@@ -528,7 +574,7 @@ await test("sheetPayload reshapes the row (rename keys, add a constant)", async 
   assert.deepEqual(calls.sheet[0].query, {
     sheet: "Brandon Google Ads",
     name: "Jane Rivera",
-    phone: "(512) 555-0100",
+    phone: "(512) 555-2100",
     pageUrl: "https://www.testplumbing.com/contact",
   });
 });

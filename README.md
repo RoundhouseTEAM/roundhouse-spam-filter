@@ -23,7 +23,9 @@ GA events and Google Ads conversion (`transaction_id: leadId`), leads with a pro
 button, is `noindex`, and is not in the sitemap. Never fire a conversion on a bare page load.
 
 **Rules (Philip, 2026-09-16):** name, phone, email and message are all required. Phone
-must be exactly 10 US digits (a leading 1 is dropped). Message max 600 characters; one
+must be exactly 10 US digits (a leading 1 is dropped), and a number that can never be a
+person's gets a visible message (2.45.0): an N11, 555 or 900 area code, an exchange starting
+0 or 1, or the 555-0100–0199 block reserved for films. Message max 600 characters; one
 link allowed in the message (2.10.0 — two or more get a visible message), none in the name. Every mistake a person can make gets a specific
 visible message. No "Unverified" subject line.
 
@@ -40,7 +42,11 @@ costs a client a job; a spam email costs them a delete. So `handleLead` **withho
 - a flood: over 30 deliverable submissions from one IP in 10 minutes
 - **two automation signals together**, at least one strong — strong: honeypot filled
   without autofill, submitted under 1.5s, no Origin/Referer at all, Referer is an
-  `/api/` path; supporting: no JavaScript, foreign origin, autofilled honeypot
+  `/api/` path, Origin and Referer naming different hosts (2.45.0 — a browser never
+  does; a script forging headers does), a phone area code NANPA has never assigned
+  (2.45.0, `area-codes.js`; refresh with `node scripts/update-area-codes.mjs`);
+  supporting: no JavaScript, foreign origin, autofilled honeypot. Each strong signal
+  alone is delivered and flagged, so a customer on a brand-new overlay still gets through
 
 Everything else that used to block is **delivered to the client and flagged**
 (`delivered-flagged` row, never shown to the client, never an urgent alert): keyword

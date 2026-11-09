@@ -58,7 +58,7 @@ const PAGE_ID = "111222333";
 const CONFIG = {
   site: "test-site",
   businessName: "Test Plumbing",
-  phone: "(512) 555-0199",
+  phone: "(512) 555-2199",
   allowedOrigins: ["testplumbing.com", "localhost", ".vercel.app"],
   recipients: ["owner@testplumbing.com"],
   leadsSheetUrl: "https://docs.google.com/spreadsheets/d/x/edit",
@@ -78,7 +78,7 @@ function addLead(overrides = {}, fields = {}) {
   const id = `lead${++seq}`;
   const f = {
     full_name: "Jane Rivera",
-    phone_number: "+16155550100",
+    phone_number: "+16155552100",
     email: "jane@example.com",
     zip_code: "37130",
     "what_do_you_need_help_with?": "Water heater",
@@ -190,7 +190,7 @@ await test("a lead is fetched by leadgen_id and delivered: sheet, email, nothing
   assert.equal(calls.sheet.length, 1);
   const row = calls.sheet[0];
   assert.equal(row.name, "Jane Rivera");
-  assert.equal(row.phone, "+16155550100");
+  assert.equal(row.phone, "+16155552100");
   assert.equal(row.email, "jane@example.com");
   assert.equal(row.service, "Water heater", "a mapped question fills its extra field");
   assert.match(row.message, /^ZIP code: 37130\nIs this for your home\?: Yes, my home$/);
@@ -204,7 +204,7 @@ await test("a lead is fetched by leadgen_id and delivered: sheet, email, nothing
   assert.match(email.html, /Facebook lead form/);
   assert.match(email.html, /form9/);
   assert.match(email.html, /SP_Water-Heater \(ad7\)/);
-  assert.match(email.html, /tel:\+16155550100/);
+  assert.match(email.html, /tel:\+16155552100/);
   assert.equal(calls.blocked.length, 0);
 });
 
@@ -236,7 +236,7 @@ await test('"No, a business" is delivered AND flagged — never withheld', async
 });
 
 await test("a short phone or missing email is delivered and flagged (Meta already checked them)", async () => {
-  const id = addLead({}, { phone_number: "555-0100", email: undefined });
+  const id = addLead({}, { phone_number: "555-2100", email: undefined });
   const res = await handleMetaLead(post(webhookBody([id])), CONFIG);
   assert.equal(res.status, 200);
   assert.equal(calls.email.length, 1);

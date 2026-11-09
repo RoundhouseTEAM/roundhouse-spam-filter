@@ -206,7 +206,8 @@ async function checkEndToEnd(browser, siteName, url) {
     const today = new Date().toISOString().slice(0, 10);
     const standard = {
       name: "Roundhouse Monitor",
-      phone: "(512) 555-0142",
+      // Not 555-01xx — that range is reserved for films and rejected as never real (2.45.0).
+      phone: "(512) 555-1212",
       email: "monitor@getroundhouse.com",
       message: `Daily end-to-end form check ${today}. Sent to a test inbox only, never to the client.`,
     };

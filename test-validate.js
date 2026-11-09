@@ -28,7 +28,7 @@ function test(label, fn) {
 
 const good = {
   name: "Jane Rivera",
-  phone: "(512) 555-0100",
+  phone: "(512) 555-2100",
   email: "jane@example.com",
   message: "Water heater is leaking from the bottom.",
 };
@@ -39,14 +39,14 @@ test("a complete, normal lead is valid", () => {
 
 // ── Phone ────────────────────────────────────────────────────────
 test("phone: formatting is ignored", () => {
-  for (const p of ["512-555-0100", "512.555.0100", "5125550100", "(512)555-0100", " 512 555 0100 "]) {
+  for (const p of ["512-555-2100", "512.555.2100", "5125552100", "(512)555-2100", " 512 555 2100 "]) {
     assert.equal(validateField("phone", p), "", p);
   }
 });
 test("phone: a leading country code 1 is accepted", () => {
-  assert.equal(normalizePhone("1-512-555-0100"), "5125550100");
-  assert.equal(normalizePhone("+1 (512) 555-0100"), "5125550100");
-  assert.equal(validateField("phone", "+1 (512) 555-0100"), "");
+  assert.equal(normalizePhone("1-512-555-2100"), "5125552100");
+  assert.equal(normalizePhone("+1 (512) 555-2100"), "5125552100");
+  assert.equal(validateField("phone", "+1 (512) 555-2100"), "");
 });
 test("phone: under 10 digits gets the 10-digit message", () => {
   for (const p of ["5551", "317555", "512555010"]) {
@@ -54,12 +54,31 @@ test("phone: under 10 digits gets the 10-digit message", () => {
   }
 });
 test("phone: over 10 digits (not a leading 1) gets the 10-digit message", () => {
-  assert.equal(validateField("phone", "51255501001"), MESSAGES.phoneLength);
-  assert.equal(validateField("phone", "25125550100"), MESSAGES.phoneLength);
+  assert.equal(validateField("phone", "51255521001"), MESSAGES.phoneLength);
+  assert.equal(validateField("phone", "25125552100"), MESSAGES.phoneLength);
 });
 test("phone: an area code starting 0 or 1 is flagged", () => {
-  assert.equal(validateField("phone", "0125550100"), MESSAGES.phoneAreaCode);
-  assert.equal(validateField("phone", "1125550100"), MESSAGES.phoneAreaCode);
+  assert.equal(validateField("phone", "0125552100"), MESSAGES.phoneAreaCode);
+  assert.equal(validateField("phone", "1125552100"), MESSAGES.phoneAreaCode);
+});
+test("phone: numbers that can never be a person's are rejected visibly (2.45.0)", () => {
+  // N11 service codes, 555 and 900 as the area code.
+  for (const p of ["(711) 976-2125", "911-555-2100", "+1 (555) 123-4567", "+1 (900) 431-5448"]) {
+    assert.equal(validateField("phone", p), MESSAGES.phoneAreaCode, p);
+  }
+  // 555-0100–0199 is reserved for films (the Sept 2026 bot sent (202) 555-01xx); an
+  // exchange never starts with 0 or 1.
+  for (const p of ["(202) 555-0154", "202-555-0100", "2025550199", "(512) 012-3456", "(512) 199-3456"]) {
+    assert.equal(validateField("phone", p), MESSAGES.phoneNotReal, p);
+  }
+});
+test("phone: real numbers next to the never-real ones still pass", () => {
+  // 555-0200 and 555-1212 are outside the reserved block; 711 as an EXCHANGE is fine;
+  // toll-free and Canadian numbers are dialable; an unassigned area code is NOT a
+  // visible error (a new overlay opens every year) — lead.js treats it as a signal.
+  for (const p of ["(202) 555-0200", "(512) 555-1212", "(512) 711-2125", "(888) 587-2383", "(825) 555-2100", "(783) 632-9565"]) {
+    assert.equal(validateField("phone", p), "", p);
+  }
 });
 test("phone: blank", () => {
   assert.equal(validateField("phone", ""), MESSAGES.phoneMissing);
@@ -183,8 +202,8 @@ test("every error is reported at once, keyed by field", () => {
 });
 
 test("fallback messages: a phone says call, an email says email", () => {
-  assert.match(deliveryFailedMessage("(512) 555-0100"), /Please call us at \(512\) 555-0100 and/);
-  assert.match(offlineMessage("(512) 555-0100"), /or call us at \(512\) 555-0100\.$/);
+  assert.match(deliveryFailedMessage("(512) 555-2100"), /Please call us at \(512\) 555-2100 and/);
+  assert.match(offlineMessage("(512) 555-2100"), /or call us at \(512\) 555-2100\.$/);
   assert.match(deliveryFailedMessage("sue@example.org"), /Please email us at sue@example\.org and/);
   assert.match(offlineMessage("sue@example.org"), /or email us at sue@example\.org\.$/);
 });

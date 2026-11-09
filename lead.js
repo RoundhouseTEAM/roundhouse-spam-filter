@@ -63,6 +63,7 @@
 
 import { checkSpam, checkContent, findLinkMarkup, findBlockedTemplate, findBlockedKeyword, logBlocked } from "./index.js";
 import { callAppsScript, afterResponse } from "./apps-script.js";
+import { isAssignedAreaCode } from "./area-codes.js";
 import { checkRateLimit, clientIp, DEFAULT_LIMIT, DEFAULT_WINDOW_MS, DEFAULT_FLOOD_LIMIT } from "./ratelimit.js";
 import {
   validateLead,
@@ -220,6 +221,16 @@ export function readOpenTime(body) {
   return { jsRan: false, openMs: null };
 }
 
+/** The lower-cased host of a URL header value, or "" when absent, "null" or not a URL. */
+function hostOf(value) {
+  if (!value || value === "null") return "";
+  try {
+    return new URL(value).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
 /**
  * AUTOMATION. Signals a script produces and a person on our form essentially never does.
  * Any one of them alone is delivered and flagged — each has a rare innocent cause (a
@@ -253,6 +264,25 @@ export function automationSignals({ body, headers, allowedOrigins, jsRan, openMs
     // cutover, a translation proxy. Up to 2.5.0 this dropped every lead on a
     // misconfigured site with no alert.
     else weak.push(`origin not in allowedOrigins (origin="${origin.slice(0, 120)}" referer="${referer.slice(0, 120)}")`);
+  }
+
+  // A real browser's Origin is the page's own origin, and its Referer is a URL on that same
+  // page — so the two hosts always match. A script that writes the headers itself gets
+  // them wrong: the November 2026 "product review" bot sent Origin powerconstructioninc.com
+  // with Referer www.powerconstructioninc.com/. "null" (a privacy setting, a redirect) and
+  // a missing header are not mismatches.
+  const originHost = hostOf(origin);
+  const refererHost = hostOf(referer);
+  if (originHost && refererHost && originHost !== refererHost) {
+    strong.push(`origin and referer disagree (origin=${originHost} referer=${refererHost})`);
+  }
+
+  // A phone whose area code NANPA has never assigned can't be dialed — it was made up.
+  // That bot sent 783, 788, 711 and 900. Only a well-formed 10-digit number is judged
+  // here: a short or mistyped one gets its visible message from validation instead.
+  const digits = normalizePhone(body.phone);
+  if (digits.length === 10 && !/^[01]/.test(digits) && !isAssignedAreaCode(digits)) {
+    strong.push(`phone area code ${digits.slice(0, 3)} is not assigned`);
   }
 
   if (openMs !== null && openMs < MIN_FILL_MS) strong.push(`submitted ${Math.round(openMs)}ms after render`);

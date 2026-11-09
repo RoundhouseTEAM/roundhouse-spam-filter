@@ -36,6 +36,8 @@ export declare function offlineMessage(phone: string): string;
 export declare function deliveryFailedMessage(phone: string): string;
 export declare function isChecked(value: unknown): boolean;
 export declare function normalizePhone(raw: unknown): string;
+/** The message for a number that can never be a person's (N11/555/900 area code, 555-01xx, exchange 0xx/1xx), or "". */
+export declare function phoneNeverReal(digits: string): string;
 export declare function isRequiredExtra(field: ExtraField): boolean;
 /** True for a label phrased as a question, e.g. "Are you a new customer?". */
 export declare function isQuestionLabel(label: string): boolean;

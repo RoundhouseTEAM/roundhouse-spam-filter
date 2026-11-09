@@ -104,6 +104,20 @@ function isDelivered(layer) {
 }
 
 /**
+ * The Apps Script writes with appendRow, which reads a value starting with = + - or @ as
+ * a FORMULA: every "+1 (783) 632-9565" phone landed as #ERROR! (39 rows by 2026-11-09,
+ * hiding the made-up area codes that gave a bot away), and a name or message starting
+ * with "=" would run as one. A leading apostrophe makes Sheets store the text as typed —
+ * the apostrophe itself is not shown in the cell. Only the webhook copy is changed; the
+ * console row keeps the raw values.
+ */
+export function sheetSafe(row) {
+  const out = {};
+  for (const [k, v] of Object.entries(row)) out[k] = typeof v === "string" && /^[=+\-@]/.test(v) ? `'${v}` : v;
+  return out;
+}
+
+/**
  * A name, a dialable phone and an actual message together. Bots frequently miss at
  * least one; a real customer caught by a filter has all three. This is the whole
  * test for "there is a lead here worth rescuing today".
@@ -238,7 +252,7 @@ export async function logBlocked(entry = {}) {
 
     const call = await callAppsScript(
       webhook,
-      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(row) },
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(sheetSafe(row)) },
       { runTimeoutMs: WEBHOOK_RUN_TIMEOUT_MS, readTimeoutMs: WEBHOOK_READ_TIMEOUT_MS }
     );
     if (call.unread) {
