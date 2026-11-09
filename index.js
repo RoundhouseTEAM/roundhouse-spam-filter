@@ -75,6 +75,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "kenvix.online", // Philip, 2026-11-03
   "clarimart.com", // Philip, 2026-11-05
   "heylending.com", // Philip, 2026-11-09
+  "engelsbergpartners.com", // Philip, 2026-11-09
 ];
 
 // Individual spammer addresses on free mail providers, whose domain can't be blocked.
