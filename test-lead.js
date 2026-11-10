@@ -5,6 +5,7 @@
 import assert from "node:assert/strict";
 import { handleLead, MAX_BODY_BYTES } from "./lead.js";
 import { _resetRateLimitMemory } from "./ratelimit.js";
+import { _resetRepeatMemory } from "./repeat.js";
 import { MESSAGES } from "./validate.js";
 
 // ── Stubs ────────────────────────────────────────────────────────
@@ -15,6 +16,7 @@ let outputBehaviour = "ok"; // "ok" | "error" | "hang"
 let emailBehaviour = "ok"; // "ok" | "reject" | "throw"
 let redisBehaviour = "ok"; // "ok" | "down"
 let redisCount = 0;
+const redisRepeat = new Map(); // repeat-guard keys (2.49.0)
 
 process.env.GOOGLE_SHEET_WEBHOOK = "https://sheet.test/exec";
 process.env.RESEND_API_KEY = "re_test";
@@ -49,6 +51,15 @@ globalThis.fetch = async (url, options = {}) => {
       return new Response(JSON.stringify({ name: "daily_quota_exceeded" }), { status: 429 });
     }
     return new Response(JSON.stringify({ id: "email_123" }), { status: 200 });
+  }
+  if (url === "https://redis.test/pipeline" && Array.isArray(body) && String(body[0]?.[1]).startsWith("rh:lead-") && !String(body[0]?.[1]).startsWith("rh:lead-rate")) {
+    calls.redisRepeat = (calls.redisRepeat ?? 0) + 1;
+    if (redisBehaviour === "down") return new Response("oops", { status: 500 });
+    return new Response(JSON.stringify(body.map(([cmd, key]) => {
+      if (cmd === "GET") return { result: redisRepeat.has(key) ? String(redisRepeat.get(key)) : null };
+      if (cmd === "INCR") { redisRepeat.set(key, (redisRepeat.get(key) ?? 0) + 1); return { result: redisRepeat.get(key) }; }
+      return { result: 1 };
+    })), { status: 200 });
   }
   if (url === "https://redis.test/pipeline") {
     calls.redis = (calls.redis ?? 0) + 1;
@@ -121,6 +132,9 @@ function nativeReq(fields, headers = {}) {
 
 function reset() {
   _resetRateLimitMemory();
+  _resetRepeatMemory();
+  redisRepeat.clear();
+  calls.redisRepeat = 0;
   redisCount = 0;
   redisBehaviour = "ok";
   delete process.env.UPSTASH_REDIS_REST_URL;
@@ -560,6 +574,86 @@ await test("double-click: second identical submission is not delivered twice", a
   assert.equal(second.leadId, first.leadId, "same leadId, so Ads dedupes too");
   assert.equal(calls.email.length, 1);
   assert.equal(calls.sheet.length, 1);
+});
+
+
+// ── Repeat leads (2.49.0 — hiberchat.com, ~16 identical pitches in an hour) ──
+const HIBER = "We'd love to introduce our AI-powered customer support platform that helps businesses automate website conversations.";
+
+await test("repeat: an identical lead after the double-click window is withheld and logged", async () => {
+  const body = goodLead({ message: HIBER });
+  await handleLead(jsonReq(body), CONFIG);
+  _resetRateLimitMemory(); // a fresh request, past the double-click guard
+  // Bypass the 2-minute guard: same fields, different case/spacing — same to a person.
+  const again = await (await handleLead(jsonReq({ ...body, message: "  " + HIBER.toUpperCase() + "\n" }), CONFIG)).json();
+  assert.equal(again.ok, true);
+  assert.notEqual(again.delivered, true, "no conversion for a withheld copy");
+  assert.equal(calls.email.length, 1);
+  const row = calls.blocked.find((b) => b.layer === "repeat-lead");
+  assert.ok(row, "logged centrally");
+  assert.equal(row.urgent ?? "", "");
+});
+
+await test("repeat: same long message from rotating names — 2 delivered, 3rd on withheld", async () => {
+  const names = ["Suraj Kumar", "Amit Shah", "Ravi Patel", "Neha Singh"];
+  const results = [];
+  for (const [i, name] of names.entries()) {
+    const r = await (await handleLead(jsonReq(goodLead({ name, email: `x${i}@chatvendor.com`, message: HIBER })), CONFIG)).json();
+    results.push(r.delivered === true);
+  }
+  assert.deepEqual(results, [true, true, false, false]);
+  assert.equal(calls.email.length, 2);
+  assert.equal(calls.blocked.filter((b) => b.layer === "repeat-message").length, 2);
+});
+
+await test("repeat: a visitor resubmitting to correct their phone is delivered", async () => {
+  const body = goodLead({ message: "Our kitchen sink has been backing up for three days and now the dishwasher drains into it too." });
+  await handleLead(jsonReq(body), CONFIG);
+  const fixed = await (await handleLead(jsonReq({ ...body, phone: "(512) 555-2101" }), CONFIG)).json();
+  assert.equal(fixed.delivered, true);
+  assert.equal(calls.email.length, 2);
+});
+
+await test("repeat: short identical messages from different people are all delivered", async () => {
+  for (const [i, name] of ["Ann Lee", "Bob Day", "Cy Fox", "Di Ray"].entries()) {
+    const r = await (await handleLead(jsonReq(goodLead({ name, email: `p${i}@example.com`, message: "Need a water heater quote" })), CONFIG)).json();
+    assert.equal(r.delivered, true);
+  }
+});
+
+await test("repeat: another site's identical lead is not a repeat", async () => {
+  const body = goodLead({ message: HIBER });
+  await handleLead(jsonReq(body), CONFIG);
+  _resetRateLimitMemory();
+  const other = await (await handleLead(jsonReq(body), { ...CONFIG, site: "other-site" })).json();
+  assert.equal(other.delivered, true);
+});
+
+await test("repeat: a retry after a failed delivery is not a repeat", async () => {
+  const body = goodLead({ message: HIBER });
+  sheetStatus = 500;
+  emailBehaviour = "throw";
+  await handleLead(jsonReq(body), CONFIG);
+  sheetStatus = 200;
+  emailBehaviour = "ok";
+  const retry = await (await handleLead(jsonReq(body), CONFIG)).json();
+  assert.equal(retry.delivered, true);
+});
+
+await test("repeat: uses Upstash across instances; an outage never blocks a lead", async () => {
+  process.env.UPSTASH_REDIS_REST_URL = "https://redis.test";
+  process.env.UPSTASH_REDIS_REST_TOKEN = "tok";
+  const body = goodLead({ message: HIBER, name: "Upstash Tester" });
+  await handleLead(jsonReq(body), CONFIG);
+  _resetRepeatMemory(); // a different, cold instance
+  _resetRateLimitMemory();
+  const fromRedis = await (await handleLead(jsonReq({ ...body, message: HIBER.toLowerCase() }), CONFIG)).json();
+  assert.notEqual(fromRedis.delivered, true, "Redis remembered it");
+  assert.ok(calls.blocked.some((b) => b.layer === "repeat-lead" && /redis/.test(b.matched)));
+  redisBehaviour = "down";
+  _resetRepeatMemory();
+  const fresh = await (await handleLead(jsonReq(goodLead()), CONFIG)).json();
+  assert.equal(fresh.delivered, true);
 });
 
 // ── Adapting to each client's existing Apps Script ───────────────

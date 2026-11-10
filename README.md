@@ -82,6 +82,14 @@ Order inside `handleLead`: size / cross-site → automation signals → validati
 **full lead written to the Vercel logs** → client sheet and Resend email **in parallel**
 → central log rows for flags and partial failures.
 
+**Repeat guard (2.49.0, `repeat.js`).** Each delivered lead is remembered for 30 days per
+site. A lead identical to one already delivered (every field; case and spacing ignored)
+is withheld as `repeat-lead` — the client already has it. A message of 60+ characters
+already delivered twice with other contact details is withheld from the third copy on
+as `repeat-message`, so a visitor correcting their phone is still delivered. Neither
+alerts. Upstash Redis when connected (exact across instances); otherwise in-memory per
+warm instance. The daily monitor is never checked or recorded.
+
 Delivery only counts on a verified answer: the sheet must not answer `{ok:false}`, a
 Google sign-in/error page, or the `listening` health check (Apps Script returns all of
 those with HTTP 200); the email must return a Resend `id`. Central log rows:

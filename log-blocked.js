@@ -77,6 +77,9 @@ const NEVER_URGENT_LAYERS = new Set([
   // 30+ deliverable submissions from one IP in 10 minutes. Every row is still logged in
   // full; the per-day cap would be spent on one flood otherwise.
   "rate-limit-flood",
+  // A copy of a lead the client already received (2.49.0) — nothing to rescue.
+  "repeat-lead",
+  "repeat-message",
   // No fields were even parsed — there is no lead to rescue.
   "too-large",
   // Posted from another website's page — never our own form.

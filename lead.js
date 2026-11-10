@@ -36,6 +36,8 @@
  *  3. Validation                visible per-field messages
  *  4. Content (non-Latin, list) blocklisted domain/phone withheld; the rest flagged
  *  5. Double-click              same lead within 2 minutes → the first lead's id
+ *  5b. Repeat (2.49.0)          an identical lead already delivered in 30 days → withheld;
+ *                               a 60+ char message delivered twice → 3rd copy on withheld
  *  6. Rate limit                over `limit` flagged; over `floodLimit` withheld
  *  7. Record                    the full lead goes to the Vercel logs BEFORE any delivery
  *  8. Deliver                   client sheet and Resend email in parallel; each counts only
@@ -65,6 +67,7 @@ import { checkSpam, checkContent, findLinkMarkup, findBlockedTemplate, findBlock
 import { callAppsScript, afterResponse } from "./apps-script.js";
 import { isAssignedAreaCode } from "./area-codes.js";
 import { checkRateLimit, clientIp, DEFAULT_LIMIT, DEFAULT_WINDOW_MS, DEFAULT_FLOOD_LIMIT } from "./ratelimit.js";
+import { repeatKeys, checkRepeat, recordDelivered } from "./repeat.js";
 import {
   validateLead,
   normalizePhone,
@@ -661,6 +664,18 @@ export async function handleLead(req, config) {
       return native ? redirect(`${successPath}?lead=${dupe.leadId}`) : json({ ok: true, delivered: true, leadId: dupe.leadId });
     }
 
+    // 5b. Repeat (2.49.0). The client already has an identical lead → withheld. One long
+    // message behind rotating names → the third copy on is withheld. See repeat.js.
+    const repeat = repeatKeys(
+      site,
+      [lead.name, lead.phoneDigits, lead.email, lead.message, ...extraFields.map((f) => lead[f.name] ?? "")],
+      lead.message
+    );
+    if (!monitor) {
+      const rep = await checkRepeat(repeat);
+      if (rep.repeat) return withhold(rep.repeat, rep.matched);
+    }
+
     // 6. Rate limit — counted only here, after the checks above, so only submissions
     // that would reach the client count. An office, a property manager or a client
     // testing their own site can pass `limit`; that is flagged, not withheld. Only a
@@ -714,6 +729,7 @@ export async function handleLead(req, config) {
     // Remembered only once the lead is actually captured, so a visitor retrying after a
     // failed delivery is delivered again rather than told it already went through.
     recent.set(dupeKey, { at: Date.now(), leadId });
+    await recordDelivered(repeat);
 
     return native
       ? redirect(`${successPath}?lead=${leadId}`)
