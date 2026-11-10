@@ -77,6 +77,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "heylending.com", // Philip, 2026-11-09
   "engelsbergpartners.com", // Philip, 2026-11-09
   "hiberchat.com", // Philip, 2026-11-09 — ~16 submissions in an hour
+  "generation-freedom.org", // Philip, 2026-11-10
 ];
 
 // Individual spammer addresses on free mail providers, whose domain can't be blocked.
