@@ -76,6 +76,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "clarimart.com", // Philip, 2026-11-05
   "heylending.com", // Philip, 2026-11-09
   "engelsbergpartners.com", // Philip, 2026-11-09
+  "hiberchat.com", // Philip, 2026-11-09 — ~16 submissions in an hour
 ];
 
 // Individual spammer addresses on free mail providers, whose domain can't be blocked.
