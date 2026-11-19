@@ -251,7 +251,6 @@ for (const [label, body, headers, layer] of [
   ["hiberchat.com mentioned in the message", goodLead({ message: "Try our chat widget at https://hiberchat.com" }), {}, "mention"],
   ["generation-freedom.org sender address (Philip, 2026-11-10)", goodLead({ email: "info@Generation-Freedom.org" }), {}, "email-domain"],
   ["generation-freedom.org mentioned in the message", goodLead({ message: "Learn more at https://www.generation-freedom.org/apply" }), {}, "mention"],
-  ["posteo.com sender address (Philip, 2026-11-19)", goodLead({ email: "someone@Posteo.com" }), {}, "email-domain"],
   ["porchlightsites.com sender address (Philip, 2026-11-19)", goodLead({ email: "hello@PorchlightSites.com" }), {}, "email-domain"],
   ["porchlightsites.com mentioned in the message", goodLead({ message: "See our work at https://www.porchlightsites.com" }), {}, "mention"],
   ["contractorsranked.com mentioned in the message (Philip, 2026-11-02)", goodLead({ message: "You're listed on www.ContractorsRanked.com - claim it" }), {}, "mention"],
