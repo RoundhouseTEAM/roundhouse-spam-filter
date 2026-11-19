@@ -48,6 +48,30 @@ export interface LeadConfig {
   sheetPayload?: (lead: Record<string, string>) => Record<string, string>;
   /** Defaults to process.env.RESEND_API_KEY. */
   resendApiKey?: string;
+  /**
+   * Meta Conversions API (2.53.0). Set ONLY on a route whose form is a Facebook/Instagram ad
+   * destination. Each delivered lead sends one server-side event with event_id = leadId;
+   * the thank-you page fires the browser Pixel with the same id (fireMetaLead) so Meta
+   * counts it once. Withheld, duplicate and monitor submissions never send.
+   */
+  metaCapi?: MetaCapiConfig;
+}
+
+export interface MetaCapiConfig {
+  /** Defaults to process.env.META_PIXEL_ID, then NEXT_PUBLIC_META_PIXEL_ID. */
+  pixelId?: string;
+  /** Defaults to process.env.META_CAPI_TOKEN (Events Manager → Settings → Conversions API). */
+  accessToken?: string;
+  /** Defaults to "Lead". */
+  eventName?: string;
+  /** Extra field holding a ZIP, hashed as `zp`. Defaults to "zip". */
+  zipField?: string;
+  /** Constant user_data hashed for every event, e.g. { st: "hi", country: "us" }. */
+  userData?: Record<string, string>;
+  /** Defaults to process.env.META_TEST_EVENT_CODE — set while testing in Events Manager. */
+  testEventCode?: string;
+  /** Graph API version. Defaults to v21.0. */
+  apiVersion?: string;
 }
 
 /** The entire server side of a Roundhouse contact form. */

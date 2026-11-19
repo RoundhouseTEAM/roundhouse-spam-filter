@@ -1,6 +1,6 @@
 {
   "name": "@roundhouse/spam-filter",
-  "version": "2.52.0",
+  "version": "2.53.0",
   "description": "Shared contact-form spam filter, lead handler and lead form for Roundhouse client sites",
   "type": "module",
   "main": "index.js",
@@ -41,6 +41,7 @@
     "repeat.js",
     "ratelimit.js",
     "apps-script.js",
+    "meta-capi.js",
     "lead.d.ts",
     "meta-lead.js",
     "meta-lead.d.ts",
@@ -50,7 +51,7 @@
     "conversion.tsx"
   ],
   "scripts": {
-    "test": "node test.js && node test-log-blocked.js && node test-apps-script.js && node test-validate.js && node test-lead.js && node test-meta-lead.js"
+    "test": "node test.js && node test-log-blocked.js && node test-apps-script.js && node test-validate.js && node test-lead.js && node test-meta-lead.js && node test-meta-capi.js"
   },
   "peerDependencies": {
     "react": ">=18"

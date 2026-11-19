@@ -65,6 +65,7 @@
 
 import { checkSpam, checkContent, findLinkMarkup, findBlockedTemplate, findBlockedKeyword, logBlocked } from "./index.js";
 import { callAppsScript, afterResponse } from "./apps-script.js";
+import { sendMetaLead } from "./meta-capi.js";
 import { isAssignedAreaCode } from "./area-codes.js";
 import { checkRateLimit, clientIp, DEFAULT_LIMIT, DEFAULT_WINDOW_MS, DEFAULT_FLOOD_LIMIT } from "./ratelimit.js";
 import { repeatKeys, checkRepeat, recordDelivered } from "./repeat.js";
@@ -730,6 +731,23 @@ export async function handleLead(req, config) {
     // failed delivery is delivered again rather than told it already went through.
     recent.set(dupeKey, { at: Date.now(), leadId });
     await recordDelivered(repeat);
+
+    // 10. Meta Conversions API (2.53.0) — only a site whose form is a Facebook/Instagram ad
+    // destination sets metaCapi. One server-side Lead with event_id = leadId, deduplicated
+    // against the thank-you page's browser Pixel Lead. After the response; never throws.
+    if (config.metaCapi) {
+      await afterResponse(
+        sendMetaLead({
+          config: config.metaCapi,
+          lead,
+          leadId,
+          site,
+          ip: clientIp(req),
+          userAgent: req.headers.get("user-agent") ?? "",
+          cookieHeader: req.headers.get("cookie") ?? "",
+        })
+      );
+    }
 
     return native
       ? redirect(`${successPath}?lead=${leadId}`)

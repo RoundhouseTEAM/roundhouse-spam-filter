@@ -218,6 +218,29 @@ request is Meta's server, not a browser. No conversions fire (Meta counts its ow
 then confirm the email and the sheet row actually arrived — or read `[lead] RECEIVED … (Facebook
 lead form)` in the Vercel logs. A 200 alone proves nothing.
 
+## Facebook / Instagram ad landing pages — Meta Pixel + Conversions API (2.53.0)
+
+For a page that is the destination of Facebook/Instagram ads (never a Google Ads page —
+each ad platform gets its own landing page and its own thank-you page):
+
+- **Server:** give that page's route its own `LeadConfig` with `metaCapi`. Each DELIVERED
+  lead sends one server-side `Lead` with `event_id` = the lead id: hashed email, phone,
+  first/last name and ZIP, plus IP, user agent, `_fbp` and `_fbc` (or `fbclid` from the page
+  address). Withheld, duplicate and monitor submissions never send. It runs after the
+  response and never throws; failures log `[meta-capi] FAILED` in the Vercel logs.
+  Env: `META_PIXEL_ID` (or `NEXT_PUBLIC_META_PIXEL_ID`), `META_CAPI_TOKEN`, and
+  `META_TEST_EVENT_CODE` while testing in Events Manager (remove it before launch).
+- **Thank-you page:** `<LeadConversion onLead={(id) => fireMetaLead(id)} />` fires the browser
+  Pixel `Lead` with `eventID` = the same id, so Meta keeps one of the two.
+- **Call taps:** `trackMetaContact()` fires Meta's `Contact` event.
+- **ZIP:** an extra field with `format: "zip"` must be 5 digits (ZIP+4 accepted), with a
+  visible message otherwise, and renders as a numeric input.
+
+```ts
+import { fireMetaLead, trackMetaContact } from "@roundhouse/spam-filter/conversion";
+const FB_CONFIG: LeadConfig = { ...LEAD_CONFIG, extraFields: [...], metaCapi: { userData: { st: "hi", country: "us" } } };
+```
+
 ## Daily monitor, spike alerts and bounce alerts (2.7.0)
 
 - **End-to-end test lead.** `monitor/check.mjs` (GitHub Action, 12:00 UTC) submits one valid

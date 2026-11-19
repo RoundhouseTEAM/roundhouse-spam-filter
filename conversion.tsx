@@ -84,3 +84,41 @@ export default function LeadConversion({ onLead, param = "lead", waitForGtag = t
 }
 
 export { LeadConversion };
+
+// ── Meta Pixel (2.53.0) ──────────────────────────────────────────
+// For pages that are Facebook/Instagram ad destinations only. The site loads the Pixel
+// base code on those pages; these helpers fire through it.
+
+type Fbq = (...args: unknown[]) => void;
+function fbqFn(): Fbq | null {
+  const f = (window as unknown as { fbq?: unknown }).fbq;
+  return typeof f === "function" ? (f as Fbq) : null;
+}
+
+/**
+ * Browser half of a deduplicated Meta Lead: call from <LeadConversion onLead>. The server
+ * half (LeadConfig.metaCapi) sends the same event with event_id = leadId, so Meta keeps
+ * one. Waits up to ~5s for the Pixel base code; fbq queues calls until its script loads.
+ */
+export function fireMetaLead(leadId: string, params: Record<string, unknown> = {}): void {
+  const started = Date.now();
+  const fire = () => {
+    const fbq = fbqFn();
+    if (!fbq) {
+      if (Date.now() - started < GTAG_WAIT_MS) window.setTimeout(fire, GTAG_POLL_MS);
+      else console.warn("[lead-conversion] Meta Pixel never loaded; the server event still counts the lead");
+      return;
+    }
+    fbq("track", "Lead", params, { eventID: leadId });
+  };
+  fire();
+}
+
+/** A tap on a tel: link, as Meta's standard Contact event. No-op without the Pixel. */
+export function trackMetaContact(params: Record<string, unknown> = {}): void {
+  try {
+    fbqFn()?.("track", "Contact", params);
+  } catch {
+    /* never break the call */
+  }
+}

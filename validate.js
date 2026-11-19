@@ -41,6 +41,7 @@ export const MESSAGES = {
   messageTooLong: `Please keep your message under ${MESSAGE_MAX} characters.`,
   messageTooManyLinks: "Please include no more than one link in your message.",
   consentMissing: "Please check the box to agree to be contacted.",
+  zipInvalid: "Please enter a 5-digit ZIP code.",
 };
 
 /** How a checked checkbox arrives: "yes" from the shared form, "on" from a native post. */
@@ -173,6 +174,8 @@ export function selectPlaceholder(label) {
   return `Choose your ${l.toLowerCase()}`;
 }
 
+const ZIP_RE = /^\d{5}(-\d{4})?$/;
+
 function validateExtra(field, value) {
   const v = String(value ?? "").trim();
   const label = field.label || field.name;
@@ -193,6 +196,8 @@ function validateExtra(field, value) {
   if (v.length > max) {
     return `Please keep your ${question ? "answer" : label.toLowerCase()} under ${max} characters.`;
   }
+  // A ZIP (2.53.0): 5 digits, or ZIP+4. Alpha Omega counts Westside jobs by it.
+  if (field.format === "zip" && !ZIP_RE.test(v)) return MESSAGES.zipInvalid;
   if (hasOptions && !field.options.includes(v)) {
     return question
       ? "Please choose an answer from the list."

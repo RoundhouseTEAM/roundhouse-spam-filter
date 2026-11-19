@@ -402,6 +402,8 @@ export default function LeadForm({
       control = <input {...common} type="email" autoComplete="email" maxLength={EMAIL_MAX} />;
     } else if (name === "name") {
       control = <input {...common} type="text" autoComplete="name" maxLength={NAME_MAX} />;
+    } else if (extra?.format === "zip") {
+      control = <input {...common} type="text" inputMode="numeric" autoComplete="postal-code" maxLength={10} />;
     } else {
       control = (
         <input

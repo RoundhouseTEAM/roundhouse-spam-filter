@@ -17,6 +17,8 @@ export interface ExtraField {
   /** Rendered as a textarea instead of a single-line input. */
   multiline?: boolean;
   autoComplete?: string;
+  /** "zip" (2.53.0): must be a 5-digit US ZIP (ZIP+4 accepted); rendered as a numeric input. */
+  format?: "zip";
   /** Rendered as a checkbox; `label` is the text beside it. Arrives as "Yes" or "". */
   checkbox?: boolean;
   /** Overrides the default "Please enter your …" / consent message when required and missing. */
