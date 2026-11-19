@@ -67,6 +67,10 @@ globalThis.fetch = async (url, options = {}) => {
     redisCount += 1;
     return new Response(JSON.stringify([{ result: redisCount }, { result: 1 }]), { status: 200 });
   }
+  if (url.startsWith("https://graph.facebook.com/")) {
+    (calls.meta ??= []).push(body);
+    return new Response(JSON.stringify({ events_received: 1 }), { status: 200 });
+  }
   if (url === "https://blocked.test/exec") {
     calls.blocked.push(body);
     return new Response(JSON.stringify({ ok: true }), { status: 200 });
@@ -258,6 +262,15 @@ for (const [label, body, headers, layer] of [
   ["blocked gmail address with dots and a +tag", goodLead({ email: "joanna.riggs3+leads@gmail.com" }), {}, "email-address"],
   ["blocked address written into the message", goodLead({ message: "Email me at joannariggs3@gmail.com" }), {}, "mention"],
   ["blocklisted name: Hame Walls (Philip, 2026-10-28)", goodLead({ name: "Hame Walls" }), {}, "blocked-name"],
+  // Philip, 2026-11-19 — the delivered-flagged spam from 2026-11-15..19, as logged.
+  ["bot template: Hayson Mike (Irrigators, 2026-11-19)", goodLead({ name: "Hayson Mike", message: "Hello, I’m interested in your services. Please feel free to reach me via email haysonmike767@gmail.com\nThank you" }), {}, "template"],
+  ["bot template: Brenda Andewson (Power Construction /lp from Google Ads, 2026-11-15)", goodLead({ name: "Brenda Andewson", message: "Hello, I’m interested in your services. Please feel free to reach me via email brendaandewson1@gmail.com \nThank you" }), {}, "template"],
+  ["tillerco.co subdomain sender (Adair, 2026-11-18)", goodLead({ email: "barbaragreen66@team.tillerco.co" }), {}, "email-domain"],
+  ["blocklisted name: Jo Riggs on a new address (Power Construction, 2026-11-17)", goodLead({ name: "Jo Riggs", email: "joriggsvideo2@gmail.com" }), {}, "blocked-name"],
+  ["Jo Riggs video template under another name", goodLead({ name: "Jo", message: "Hi, I just visited your site and wondered if you'd ever thought about having an engaging video to explain what you do?" }), {}, "template"],
+  ["veraforma.fit mentioned (Andrews, 2026-11-18)", goodLead({ message: "Details: https://veraforma.fit/employers/" }), {}, "mention"],
+  ["redesign mockup (Irrigators, 2026-11-16)", goodLead({ message: "So I went ahead and created a quick redesign mockup for you. Its completely free." }), {}, "blocked-keyword"],
+  ["robotics companies pay (Newman's, 2026-11-18)", goodLead({ message: "Robotics companies pay businesses like yours to record everyday hands-on work." }), {}, "blocked-keyword"],
   ["blocklisted name: HAME WALLS. with a company after it", goodLead({ name: "HAME WALLS. - Growth Team" }), {}, "blocked-name"],
   ["blocklisted site mentioned in message", goodLead({ message: "See www.AdsMogul.com for details" }), {}, "mention"],
   ["bot template message (Indiana Flow, 2026-09)", goodLead({ message: "I would like more information.  Please contact me by email!" }), {}, "template"],
@@ -290,6 +303,9 @@ for (const [label, body, headers, layer] of [
   ["script: no origin/referer headers, no JavaScript", goodLead({ _elapsed: undefined }), { origin: "" }, "automation"],
   ["form bot: honeypot filled, no JavaScript", goodLead({ _elapsed: undefined, referral_code: "http://spam" }), {}, "automation"],
   ["bot: honeypot filled AND submitted instantly", goodLead({ _elapsed: 200, referral_code: "x" }), {}, "automation"],
+  ["bot user agent + no JavaScript (VeraFormaBot, Andrews 2026-11-18)", goodLead({ _elapsed: undefined }), { "user-agent": "VeraFormaBot/1.0 (+https://example.com/bot)" }, "automation"],
+  ["python-requests + no JavaScript", goodLead({ _elapsed: undefined }), { "user-agent": "python-requests/2.32.3" }, "automation"],
+  ["honeypot copies the message's opening + no origin/referer", goodLead({ referral_code: "Hi,", message: "Hi,\n\nRobots pay you to film your crew." }), { origin: "" }, "automation"],
   ["bot: instant submit from a foreign origin", goodLead({ _elapsed: 100 }), { origin: "https://evil.example" }, "automation"],
   // Power Construction, 2026-11-08 — the "product review" bot, as the Vercel logs recorded it.
   ["product-review bot: unassigned area code 783 + origin/referer disagree + no JavaScript",
@@ -327,6 +343,14 @@ for (const [label, body, headers, flag] of [
   // browser ran the form's JavaScript, so it is the only signal → delivered.
   ["unassigned area code alone (JS ran)", goodLead({ phone: "(783) 632-9565" }), {}, /phone area code 783 is not assigned/],
   ["origin/referer disagree alone (JS ran)", goodLead(), { origin: "https://testplumbing.com", referer: "https://www.testplumbing.com/contact" }, /origin and referer disagree/],
+  ["bot user agent alone (JS ran)", goodLead(), { "user-agent": "SomeCrawler/2.0" }, /bot user agent/],
+  ["honeypot copied from the message alone (JS ran, 2.55.0)", goodLead({ referral_code: "Hi,", message: "Hi, my water heater is leaking" }), {}, /copied from the message/],
+  // Alpha Omega, 2026-11-16 — a real hospital buyer whose browser put its company name in
+  // the honeypot. Delivered; the company also appears later in the message, which must
+  // NOT count as "copied from the message".
+  ["real lead: autofilled company name in the honeypot (Maluhia, 2026-11-16)",
+    goodLead({ name: "DELILAH VILLA", phone: "8088323008", email: "devilla@hhsc.org", referral_code: "MALUHIA", message: "Hello,\nI am reaching out from Maluhia Hospital. I want to know if you offer water treatment services for cooling tower water systems and legionella testing.\nThank you!" }),
+    {}, /honeypot filled \(MALUHIA\) — browser autofill/],
 ]) {
   await test(`delivered + flagged: ${label}`, async () => {
     const res = await handleLead(jsonReq(body, headers), CONFIG);
@@ -335,6 +359,13 @@ for (const [label, body, headers, flag] of [
     assert.equal(calls.sheet.length, 1);
     assert.equal(calls.email.length, 1);
     assert.ok(!calls.email[0].html.toLowerCase().includes("flag"), "the client never sees a spam label");
+    const automation = /origin|submitted|area code|honeypot|copied|JavaScript|user agent/.test(String(flag));
+    if (automation) {
+      assert.equal(data.conversion, false, "a bot-signal lead fires no conversion (2.55.0)");
+      assert.equal(data.leadId, undefined, "no lead id reaches the thank-you page");
+    } else {
+      assert.ok(data.leadId, "a content-only flag still counts as a conversion");
+    }
     const row = calls.blocked.find((b) => b.layer === "delivered-flagged");
     assert.ok(row, "flagged row logged");
     assert.match(row.matched, flag);
@@ -838,11 +869,11 @@ await test("rate limit can be disabled per site", async () => {
 });
 
 // ── Native (no-JavaScript) posts ─────────────────────────────────
-await test("native post: delivered lead redirects to the success page with the leadId", async () => {
+await test("native post: delivered (no JavaScript) → success page with NO leadId, so no conversion (2.55.0)", async () => {
   const { _elapsed, ...fields } = goodLead();
   const res = await handleLead(nativeReq(fields), CONFIG);
   assert.equal(res.status, 303);
-  assert.match(res.headers.get("location"), /^\/thank-you\?lead=/);
+  assert.equal(res.headers.get("location"), "/thank-you");
   assert.equal(calls.email.length, 1);
 });
 
@@ -858,7 +889,7 @@ await test("native post: a keyword match is still delivered", async () => {
   const { _elapsed, ...fields } = goodLead({ message: "need backlinks help, and a leak fixed" });
   const res = await handleLead(nativeReq(fields), CONFIG);
   assert.equal(res.status, 303);
-  assert.match(res.headers.get("location"), /^\/thank-you\?lead=/);
+  assert.equal(res.headers.get("location"), "/thank-you");
   assert.equal(calls.email.length, 1);
 });
 
@@ -874,6 +905,42 @@ await test("native post: withheld submission redirects to the success page with 
   const res = await handleLead(nativeReq(fields), CONFIG);
   assert.equal(res.status, 303);
   assert.equal(res.headers.get("location"), "/thank-you");
+});
+
+// ── No conversion for bot-signal leads (2.55.0) ──────────────────
+await test("a clean lead still gets a lead id for its conversion", async () => {
+  const data = await (await handleLead(jsonReq(goodLead()), CONFIG)).json();
+  assert.ok(data.leadId);
+  assert.equal(data.conversion, undefined);
+});
+
+await test("bot-signal lead: delivered, no lead id, log row says no conversion fired", async () => {
+  const data = await (await handleLead(jsonReq(goodLead({ referral_code: "ACME CO" })), CONFIG)).json();
+  assert.deepEqual(data, { ok: true, delivered: true, conversion: false });
+  assert.equal(calls.email.length, 1);
+  assert.match(calls.blocked[0].matched, /no conversion fired/);
+});
+
+await test("bot-signal lead double-clicked: the repeat also carries no lead id", async () => {
+  const body = goodLead({ referral_code: "ACME CO" });
+  await handleLead(jsonReq(body), CONFIG);
+  const again = await (await handleLead(jsonReq(body), CONFIG)).json();
+  assert.deepEqual(again, { ok: true, delivered: true, conversion: false });
+  assert.equal(calls.email.length, 1, "delivered once");
+});
+
+await test("a clean lead on a metaCapi site does send the CAPI event (control)", async () => {
+  calls.meta = [];
+  const data = await (await handleLead(jsonReq(goodLead()), { ...CONFIG, metaCapi: { pixelId: "1", accessToken: "t" } })).json();
+  assert.ok(data.leadId);
+  assert.equal(calls.meta.length, 1);
+});
+
+await test("bot-signal lead sends no Meta CAPI event", async () => {
+  calls.meta = [];
+  const data = await (await handleLead(jsonReq(goodLead({ referral_code: "ACME CO" })), { ...CONFIG, metaCapi: { pixelId: "1", accessToken: "t" } })).json();
+  assert.equal(data.conversion, false);
+  assert.equal(calls.meta?.length ?? 0, 0);
 });
 
 // ── Apps Script redirects (2.8.0) ────────────────────────────────

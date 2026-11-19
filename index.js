@@ -79,6 +79,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "hiberchat.com", // Philip, 2026-11-09 — ~16 submissions in an hour
   "generation-freedom.org", // Philip, 2026-11-10
   "porchlightsites.com", // Philip, 2026-11-19
+  "tillerco.co", // "New York Savings" funding pitch from team.tillerco.co (Adair), Philip 2026-11-19
 ];
 
 // Individual spammer addresses on free mail providers, whose domain can't be blocked.
@@ -95,6 +96,7 @@ export const BLOCKED_EMAILS = [
 export const BLOCKED_SITES = [
   "adsmogul.com", // ad-agency pitch, Philip 2026-09-17
   "contractorsranked.com", // in the message body, Philip 2026-11-02
+  "veraforma.fit", // VeraForma staff-fitness-app pitch (Andrews), Philip 2026-11-19
 ];
 
 // Bot template phrases. A submission with one of these ANYWHERE in a field a visitor
@@ -114,6 +116,11 @@ export const BLOCKED_MESSAGES = [
   "I'm interested in company news. Please let me know when I am subscribed",
   // Philip, 2026-10-27 — SMS-style opt-out footer on bulk pitches.
   "To stop receiving these messages, reply STOP",
+  // Philip, 2026-11-19 — Irrigators ×2 + Power Construction (from a Google Ads click), each
+  // with the honeypot filled and the sender's own address after it.
+  "I'm interested in your services. Please feel free to reach me via email",
+  // Philip, 2026-11-19 — the Jo Riggs $195 explainer-video pitch, which rotates addresses.
+  "an engaging video to explain what you do",
 ];
 
 // Withheld keywords (Philip, 2026-09-22). Any of these as a whole word in the MESSAGE or a
@@ -134,6 +141,8 @@ export const BLOCKED_KEYWORDS = [
   "fine touch marketing", // Philip 2026-10-26 — also matches "FineTouchMarketing"
   "ai receptionist", // KENVIX pitch to Dam Plumber, Philip 2026-10-27 — was a flag before
   "united marketing", // United Marketing LLC pitch, Philip 2026-11-05 — with or without "LLC", also "UnitedMarketing"
+  "redesign mockup", // "I created a quick redesign mockup for you" pitch (Irrigators), Philip 2026-11-19
+  "robotics companies pay", // "pay your workers to record their work for robots" pitch (Newman's), Philip 2026-11-19
 ];
 
 // TLDs no real customer sends from.
@@ -153,6 +162,7 @@ export const BLOCKED_PHONES = [
 // a lone first or last name would catch real customers.
 export const BLOCKED_NAMES = [
   "hame walls", // Philip, 2026-10-28
+  "jo riggs", // explainer-video pitch, rotates joriggsvideo*/joannariggs* addresses, Philip 2026-11-19
 ];
 
 // ── Keyword phrases ──────────────────────────────────────────────

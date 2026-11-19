@@ -22,6 +22,14 @@ in-place `success`. The thank-you page renders `<LeadConversion onLead={…}>` w
 GA events and Google Ads conversion (`transaction_id: leadId`), leads with a prominent call
 button, is `noindex`, and is not in the sitemap. Never fire a conversion on a bare page load.
 
+**Bot-flagged leads don't count (2.55.0, Philip 2026-11-19):** a lead delivered with ANY
+automation signal (honeypot filled — autofill included — no JavaScript, too fast, foreign
+origin, bot user agent, …) still reaches the client, but the server answers
+`{ delivered: true, conversion: false }` with no lead id. The form sends it to the bare
+thank-you page, so no Google Ads / GA / Meta conversion fires; no Meta CAPI event is sent.
+The central log row ends with "no conversion fired". Bots clicking ads and filling the form
+were being counted as conversions and training Smart Bidding toward them.
+
 **Rules (Philip, 2026-09-16):** name, phone, email and message are all required. Phone
 must be exactly 10 US digits (a leading 1 is dropped), and a number that can never be a
 person's gets a visible message (2.45.0): an N11, 555 or 900 area code, an exchange starting

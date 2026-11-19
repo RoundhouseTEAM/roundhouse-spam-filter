@@ -48,6 +48,10 @@
  * Withheld submissions return exactly the same response as a real lead EXCEPT
  * `delivered`, which is what conversions fire on.
  *
+ * A delivered lead that carries any automation signal (2.55.0) answers
+ * `{ ok, delivered: true, conversion: false }` with NO leadId (native: the success page
+ * with no `?lead=`), so no Google Ads / GA / Meta conversion can fire for it.
+ *
  * MONITOR MODE (2.7.0)
  * ────────────────────
  * The daily monitor submits a real lead through each live form with the header
@@ -85,6 +89,29 @@ import {
 export const MAX_BODY_BYTES = 64 * 1024;
 
 const MIN_FILL_MS = 1500;
+
+// A User-Agent that names itself a bot or an HTTP library (2.55.0). No browser a person
+// uses sends one: Andrews got "VeraFormaBot/1.0 (+https://veraforma.fit/…)" on 2026-11-18.
+// "CUBOT" phones don't match — "bot" must start a word or sit right before a "/".
+const BOT_USER_AGENT =
+  /\bbot\b|[a-z]bot\/|crawler|spider|scrapy|headlesschrome|curl\/|wget\/|python-requests|python-urllib|aiohttp|go-http-client|okhttp|axios\/|node-fetch|undici|libwww-perl|java\/\d/i;
+
+/** The User-Agent if it names a bot or HTTP library, else "". */
+export function botUserAgent(ua) {
+  return ua && BOT_USER_AGENT.test(ua) ? ua : "";
+}
+
+/**
+ * Words only, lowercase — for comparing the honeypot to what the visitor typed.
+ * @param {string} v
+ */
+function words(v) {
+  return String(v ?? "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
 const AUTOFILL_MIN_OPEN_MS = 3000;
 /** An old-style `_ts` implying the page was open longer than this is a wrong clock. */
 const MAX_PLAUSIBLE_OPEN_MS = 7 * 24 * 60 * 60 * 1000;
@@ -291,14 +318,23 @@ export function automationSignals({ body, headers, allowedOrigins, jsRan, openMs
 
   if (openMs !== null && openMs < MIN_FILL_MS) strong.push(`submitted ${Math.round(openMs)}ms after render`);
 
+  const ua = botUserAgent(headers.get("user-agent") ?? "");
+  if (ua) strong.push(`bot user agent (${ua.slice(0, 120)})`);
+
   const honeypot = str(body.referral_code) || str(body.website);
   if (honeypot) {
     // Edge/Chrome autofill ignores autocomplete="off": JS ran and the form was open a
     // while → a person's browser filled it.
-    const autofill = jsRan && (openMs === null || openMs >= AUTOFILL_MIN_OPEN_MS);
+    // But autofill only writes saved profile data (a name, address, company). A honeypot
+    // holding the opening of the visitor's own message ("Hi," — Newman's, 2026-11-18) is a
+    // bot typing into every box, not a browser (2.55.0).
+    const hp = words(honeypot);
+    const msg = words(body.message);
+    const copiedMessage = hp.length >= 2 && (msg === hp || msg.startsWith(`${hp} `));
+    const autofill = !copiedMessage && jsRan && (openMs === null || openMs >= AUTOFILL_MIN_OPEN_MS);
     const note = `honeypot filled (${honeypot.slice(0, 80)})`;
     if (autofill) weak.push(`${note} — browser autofill`);
-    else strong.push(note);
+    else strong.push(copiedMessage ? `${note} — copied from the message` : note);
   }
 
   if (!jsRan) weak.push("no JavaScript (no _elapsed/_ts)");
@@ -592,6 +628,15 @@ export async function handleLead(req, config) {
       return withhold("automation", [...auto.strong, ...auto.weak].join(" | "));
     }
     flags.push(...auto.strong, ...auto.weak);
+    // 2.55.0 (Philip, 2026-11-19): a lead carrying ANY automation signal is still delivered
+    // to the client, but no conversion fires for it — no lead id reaches the thank-you
+    // page and no Meta CAPI event is sent. A bot that clicked a Google Ads ad and filled
+    // the form (Power Construction /lp, 2026-11-15) was counting as a conversion and
+    // teaching Smart Bidding to buy more of that traffic. The cost — a real person whose
+    // browser autofilled the honeypot isn't counted — is a missed data point, never a
+    // lost lead.
+    const countConversion = auto.strong.length + auto.weak.length === 0;
+    if (!countConversion) flags.push("no conversion fired");
 
     // 2b. HTML/BBCode link markup in any field — only a link-spam bot writes it. Checked
     // before validation so the bot gets the same silent success, not a list of fixes.
@@ -662,6 +707,9 @@ export async function handleLead(req, config) {
     ].join("|");
     const dupe = isDuplicate(dupeKey);
     if (dupe) {
+      if (dupe.countConversion === false) {
+        return native ? redirect(successPath) : json({ ok: true, delivered: true, conversion: false });
+      }
       return native ? redirect(`${successPath}?lead=${dupe.leadId}`) : json({ ok: true, delivered: true, leadId: dupe.leadId });
     }
 
@@ -729,13 +777,13 @@ export async function handleLead(req, config) {
 
     // Remembered only once the lead is actually captured, so a visitor retrying after a
     // failed delivery is delivered again rather than told it already went through.
-    recent.set(dupeKey, { at: Date.now(), leadId });
+    recent.set(dupeKey, { at: Date.now(), leadId, countConversion });
     await recordDelivered(repeat);
 
     // 10. Meta Conversions API (2.53.0) — only a site whose form is a Facebook/Instagram ad
     // destination sets metaCapi. One server-side Lead with event_id = leadId, deduplicated
     // against the thank-you page's browser Pixel Lead. After the response; never throws.
-    if (config.metaCapi) {
+    if (config.metaCapi && countConversion) {
       await afterResponse(
         sendMetaLead({
           config: config.metaCapi,
@@ -749,6 +797,9 @@ export async function handleLead(req, config) {
       );
     }
 
+    if (!countConversion) {
+      return native ? redirect(successPath) : json({ ok: true, delivered: true, conversion: false });
+    }
     return native
       ? redirect(`${successPath}?lead=${leadId}`)
       : json({ ok: true, delivered: true, leadId });

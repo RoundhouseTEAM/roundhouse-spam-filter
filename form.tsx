@@ -17,8 +17,9 @@
  *  - The honeypot keeps its off-screen positioning (not display:none — some bots skip
  *    those) and is read straight from the DOM at submit, by the same name the server
  *    reads. The Brandon page read it by a stale name and could not submit for 16 days.
- *  - Conversions fire only when the server says `delivered`. Blocked spam gets the same
- *    thank-you but never counts in Google Ads.
+ *  - Conversions fire only when the server says `delivered` and sends a lead id. Blocked
+ *    spam gets the same thank-you but never counts in Google Ads; a delivered lead with a
+ *    bot signal goes to the thank-you page with no lead id, so it doesn't count either.
  *  - The form still has action/method, so a visitor whose JavaScript never ran can
  *    submit natively; handleLead() answers that with a redirect or a plain page.
  *
@@ -286,6 +287,12 @@ export default function LeadForm({
       const data = await res.json().catch(() => ({}) as Record<string, unknown>);
 
       if (res.ok && data.ok) {
+        // Delivered, but with a bot signal (2.55.0): the thank-you page with no lead id,
+        // so nothing on it counts a conversion.
+        if (thankYouPath && data.delivered && data.conversion === false) {
+          window.location.assign(thankYouPath);
+          return;
+        }
         if (thankYouPath && data.delivered && typeof data.leadId === "string") {
           const sep = thankYouPath.includes("?") ? "&" : "?";
           // Stay in "sending" while the browser navigates, so the button can't be pressed again.
