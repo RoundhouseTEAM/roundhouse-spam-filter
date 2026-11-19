@@ -99,7 +99,7 @@ const NEVER_URGENT_LAYERS = new Set([
  * couldn't be fetched from Meta arrives with no name or phone to judge by, yet a real
  * person is waiting in Meta's Leads Center.
  */
-const ALWAYS_URGENT_LAYERS = new Set(["meta-fetch-failed"]);
+const ALWAYS_URGENT_LAYERS = new Set(["meta-fetch-failed", "meta-unrouted", "meta-forward-failed"]);
 
 /** Rows that record a lead the client DID receive — shown as "Yes" in the Delivered column. */
 function isDelivered(layer) {

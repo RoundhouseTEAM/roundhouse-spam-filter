@@ -218,6 +218,32 @@ request is Meta's server, not a browser. No conversions fire (Meta counts its ow
 then confirm the email and the sheet row actually arrived — or read `[lead] RECEIVED … (Facebook
 lead form)` in the Vercel logs. A 200 alone proves nothing.
 
+### One webhook for every client — `meta-router` (2.54.0)
+
+Our Meta app (AHNC Ads Tool, 1086636537290889) has ONE Page webhook URL. It points at the
+central router project **`roundhouse-meta-router`** (repo `RoundhouseTEAM/roundhouse-meta-router`),
+which forwards each lead to the right site's `/api/meta-lead/` by `page_id`. The site still
+fetches and delivers the lead itself. The router project is config only:
+
+```ts
+import { routeMetaLead } from "@roundhouse/spam-filter/meta-router";
+const ROUTES = { "<page id>": "https://clientdomain.com/api/meta-lead/" };
+export const GET = (req: Request) => routeMetaLead(req, { routes: ROUTES });
+export const POST = (req: Request) => routeMetaLead(req, { routes: ROUTES });
+```
+
+- One site in a webhook → the original bytes + Meta's signature go through untouched.
+  A body mixing Pages is split and re-signed with the app secret, but only if Meta's
+  signature verified.
+- A site answering non-2xx or unreachable → `meta-forward-failed` (**urgent**), 500 so Meta retries.
+- A Page with no route → `meta-unrouted` (**urgent**) with the leadgen/form/ad ids; 200.
+
+**Adding a client to Facebook lead forms:** add `/api/meta-lead` to the site (copy Simply
+Plumbing's route), set its four `META_` env vars, deploy, add its Page id → URL to the
+router's `ROUTES` and deploy the router, subscribe the Page to the app
+(`POST /{page-id}/subscribed_apps?subscribed_fields=leadgen` with the Page token), then
+send a test lead (`POST /{form-id}/test_leads`). Never point the app's webhook at a site.
+
 ## Facebook / Instagram ad landing pages — Meta Pixel + Conversions API (2.53.0)
 
 For a page that is the destination of Facebook/Instagram ads (never a Google Ads page —
