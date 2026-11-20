@@ -8,7 +8,8 @@
  *  - EXACT REPEAT — every field the same as a lead this site already delivered (name,
  *    phone, email, message, extra fields; case and spacing ignored) → withheld. The
  *    client already has that lead, word for word, so nothing is lost.
- *  - SAME MESSAGE, DIFFERENT DETAILS — a message of 60+ characters that this site has
+ *  - SAME MESSAGE, DIFFERENT DETAILS — a message of 60+ characters (numbers in it ignored,
+ *    2.56.0) that this site has
  *    already delivered TWICE → the third copy onward is withheld. The second copy is
  *    still delivered, so a visitor who resubmits to correct their phone or email is
  *    never swallowed; only a bot rotating names behind one pitch is.
@@ -34,6 +35,15 @@ const MEMORY_MAX_KEYS = 5000;
 
 const memory = new Map(); // key -> { count, at }
 
+/**
+ * The message as the "same message" guard compares it: every run of digits becomes "#"
+ * (2.56.0). A bot that writes its rotating phone number into the message ("Please call
+ * me at +16285024639." — Newman's, 2026-11-20) otherwise makes every copy look new.
+ */
+export function messageShape(s) {
+  return normalizeText(s).replace(/\d+/g, "#");
+}
+
 /** Lowercase, every run of whitespace one space, trimmed — "exactly the same" to a person. */
 export function normalizeText(s) {
   return String(s ?? "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -48,7 +58,7 @@ function hash(s) {
  * @returns {{ exact: string, message: string | null }}
  */
 export function repeatKeys(site, fields, message) {
-  const msg = normalizeText(message);
+  const msg = messageShape(message);
   return {
     exact: `rh:lead-exact:${site}:${hash(fields.map(normalizeText).join("\u0000"))}`,
     message: msg.length >= REPEAT_MESSAGE_MIN_CHARS ? `rh:lead-msg:${site}:${hash(msg)}` : null,

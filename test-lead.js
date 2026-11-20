@@ -270,6 +270,8 @@ for (const [label, body, headers, layer] of [
   ["Jo Riggs video template under another name", goodLead({ name: "Jo", message: "Hi, I just visited your site and wondered if you'd ever thought about having an engaging video to explain what you do?" }), {}, "template"],
   ["veraforma.fit mentioned (Andrews, 2026-11-18)", goodLead({ message: "Details: https://veraforma.fit/employers/" }), {}, "mention"],
   ["redesign mockup (Irrigators, 2026-11-16)", goodLead({ message: "So I went ahead and created a quick redesign mockup for you. Its completely free." }), {}, "blocked-keyword"],
+  ["provenancedatalabs.com sender (Daniel Hartley, Power Construction 2026-11-20)", goodLead({ name: "Daniel Hartley", email: "daniel.hartley@provenancedatalabs.com" }), {}, "email-domain"],
+  ["robot-footage pitch reworded, from gmail (Power Construction, 2026-11-20)", goodLead({ email: "dh@gmail.com", message: "AI labs building robots are paying businesses each month for first-person video of their people at work. The rate is $10 per accepted hour." }), {}, "blocked-keyword"],
   ["robotics companies pay (Newman's, 2026-11-18)", goodLead({ message: "Robotics companies pay businesses like yours to record everyday hands-on work." }), {}, "blocked-keyword"],
   ["blocklisted name: HAME WALLS. with a company after it", goodLead({ name: "HAME WALLS. - Growth Team" }), {}, "blocked-name"],
   ["blocklisted site mentioned in message", goodLead({ message: "See www.AdsMogul.com for details" }), {}, "mention"],
@@ -305,6 +307,13 @@ for (const [label, body, headers, layer] of [
   ["bot: honeypot filled AND submitted instantly", goodLead({ _elapsed: 200, referral_code: "x" }), {}, "automation"],
   ["bot user agent + no JavaScript (VeraFormaBot, Andrews 2026-11-18)", goodLead({ _elapsed: undefined }), { "user-agent": "VeraFormaBot/1.0 (+https://example.com/bot)" }, "automation"],
   ["python-requests + no JavaScript", goodLead({ _elapsed: undefined }), { "user-agent": "python-requests/2.32.3" }, "automation"],
+  // Newman's, 2026-11-20 — as logged: keyboard-mash gmail + no JavaScript.
+  ["keyboard-mash email + no JavaScript (Jimmy, Newman's 2026-11-20)",
+    goodLead({ _elapsed: undefined, name: "Jimmy", phone: "+16285024639", email: "hdfjjvg@gmail.com", message: "I would like to schedule a consultation. Please call me at +16285024639." }),
+    { origin: "https://www.testplumbing.com", referer: "https://www.testplumbing.com/contact-us" }, "automation"],
+  ["keyboard-mash email + no JavaScript (Tom, Newman's 2026-11-20)",
+    goodLead({ _elapsed: undefined, name: "Tom", phone: "+12142231973", email: "jdfjjvff@gmail.com", message: "I would like to schedule a consultation. Please call me at +12142231973." }),
+    { origin: "https://www.testplumbing.com", referer: "https://www.testplumbing.com/contact-us" }, "automation"],
   ["honeypot copies the message's opening + no origin/referer", goodLead({ referral_code: "Hi,", message: "Hi,\n\nRobots pay you to film your crew." }), { origin: "" }, "automation"],
   ["bot: instant submit from a foreign origin", goodLead({ _elapsed: 100 }), { origin: "https://evil.example" }, "automation"],
   // Power Construction, 2026-11-08 — the "product review" bot, as the Vercel logs recorded it.
@@ -344,6 +353,7 @@ for (const [label, body, headers, flag] of [
   ["unassigned area code alone (JS ran)", goodLead({ phone: "(783) 632-9565" }), {}, /phone area code 783 is not assigned/],
   ["origin/referer disagree alone (JS ran)", goodLead(), { origin: "https://testplumbing.com", referer: "https://www.testplumbing.com/contact" }, /origin and referer disagree/],
   ["bot user agent alone (JS ran)", goodLead(), { "user-agent": "SomeCrawler/2.0" }, /bot user agent/],
+  ["keyboard-mash email alone (JS ran, 2.56.0)", goodLead({ email: "hdfjjvg@gmail.com" }), {}, /keyboard-mash email/],
   ["honeypot copied from the message alone (JS ran, 2.55.0)", goodLead({ referral_code: "Hi,", message: "Hi, my water heater is leaking" }), {}, /copied from the message/],
   // Alpha Omega, 2026-11-16 — a real hospital buyer whose browser put its company name in
   // the honeypot. Delivered; the company also appears later in the message, which must
@@ -359,7 +369,7 @@ for (const [label, body, headers, flag] of [
     assert.equal(calls.sheet.length, 1);
     assert.equal(calls.email.length, 1);
     assert.ok(!calls.email[0].html.toLowerCase().includes("flag"), "the client never sees a spam label");
-    const automation = /origin|submitted|area code|honeypot|copied|JavaScript|user agent/.test(String(flag));
+    const automation = /origin|submitted|area code|honeypot|copied|JavaScript|user agent|keyboard-mash/.test(String(flag));
     if (automation) {
       assert.equal(data.conversion, false, "a bot-signal lead fires no conversion (2.55.0)");
       assert.equal(data.leadId, undefined, "no lead id reaches the thank-you page");
@@ -639,6 +649,18 @@ await test("repeat: same long message from rotating names — 2 delivered, 3rd o
   assert.deepEqual(results, [true, true, false, false]);
   assert.equal(calls.email.length, 2);
   assert.equal(calls.blocked.filter((b) => b.layer === "repeat-message").length, 2);
+});
+
+await test("repeat: same message with only the phone in it changed — 3rd copy withheld (Newman's, 2026-11-20)", async () => {
+  // As logged, with JS so only the repeat guard decides (no keyboard-mash addresses).
+  const sends = [["Jimmy", "6285024639"], ["Tom", "2142231973"], ["Sam", "3105551299"]];
+  const results = [];
+  for (const [name, phone] of sends) {
+    const r = await (await handleLead(jsonReq(goodLead({ name, phone, email: `${name.toLowerCase()}@example.com`, message: `I would like to schedule a consultation. Please call me at +1${phone}.` })), CONFIG)).json();
+    results.push(r.delivered === true);
+  }
+  assert.deepEqual(results, [true, true, false]);
+  assert.equal(calls.blocked.filter((b) => b.layer === "repeat-message").length, 1);
 });
 
 await test("repeat: a visitor resubmitting to correct their phone is delivered", async () => {

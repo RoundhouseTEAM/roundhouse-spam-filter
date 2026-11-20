@@ -80,6 +80,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "generation-freedom.org", // Philip, 2026-11-10
   "porchlightsites.com", // Philip, 2026-11-19
   "tillerco.co", // "New York Savings" funding pitch from team.tillerco.co (Adair), Philip 2026-11-19
+  "provenancedatalabs.com", // "film your crew for AI robot labs" pitch (Power Construction), Philip 2026-11-20
 ];
 
 // Individual spammer addresses on free mail providers, whose domain can't be blocked.
@@ -143,6 +144,9 @@ export const BLOCKED_KEYWORDS = [
   "united marketing", // United Marketing LLC pitch, Philip 2026-11-05 — with or without "LLC", also "UnitedMarketing"
   "redesign mockup", // "I created a quick redesign mockup for you" pitch (Irrigators), Philip 2026-11-19
   "robotics companies pay", // "pay your workers to record their work for robots" pitch (Newman's), Philip 2026-11-19
+  // Same robot-footage pitch, reworded (Power Construction, Philip 2026-11-20).
+  "per accepted hour",
+  "first person video", // also "first-person video"
 ];
 
 // TLDs no real customer sends from.

@@ -27,7 +27,10 @@ automation signal (honeypot filled — autofill included — no JavaScript, too 
 origin, bot user agent, …) still reaches the client, but the server answers
 `{ delivered: true, conversion: false }` with no lead id. The form sends it to the bare
 thank-you page, so no Google Ads / GA / Meta conversion fires; no Meta CAPI event is sent.
-The central log row ends with "no conversion fired". Bots clicking ads and filling the form
+The central log row ends with "no conversion fired". 2.56.0 adds a keyboard-mash sender address
+(6+ letters, no vowel, no digit before the @ — `hdfjjvg@gmail.com`) as a strong bot
+signal, and the repeat guard now ignores numbers in the message, so a bot that writes
+its rotating phone into one template is withheld from the third copy. Bots clicking ads and filling the form
 were being counted as conversions and training Smart Bidding toward them.
 
 **Rules (Philip, 2026-09-16):** name, phone, email and message are all required. Phone

@@ -102,6 +102,18 @@ export function botUserAgent(ua) {
 }
 
 /**
+ * A keyboard-mash email address (2.56.0): the part before the @ is 6+ letters with no
+ * vowel (y counts) and no digit — "hdfjjvg@gmail.com", "jdfjjvff@gmail.com" (Newman's
+ * bot, 2026-11-20). Initials ("jkl@", "rjb1972@") are too short or have digits.
+ * @returns {string} the address, or "".
+ */
+export function mashedEmail(email) {
+  const e = String(email ?? "").trim().toLowerCase();
+  const local = e.split("@")[0].split("+")[0].replace(/\./g, "");
+  return e.includes("@") && /^[a-z]{6,}$/.test(local) && !/[aeiouy]/.test(local) ? e : "";
+}
+
+/**
  * Words only, lowercase — for comparing the honeypot to what the visitor typed.
  * @param {string} v
  */
@@ -320,6 +332,9 @@ export function automationSignals({ body, headers, allowedOrigins, jsRan, openMs
 
   const ua = botUserAgent(headers.get("user-agent") ?? "");
   if (ua) strong.push(`bot user agent (${ua.slice(0, 120)})`);
+
+  const mash = mashedEmail(body.email);
+  if (mash) strong.push(`keyboard-mash email (${mash.slice(0, 80)})`);
 
   const honeypot = str(body.referral_code) || str(body.website);
   if (honeypot) {
