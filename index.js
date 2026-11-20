@@ -81,6 +81,12 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "porchlightsites.com", // Philip, 2026-11-19
   "tillerco.co", // "New York Savings" funding pitch from team.tillerco.co (Adair), Philip 2026-11-19
   "provenancedatalabs.com", // "film your crew for AI robot labs" pitch (Power Construction), Philip 2026-11-20
+  // Same robot-footage pitch on rotating domains, all with (267) 489-2720 — Philip 2026-11-20.
+  "medici55.com",
+  "getfairhavendata.com",
+  "whitmoredatapartners.com",
+  "verconai.com", // "I built you a free demo site" pitch (Alpha Omega, Master Pro), Philip 2026-11-20
+  "homeandbuildingbiz.com", // "excellent time to sell a business" broker pitch (CM&M), Philip 2026-11-20
 ];
 
 // Individual spammer addresses on free mail providers, whose domain can't be blocked.
@@ -98,6 +104,7 @@ export const BLOCKED_SITES = [
   "adsmogul.com", // ad-agency pitch, Philip 2026-09-17
   "contractorsranked.com", // in the message body, Philip 2026-11-02
   "veraforma.fit", // VeraForma staff-fitness-app pitch (Andrews), Philip 2026-11-19
+  "getlivedemo.com", // <business>.getlivedemo.com free-demo-site pitch from Tiago, Philip 2026-11-20
 ];
 
 // Bot template phrases. A submission with one of these ANYWHERE in a field a visitor
@@ -147,6 +154,7 @@ export const BLOCKED_KEYWORDS = [
   // Same robot-footage pitch, reworded (Power Construction, Philip 2026-11-20).
   "per accepted hour",
   "first person video", // also "first-person video"
+  "sell a business in your industry", // business-broker pitch (CM&M), Philip 2026-11-20
 ];
 
 // TLDs no real customer sends from.
@@ -158,6 +166,8 @@ export const BLOCKED_PHONES = [
   "3072076448", // SEO spam: "Brown Miller" (Alpha Omega), "Anette Smith" (Newmans)
   "8058008141", // AdsMogul pitch, Philip 2026-09-17
   "5164186310", // Fine Touch Marketing, Philip 2026-10-26
+  "2674892720", // robot-footage pitch, every domain/name it rotates through, Philip 2026-11-20
+  "3075334552", // Tiago, getlivedemo.com free-demo-site pitch, Philip 2026-11-20
 ];
 
 // Repeat offenders by name. Matched against the NAME field only, as whole words in order
