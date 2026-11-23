@@ -131,6 +131,16 @@ export const BLOCKED_MESSAGES = [
   "an engaging video to explain what you do",
 ];
 
+// Withheld ONLY when the form's JavaScript didn't run (2.58.0, Philip 2026-11-23). A real
+// customer could type these words, but from a browser that runs the form; a script posting
+// straight to the endpoint doesn't. Elsewhere "no JavaScript" alone is only a flag.
+export const NO_JS_BLOCKED_MESSAGES = [
+  // Newman's, 2026-11-20..23 — one IP, rotating names, phones and Gmail addresses, the number
+  // written after the phrase. The keyboard-mash rule caught the first two; later ones
+  // ("jvgjc", "msjsj99") slipped past it and were delivered, each costing two Resend emails.
+  "I would like to schedule a consultation. Please call me at",
+];
+
 // Withheld keywords (Philip, 2026-09-22). Any of these as a whole word in the MESSAGE or a
 // typed extra field — never the name ("Seo" is a Korean surname) — and the lead is not
 // sent to the client, only recorded in the central sheet. A deliberate exception to
@@ -386,10 +396,10 @@ function bareWords(value) {
  * A BLOCKED_MESSAGES phrase anywhere in the text, on word boundaries.
  * @returns {string} the phrase that matched, or "".
  */
-export function findBlockedTemplate(text) {
+export function findBlockedTemplate(text, list = BLOCKED_MESSAGES) {
   const bare = ` ${bareWords(text)} `;
   if (!bare.trim()) return "";
-  return BLOCKED_MESSAGES.find((m) => bare.includes(` ${bareWords(m)} `)) ?? "";
+  return list.find((m) => bare.includes(` ${bareWords(m)} `)) ?? "";
 }
 
 /**

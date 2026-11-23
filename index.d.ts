@@ -19,8 +19,10 @@ export declare const BLOCKED_SITES: string[];
 /** Individual spammer addresses on free mail providers (Gmail dots/"+tags" ignored). */
 export declare const BLOCKED_EMAILS: string[];
 export declare const BLOCKED_MESSAGES: string[];
-/** The BLOCKED_MESSAGES phrase found anywhere in the text, or "". */
-export declare function findBlockedTemplate(text: string): string;
+/** Bot phrases withheld only when the form's JavaScript didn't run (2.58.0). */
+export declare const NO_JS_BLOCKED_MESSAGES: string[];
+/** The phrase from `list` (default BLOCKED_MESSAGES) found anywhere in the text, or "". */
+export declare function findBlockedTemplate(text: string, list?: string[]): string;
 export declare const BLOCKED_KEYWORDS: string[];
 /** The BLOCKED_KEYWORDS term found as a whole word in the text, or "". */
 export declare function findBlockedKeyword(

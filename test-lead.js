@@ -323,6 +323,13 @@ for (const [label, body, headers, layer] of [
   ["keyboard-mash email + no JavaScript (Tom, Newman's 2026-11-20)",
     goodLead({ _elapsed: undefined, name: "Tom", phone: "+12142231973", email: "jdfjjvff@gmail.com", message: "I would like to schedule a consultation. Please call me at +12142231973." }),
     { origin: "https://www.testplumbing.com", referer: "https://www.testplumbing.com/contact-us" }, "automation"],
+  // Newman's, 2026-11-23 — as logged: same template, addresses the keyboard-mash rule misses.
+  ["no-JS template (Tom, Newman's 2026-11-23 00:11)",
+    goodLead({ _elapsed: undefined, name: "Tom", phone: "+19056307639", email: "jvgjc@gmail.com", message: "I would like to schedule a consultation. Please call me at +19056307639." }),
+    { origin: "https://www.testplumbing.com", referer: "https://www.testplumbing.com/contact-us" }, "template"],
+  ["no-JS template (skjs, Newman's 2026-11-23 01:42)",
+    goodLead({ _elapsed: undefined, name: "skjs", phone: "+12136923167", email: "msjsj99@gmail.com", message: "I would like to schedule a consultation. Please call me at +12136923167." }),
+    { origin: "https://www.testplumbing.com", referer: "https://www.testplumbing.com/contact-us" }, "template"],
   ["honeypot copies the message's opening + no origin/referer", goodLead({ referral_code: "Hi,", message: "Hi,\n\nRobots pay you to film your crew." }), { origin: "" }, "automation"],
   ["bot: instant submit from a foreign origin", goodLead({ _elapsed: 100 }), { origin: "https://evil.example" }, "automation"],
   // Power Construction, 2026-11-08 — the "product review" bot, as the Vercel logs recorded it.
@@ -408,6 +415,16 @@ for (const message of [
     assert.equal(calls.blocked.length, 0);
   });
 }
+
+// 2.58.0 — the Newman's bot phrase, typed by a real visitor whose browser ran the form.
+await test("real visitor typing the no-JS bot phrase is delivered unflagged", async () => {
+  const res = await handleLead(jsonReq(goodLead({ message: "I would like to schedule a consultation. Please call me at 801-555-0142 after 5." })), CONFIG);
+  const data = await res.json();
+  assert.equal(data.delivered, true);
+  assert.ok(data.leadId, "counts as a conversion");
+  assert.equal(calls.email.length, 1);
+  assert.equal(calls.blocked.length, 0);
+});
 
 // ── Device clocks ────────────────────────────────────────────────
 await test("clock: form open 3 minutes on a device 5 minutes FAST → delivered (old _ts page)", async () => {

@@ -67,7 +67,7 @@
  * plain HTML page out.
  */
 
-import { checkSpam, checkContent, findLinkMarkup, findBlockedTemplate, findBlockedKeyword, logBlocked } from "./index.js";
+import { checkSpam, checkContent, findLinkMarkup, findBlockedTemplate, findBlockedKeyword, logBlocked, NO_JS_BLOCKED_MESSAGES } from "./index.js";
 import { callAppsScript, afterResponse } from "./apps-script.js";
 import { sendMetaLead } from "./meta-capi.js";
 import { isAssignedAreaCode } from "./area-codes.js";
@@ -690,10 +690,12 @@ export async function handleLead(req, config) {
     if (content.blocked) flags.push(`${content.layer}: ${content.reason}`);
 
     // A known bot template anywhere in a typed field — extra fields included — is withheld.
-    const template = findBlockedTemplate(
-      [lead.name, lead.message, ...extraFields.map((f) => lead[f.name] ?? "")].join("\n")
-    );
+    const typedText = [lead.name, lead.message, ...extraFields.map((f) => lead[f.name] ?? "")].join("\n");
+    const template = findBlockedTemplate(typedText);
     if (template) return withhold("template", template);
+    // A bot phrase a real customer could also type: withheld only without JavaScript (2.58.0).
+    const noJsTemplate = jsRan ? "" : findBlockedTemplate(typedText, NO_JS_BLOCKED_MESSAGES);
+    if (noJsTemplate) return withhold("template", `${noJsTemplate} (no JavaScript)`);
 
     // SEO / digital-marketing pitches: message and the extra fields a visitor types into.
     // Not the name (a surname), and not hidden or dropdown fields — the site supplies those.
