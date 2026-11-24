@@ -50,6 +50,7 @@ costs a client a job; a spam email costs them a delete. So `handleLead` **withho
 - a `BLOCKED_KEYWORDS` term in the message or a typed extra field (2.13.0): `seo`, `digital marketing`, `vas 4 hire`, `virtual assistant(s)`, `wikipedia`, `free b2b data` (2.15.0), `freelance writer(s)` (2.26.0), `true review` (2.27.0, also "TrueReview"), `fine touch marketing` (2.30.0), `ai receptionist` (2.33.0, was a flag), `united marketing` (2.44.0, United Marketing LLC — with or without "LLC", also "UnitedMarketing"). Multi-word terms also match run together ("VAs4Hire") and are checked in the name; single words like `seo` never are (Seo is a surname)
 - a known bot template phrase (`BLOCKED_MESSAGES`, 2.12.0) **anywhere** in the name, message or an extra field, whatever else is written — e.g. "I would like more information. Please contact me by email". A deliberate exception to deliver-when-in-doubt (Philip, 2026-09-21)
 - a `NO_JS_BLOCKED_MESSAGES` phrase (2.58.0) when the form's JavaScript didn't run — a bot phrase a real customer could also type, so it is withheld only from a script posting straight to the endpoint: "I would like to schedule a consultation. Please call me at" (Newman's, 2026-11-23). With JavaScript it is delivered as normal
+- **no JavaScript** (2.59.0, Philip 2026-11-24) — the form never stamped `_elapsed`, so a script posted straight to `/api/contact`. Since 2026-08-31, 109 of 110 delivered no-JS leads were pitches or bots. Checked AFTER validation (a person still sees what to fix) and after the template/keyword/blocklist rules (known spam keeps its quiet layer). Logged as `no-javascript`, which DOES send an urgent alert when the row has a real name, a dialable phone and a message — that is how a real customer whose browser didn't run the form gets rescued
 - HTML/BBCode link markup (`<a href=`, `[url=`, `[link=`) in any field (2.10.0) — link-spam bots paste it, people don't
 - a flood: over 30 deliverable submissions from one IP in 10 minutes
 - **two automation signals together**, at least one strong — strong: honeypot filled
@@ -63,7 +64,7 @@ costs a client a job; a spam email costs them a delete. So `handleLead` **withho
 Everything else that used to block is **delivered to the client and flagged**
 (`delivered-flagged` row, never shown to the client, never an urgent alert): keyword
 phrases, odd TLDs, gibberish, Cyrillic/Greek, a foreign origin (a domain missing from
-`allowedOrigins`), a single timing or honeypot signal, no JavaScript, more than 5 leads
+`allowedOrigins`), a single timing or honeypot signal, more than 5 leads
 from one IP. Review the flagged rows to tune the rules.
 
 Timing is measured on the visitor's own device (`_elapsed`). Until 2.6.0 the server

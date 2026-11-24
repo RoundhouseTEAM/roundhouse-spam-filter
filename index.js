@@ -105,6 +105,7 @@ export const BLOCKED_SITES = [
   "contractorsranked.com", // in the message body, Philip 2026-11-02
   "veraforma.fit", // VeraForma staff-fitness-app pitch (Andrews), Philip 2026-11-19
   "getlivedemo.com", // <business>.getlivedemo.com free-demo-site pitch from Tiago, Philip 2026-11-20
+  "siteindex.live", // "List your site in Google's Search Index" pitch, Philip 2026-11-24
 ];
 
 // Bot template phrases. A submission with one of these ANYWHERE in a field a visitor
@@ -129,6 +130,14 @@ export const BLOCKED_MESSAGES = [
   "I'm interested in your services. Please feel free to reach me via email",
   // Philip, 2026-11-19 — the Jo Riggs $195 explainer-video pitch, which rotates addresses.
   "an engaging video to explain what you do",
+  // Philip, 2026-11-24 — the same pitch reworded (CM&M, as "Joanna Riggs").
+  "an engaging video to explain or promote what you do",
+  // Philip, 2026-11-24 — "New York Savings" funding pitch: 8 sites on 2026-11-23/24, a new
+  // team.<word><word>.co address and a "do you guys still do <service>?" opener each time.
+  "help with some backing of",
+  "New York Savings, NYC",
+  // Philip, 2026-11-24 — "List <your site> in Google's Search Index" (siteindex.live).
+  "in Google's Search Index so it can be visible in web search results",
 ];
 
 // Withheld ONLY when the form's JavaScript didn't run (2.58.0, Philip 2026-11-23). A real
@@ -187,6 +196,7 @@ export const BLOCKED_PHONES = [
 export const BLOCKED_NAMES = [
   "hame walls", // Philip, 2026-10-28
   "jo riggs", // explainer-video pitch, rotates joriggsvideo*/joannariggs* addresses, Philip 2026-11-19
+  "joanna riggs", // same pitch under her full first name (CM&M), Philip 2026-11-24
 ];
 
 // ── Keyword phrases ──────────────────────────────────────────────

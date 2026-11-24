@@ -19,11 +19,12 @@
  *  - WITHHELD (silent success, logged in full) only on evidence a customer can't produce:
  *      an oversized body, a request posted from another website (Sec-Fetch-Site),
  *      a confirmed spammer's email domain or phone number, HTML/BBCode link markup
- *      (`<a href=`, `[url=`), a flood from one IP, or TWO
- *      automation signals together (see AUTOMATION below).
+ *      (`<a href=`, `[url=`), a flood from one IP, TWO automation signals together
+ *      (see AUTOMATION below), or — since 2.59.0 — a lead the form's JavaScript never
+ *      touched (step 4b; withheld with an urgent alert when it reads like a customer).
  *  - DELIVERED AND FLAGGED everything else that used to block: keyword phrases, odd TLDs,
  *      gibberish, Cyrillic/Greek, a wrong origin, a too-fast submit or a filled honeypot
- *      on its own, no JavaScript, more than 5 leads from one IP. The client gets the lead
+ *      on its own, more than 5 leads from one IP. The client gets the lead
  *      exactly as normal (no label in their inbox); the central log gets a
  *      "delivered-flagged" row so the rules can be tuned.
  *  - VISIBLE messages for anything a person can fix (validation.js).
@@ -35,6 +36,7 @@
  *     Link markup (<a href>)    withheld — only a link-spam bot writes it
  *  3. Validation                visible per-field messages
  *  4. Content (non-Latin, list) blocklisted domain/phone withheld; the rest flagged
+ *  4b. No JavaScript (2.59.0)   withheld, urgent alert if it reads like a customer
  *  5. Double-click              same lead within 2 minutes → the first lead's id
  *  5b. Repeat (2.49.0)          an identical lead already delivered in 30 days → withheld;
  *                               a 60+ char message delivered twice → 3rd copy on withheld
@@ -711,6 +713,17 @@ export async function handleLead(req, config) {
       if (WITHHELD_CONTENT_RULES.has(verdict.rule)) return withhold(verdict.rule, verdict.reason ?? "");
       flags.push(`${verdict.rule}: ${verdict.reason}`);
     }
+
+    // 4b. No JavaScript (2.59.0, Philip 2026-11-24). The form stamps `_elapsed` when it
+    // runs; a script posting straight to /api/contact never loads it. Since 2026-08-31,
+    // 109 of 110 no-JavaScript leads delivered to clients were sales pitches or bots (the
+    // one exception: a CM&M water-heater customer, 2026-10-03). So it is withheld — but
+    // AFTER validation (a person still sees what to fix) and after the template, keyword
+    // and blocklist checks (known spam keeps its quiet layer). What reaches this line is
+    // logged as "no-javascript", which is NOT in NEVER_URGENT_LAYERS: a row with a real
+    // name, a dialable phone and a message sends an immediate alert, so a real customer
+    // whose browser didn't run the form can still be rescued the same day.
+    if (!jsRan) return withhold("no-javascript", flags.join(" | "));
 
     // 5. Double-click. Every field is in the key, so a resubmission that corrects the
     // address is delivered rather than swallowed.

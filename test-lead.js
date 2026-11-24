@@ -501,7 +501,7 @@ await test("autofill: honeypot filled, JS ran, open 3s+ → delivered, flagged D
   assert.equal(calls.blocked[0].urgent, "", "a delivered lead never raises an urgent alert");
 });
 
-await test("a real no-JavaScript customer (CM&M, 2026-10-03) is still delivered", async () => {
+await test("a real no-JavaScript customer (CM&M, 2026-10-03) is withheld WITH an urgent alert (2.59.0)", async () => {
   const res = await handleLead(
     jsonReq(goodLead({ _elapsed: undefined, phone: "951-454-0991", message: "state water heater no hot water is under warranty" }), {
       origin: "https://www.testplumbing.com",
@@ -509,14 +509,20 @@ await test("a real no-JavaScript customer (CM&M, 2026-10-03) is still delivered"
     }),
     CONFIG
   );
-  assert.equal((await res.json()).delivered, true);
+  const data = await res.json();
+  assert.equal(data.ok, true, "same thanks as any withheld lead");
+  assert.equal(data.delivered, undefined);
+  assert.equal(calls.email.length, 0);
+  assert.equal(calls.sheet.length, 0);
+  assert.equal(calls.blocked[0].layer, "no-javascript");
   assert.match(calls.blocked[0].matched, /^no JavaScript/);
+  assert.equal(calls.blocked[0].urgent, "yes", "a real-looking no-JS lead must alert so it can be rescued");
 });
 
 await test("Origin 'null' (privacy setting, redirect) is not read as a mismatch", async () => {
-  const res = await handleLead(jsonReq(goodLead({ _elapsed: undefined }), { origin: "null", referer: "https://www.testplumbing.com/contact" }), CONFIG);
+  const res = await handleLead(jsonReq(goodLead(), { origin: "null", referer: "https://www.testplumbing.com/contact" }), CONFIG);
   assert.equal((await res.json()).delivered, true);
-  assert.ok(!calls.blocked[0].matched.includes("disagree"));
+  assert.ok(!(calls.blocked[0]?.matched ?? "").includes("disagree"));
 });
 
 await test("a fake 555-01xx phone gets a visible message, not a silent block", async () => {
@@ -527,19 +533,47 @@ await test("a fake 555-01xx phone gets a visible message, not a silent block", a
 });
 
 await test("central log: a +1 phone is sent as text, not a formula (was #ERROR!)", async () => {
-  await handleLead(jsonReq(goodLead({ _elapsed: undefined, phone: "+1 (512) 555-2100", message: "=HYPERLINK(1) leak" })), CONFIG);
+  await handleLead(jsonReq(goodLead({ referral_code: "Jane", phone: "+1 (512) 555-2100", message: "=HYPERLINK(1) leak" })), CONFIG);
   assert.equal(calls.blocked[0].phone, "'+1 (512) 555-2100");
   assert.equal(calls.blocked[0].message, "'=HYPERLINK(1) leak");
   assert.equal(calls.sheet[0].phone, "+1 (512) 555-2100", "the client's own sheet row is unchanged");
 });
 
-await test("no timing token (JS never ran) → delivered, normal subject, flagged Delivered=Yes", async () => {
+await test("no timing token (JS never ran) → withheld as no-javascript, not delivered (2.59.0)", async () => {
   const res = await handleLead(jsonReq(goodLead({ _elapsed: undefined })), CONFIG);
-  assert.equal((await res.json()).delivered, true);
-  assert.ok(!calls.email[0].subject.includes("Unverified"));
-  assert.equal(calls.blocked[0].layer, "delivered-flagged");
+  assert.equal((await res.json()).delivered, undefined);
+  assert.equal(calls.email.length, 0);
+  assert.equal(calls.blocked[0].layer, "no-javascript");
   assert.match(calls.blocked[0].matched, /no JavaScript/);
-  assert.equal(calls.blocked[0].delivered, "Yes");
+  assert.notEqual(calls.blocked[0].delivered, "Yes");
+});
+
+await test("no JavaScript + a known pitch template → logged as template (quiet), not no-javascript", async () => {
+  await handleLead(jsonReq(goodLead({ _elapsed: undefined, message: "Hey, do you guys still do drain cleaning? There is a private group that is opening up some of their regulations to help with some backing of plumbers. Ryan — New York Savings, NYC" })), CONFIG);
+  assert.equal(calls.blocked[0].layer, "template");
+  assert.equal(calls.blocked[0].urgent, "");
+});
+
+await test("2026-11-24 pitches are withheld even when JavaScript ran", async () => {
+  const cases = [
+    [{ message: "Hi, I just visited your site and wondered if you'd ever thought about having an engaging video to explain or promote what you do?" }, "template"],
+    [{ message: "Hey, do you guys still do pipe repair? A private group is opening up some of their regulations to help with some backing of plumbers." }, "template"],
+    [{ message: "Hi, you guys do drain cleaning right? Could I give you a call today? Eric — New York Savings, NYC" }, "template"],
+    [{ message: "List yoursite.com in Google's Search Index so it can be visible in web search results! Add it today: siteindex.live" }, "template"],
+    [{ name: "Joanna Riggs" }, "blocked-name"],
+  ];
+  for (const [over, layer] of cases) {
+    calls.email.length = 0; calls.blocked.length = 0;
+    await handleLead(jsonReq(goodLead(over)), CONFIG);
+    assert.equal(calls.email.length, 0, JSON.stringify(over));
+    assert.equal(calls.blocked[0].layer, layer, JSON.stringify(over));
+  }
+});
+
+await test("no JavaScript but a validation error → the visible message still shows", async () => {
+  const res = await handleLead(jsonReq(goodLead({ _elapsed: undefined, phone: "555" })), CONFIG);
+  assert.equal(res.status, 400);
+  assert.equal((await res.json()).errors.phone, MESSAGES.phoneLength);
 });
 
 // ── Failure handling ─────────────────────────────────────────────
@@ -917,12 +951,14 @@ await test("rate limit can be disabled per site", async () => {
 });
 
 // ── Native (no-JavaScript) posts ─────────────────────────────────
-await test("native post: delivered (no JavaScript) → success page with NO leadId, so no conversion (2.55.0)", async () => {
+await test("native post (no JavaScript) → withheld, same success page with NO leadId (2.59.0)", async () => {
   const { _elapsed, ...fields } = goodLead();
   const res = await handleLead(nativeReq(fields), CONFIG);
   assert.equal(res.status, 303);
   assert.equal(res.headers.get("location"), "/thank-you");
-  assert.equal(calls.email.length, 1);
+  assert.equal(calls.email.length, 0);
+  assert.equal(calls.blocked[0].layer, "no-javascript");
+  assert.equal(calls.blocked[0].urgent, "yes");
 });
 
 await test("native post: validation errors render a plain page listing them", async () => {
@@ -933,19 +969,20 @@ await test("native post: validation errors render a plain page listing them", as
   assert.ok(html.includes(MESSAGES.emailMissing));
 });
 
-await test("native post: a keyword match is still delivered", async () => {
+await test("native post: a keyword match with no JavaScript is withheld, keyword kept in the log", async () => {
   const { _elapsed, ...fields } = goodLead({ message: "need backlinks help, and a leak fixed" });
   const res = await handleLead(nativeReq(fields), CONFIG);
   assert.equal(res.status, 303);
   assert.equal(res.headers.get("location"), "/thank-you");
-  assert.equal(calls.email.length, 1);
+  assert.equal(calls.email.length, 0);
+  assert.equal(calls.blocked[0].layer, "no-javascript");
 });
 
-await test("native post: no-referrer policy (Origin: null, no Referer) → delivered, flagged", async () => {
+await test("native post: no-referrer policy (Origin: null, no Referer) → withheld, same success page", async () => {
   const { _elapsed, ...fields } = goodLead();
   const res = await handleLead(nativeReq(fields, { referer: "", origin: "null" }), CONFIG);
   assert.equal(res.status, 303);
-  assert.equal(calls.email.length, 1);
+  assert.equal(calls.email.length, 0);
 });
 
 await test("native post: withheld submission redirects to the success page with no leadId", async () => {
