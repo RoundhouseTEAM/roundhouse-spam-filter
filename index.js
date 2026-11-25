@@ -87,6 +87,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "whitmoredatapartners.com",
   "verconai.com", // "I built you a free demo site" pitch (Alpha Omega, Master Pro), Philip 2026-11-20
   "homeandbuildingbiz.com", // "excellent time to sell a business" broker pitch (CM&M), Philip 2026-11-20
+  "ridgepointba.com", // Ridgepoint Business Advisors broker pitch, "Tom Green" (Andrews), Philip 2026-11-25
 ];
 
 // Individual spammer addresses on free mail providers, whose domain can't be blocked.
@@ -174,6 +175,10 @@ export const BLOCKED_KEYWORDS = [
   "per accepted hour",
   "first person video", // also "first-person video"
   "sell a business in your industry", // business-broker pitch (CM&M), Philip 2026-11-20
+  // Ridgepoint broker pitch (Andrews), Philip 2026-11-25 — delivered unflagged because it
+  // said "sell their businesses", not "sell your business".
+  "confidential business valuation",
+  "what your business could sell for",
 ];
 
 // TLDs no real customer sends from.
@@ -187,6 +192,7 @@ export const BLOCKED_PHONES = [
   "5164186310", // Fine Touch Marketing, Philip 2026-10-26
   "2674892720", // robot-footage pitch, every domain/name it rotates through, Philip 2026-11-20
   "3075334552", // Tiago, getlivedemo.com free-demo-site pitch, Philip 2026-11-20
+  "5168429665", // "Tom Green", Ridgepoint Business Advisors broker pitch (Andrews), Philip 2026-11-25
 ];
 
 // Repeat offenders by name. Matched against the NAME field only, as whole words in order

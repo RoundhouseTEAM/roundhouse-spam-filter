@@ -280,6 +280,11 @@ for (const [label, body, headers, layer] of [
   ["free demo site on getlivedemo.com, from gmail (Master Pro)", goodLead({ email: "t@gmail.com", message: "I built you a site. https://master-pro-plumber.getlivedemo.com Have a look." }), {}, "mention"],
   ["verconai.com sender (Alpha Omega)", goodLead({ email: "tiago@verconai.com" }), {}, "email-domain"],
   ["business-broker pitch from gmail (CM&M)", goodLead({ email: "b@gmail.com", message: "Currently, it is an excellent time to sell a business in your industry!" }), {}, "blocked-keyword"],
+  // Philip, 2026-11-25 — Ridgepoint broker pitch (Andrews), delivered with no flags.
+  ["ridgepointba.com sender (Andrews, 2026-11-25)", goodLead({ name: "Tom Green", email: "info@ridgepointba.com" }), {}, "email-domain"],
+  ["Ridgepoint phone on a gmail address", goodLead({ phone: "(516) 842-9665", email: "tg@gmail.com" }), {}, "phone"],
+  ["confidential business valuation, from gmail", goodLead({ email: "t@gmail.com", message: "We help owners sell their businesses and offer a free, confidential business valuation." }), {}, "blocked-keyword"],
+  ["what your business could sell for, from gmail", goodLead({ email: "t@gmail.com", message: "Find out what your business could sell for. Request an estimate here." }), {}, "blocked-keyword"],
   ["homeandbuildingbiz.com sender (CM&M)", goodLead({ email: "bakleysmith@homeandbuildingbiz.com" }), {}, "email-domain"],
   ["robotics companies pay (Newman's, 2026-11-18)", goodLead({ message: "Robotics companies pay businesses like yours to record everyday hands-on work." }), {}, "blocked-keyword"],
   ["blocklisted name: HAME WALLS. with a company after it", goodLead({ name: "HAME WALLS. - Growth Team" }), {}, "blocked-name"],

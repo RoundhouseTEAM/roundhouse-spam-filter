@@ -576,6 +576,11 @@ const MUST_BLOCK = [
 
 const MUST_PASS = [
   {
+    label: "customer on Ridgepoint Drive (the broker's name alone never blocks)",
+    name: "Dana Lee", email: "customer@gmail.com", phone: "5551234567",
+    message: "We're at 412 Ridgepoint Dr. Water heater is leaking, and we're selling the house next month so need it fixed fast.",
+  },
+  {
     label: "name that merely contains the blocked name's letters",
     name: "Shame Wallsworth", email: "customer@gmail.com", phone: "5551234567",
     message: "Our toilet keeps running, can you come out this week?",
