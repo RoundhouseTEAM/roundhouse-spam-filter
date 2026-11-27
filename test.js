@@ -576,6 +576,11 @@ const MUST_BLOCK = [
 
 const MUST_PASS = [
   {
+    label: "customer who wants a report for insurance (BI-pitch wording never blocks on 'report' or 'dashboard')",
+    name: "Lee Chan", email: "customer@gmail.com", phone: "5551234567",
+    message: "Need a written report of the leak for my insurance. Also a light on the water heater's dashboard keeps blinking.",
+  },
+  {
     label: "customer who saw the client's press article (link-placement wording never blocks on 'article' or 'mentions')",
     name: "Sam Ortiz", email: "customer@gmail.com", phone: "5551234567",
     message: "Saw the article that mentions you on einpresswire about water heaters. Ours is leaking, can you come out this week?",

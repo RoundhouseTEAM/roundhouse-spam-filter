@@ -87,6 +87,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "whitmoredatapartners.com",
   "verconai.com", // "I built you a free demo site" pitch (Alpha Omega, Master Pro), Philip 2026-11-20
   "homeandbuildingbiz.com", // "excellent time to sell a business" broker pitch (CM&M), Philip 2026-11-20
+  "datapallas.com", // "DataPallas Team", BI-software pitch (CM&M), Philip 2026-11-27 — sends from c.datapallas.com
   "yournewsagent.com.au", // "Tina Smith", paid link-placement pitch (Proverbs), Philip 2026-11-27
   "ridgepointba.com", // Ridgepoint Business Advisors broker pitch, "Tom Green" (Andrews), Philip 2026-11-25
 ];
@@ -195,6 +196,10 @@ export const BLOCKED_KEYWORDS = [
   "contextual mentions",
   "niche relevant sites", // also "niche-relevant sites"
   "similar placements",
+  // DataPallas BI-software pitch (CM&M), Philip 2026-11-27 — delivered unflagged.
+  "report bursting",
+  "pixel perfect reports", // also "pixel-perfect reports"
+  "open source bi", // also "open-source BI"
 ];
 
 // TLDs no real customer sends from.
@@ -209,6 +214,7 @@ export const BLOCKED_PHONES = [
   "2674892720", // robot-footage pitch, every domain/name it rotates through, Philip 2026-11-20
   "3075334552", // Tiago, getlivedemo.com free-demo-site pitch, Philip 2026-11-20
   "5168429665", // "Tom Green", Ridgepoint Business Advisors broker pitch (Andrews), Philip 2026-11-25
+  "7372134820", // "DataPallas Team", BI-software pitch (CM&M), Philip 2026-11-27
   "2494494100", // "Tina Smith", paid link-placement pitch (Proverbs), Philip 2026-11-27
   "9179261831", // "shapon", Google review-removal pitch (Indiana Flow), Philip 2026-11-27
 ];
