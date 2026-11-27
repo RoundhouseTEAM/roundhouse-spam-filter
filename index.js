@@ -87,6 +87,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "whitmoredatapartners.com",
   "verconai.com", // "I built you a free demo site" pitch (Alpha Omega, Master Pro), Philip 2026-11-20
   "homeandbuildingbiz.com", // "excellent time to sell a business" broker pitch (CM&M), Philip 2026-11-20
+  "yournewsagent.com.au", // "Tina Smith", paid link-placement pitch (Proverbs), Philip 2026-11-27
   "ridgepointba.com", // Ridgepoint Business Advisors broker pitch, "Tom Green" (Andrews), Philip 2026-11-25
 ];
 
@@ -189,6 +190,11 @@ export const BLOCKED_KEYWORDS = [
   "delete negative reviews",
   "negative reviews delete",
   "positive review provider",
+  // Paid link-placement pitch, "Tina Smith" (Proverbs), Philip 2026-11-27 — delivered
+  // unflagged: it named the client's own press release, and no guest-post wording.
+  "contextual mentions",
+  "niche relevant sites", // also "niche-relevant sites"
+  "similar placements",
 ];
 
 // TLDs no real customer sends from.
@@ -203,6 +209,7 @@ export const BLOCKED_PHONES = [
   "2674892720", // robot-footage pitch, every domain/name it rotates through, Philip 2026-11-20
   "3075334552", // Tiago, getlivedemo.com free-demo-site pitch, Philip 2026-11-20
   "5168429665", // "Tom Green", Ridgepoint Business Advisors broker pitch (Andrews), Philip 2026-11-25
+  "2494494100", // "Tina Smith", paid link-placement pitch (Proverbs), Philip 2026-11-27
   "9179261831", // "shapon", Google review-removal pitch (Indiana Flow), Philip 2026-11-27
 ];
 
@@ -513,7 +520,8 @@ export function checkSpam(input = {}) {
     }
   }
 
-  const phoneDigits = String(phone ?? "").replace(/\D/g, "");
+  // A leading 1 is dropped, as the form does: "12494494100" is the same number.
+  const phoneDigits = String(phone ?? "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
   if (phoneDigits && BLOCKED_PHONES.includes(phoneDigits)) {
     return { blocked: true, rule: "phone", reason: phoneDigits };
   }
