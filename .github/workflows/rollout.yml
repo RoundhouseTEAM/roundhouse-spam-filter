@@ -1,0 +1,50 @@
+name: Roll out to every site
+
+# Every update here goes to EVERY site (Philip, 2026-11-27). Sites pin this package by
+# commit in package-lock.json, so on each merge to main this runs the tests, then bumps
+# the lockfile in every site repo (scripts/rollout-repos.json + code search) and Vercel
+# deploys each one. Fails — and GitHub emails — if any site could not be bumped.
+#
+# Needs the repository secret ROLLOUT_TOKEN: a token with Contents read/write on every
+# site repo. Fine-grained tokens cover one owner, so RoundhouseDM's repos need a second
+# secret, ROLLOUT_TOKEN_ROUNDHOUSEDM (or use one classic token with "repo" scope).
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
+      - "monitor/**"
+      - "test*.js"
+      - ".github/workflows/form-monitor.yml"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only report what would be bumped"
+        type: boolean
+        default: true
+
+concurrency:
+  group: rollout
+  cancel-in-progress: false
+
+jobs:
+  rollout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tests (nothing ships if they fail)
+        run: npm test
+      - name: Bump every site's lockfile
+        run: node scripts/rollout.mjs
+        env:
+          SHA: ${{ github.sha }}
+          SUBJECT: ${{ github.event.head_commit.message }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+          ROLLOUT_TOKEN: ${{ secrets.ROLLOUT_TOKEN }}
+          ROLLOUT_TOKEN_ROUNDHOUSEDM: ${{ secrets.ROLLOUT_TOKEN_ROUNDHOUSEDM }}

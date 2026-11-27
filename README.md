@@ -119,8 +119,8 @@ central script doesn't answer `{ok:true}`, so a withheld lead is recoverable fro
 Vercel runtime logs even while the central sheet is broken. `npm test` covers every path
 with the network stubbed.
 
-**After pushing a change here, no site gets it until its `package-lock.json` is bumped**
-(`npm install @roundhouse/spam-filter@github:RoundhouseTEAM/roundhouse-spam-filter`).
+**A site gets a change here only when its `package-lock.json` is bumped.** The rollout
+workflow does that for every site on each merge to `main`; see "Rolling out an update".
 
 Every rule was derived from real spam across Alpha Omega, Newmans, and Indiana Flow —
 not guessed. `test.js` holds those real submissions plus real paying customers, so
@@ -383,19 +383,28 @@ npm test
 
 ## Rolling out an update
 
-Client sites pin this **by resolved git commit in `package-lock.json`**, so pushing
-here reaches no site until each repo's lockfile is bumped. A fix once sat live on only
-2 of 9 sites for 8 days because of this.
+**Every update goes to every site, automatically (Philip, 2026-11-27).** Client sites pin
+this package by resolved git commit in `package-lock.json`, so a push here reaches no
+site until each lockfile is bumped. A fix once sat live on only 2 of 9 sites for 8 days.
 
-```bash
-# in each client project
-npm update @roundhouse/spam-filter     # rewrites the pinned commit in package-lock.json
-git commit -am "Bump spam filter"      # the lockfile change is the part that ships
-git push                               # Vercel deploys on push
-```
+So on every merge to `main`, `.github/workflows/rollout.yml` runs `npm test` and then
+`scripts/rollout.mjs`, which bumps the lockfile in every site repo and commits it to that
+repo's default branch. Vercel deploys each one on push. The repos are listed in
+`scripts/rollout-repos.json`. Code search also finds any other repo in those owners that
+depends on the package, bumps it, and says to add it to the list. Only the
+`@roundhouse/spam-filter` entry changes, the same two lines a hand bump changes. A repo
+that pins a ref in `package.json` (`#v2.40.0`) is left alone. The job fails (and GitHub
+emails) if any site could not be bumped; the run summary lists every repo.
 
-Confirm with `grep roundhouse-spam-filter package-lock.json` — the commit hash there
-is what actually deploys.
+Setup, once: add a repository secret `ROLLOUT_TOKEN` with Contents read/write on every
+site repo. A fine-grained token covers one owner, so the RoundhouseDM repos need a second
+secret, `ROLLOUT_TOKEN_ROUNDHOUSEDM` (or use one classic token with `repo` scope).
+Actions → "Roll out to every site" → Run workflow re-runs it by hand; it defaults to a dry
+run that only reports what it would bump.
+
+New site: add its repo to `scripts/rollout-repos.json` and its pages to
+`monitor/sites.json`. Confirm a site with `grep roundhouse-spam-filter package-lock.json`
+— the commit hash there is what actually deploys.
 
 ## Testing
 
