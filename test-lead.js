@@ -285,6 +285,11 @@ for (const [label, body, headers, layer] of [
   ["Ridgepoint phone on a gmail address", goodLead({ phone: "(516) 842-9665", email: "tg@gmail.com" }), {}, "phone"],
   ["confidential business valuation, from gmail", goodLead({ email: "t@gmail.com", message: "We help owners sell their businesses and offer a free, confidential business valuation." }), {}, "blocked-keyword"],
   ["what your business could sell for, from gmail", goodLead({ email: "t@gmail.com", message: "Find out what your business could sell for. Request an estimate here." }), {}, "blocked-keyword"],
+  // Philip, 2026-11-27 — paid link-placement pitch (Proverbs), delivered with no flags.
+  ["yournewsagent.com.au sender (Proverbs, 2026-11-27)", goodLead({ name: "Tina Smith", email: "tina@yournewsagent.com.au" }), {}, "email-domain"],
+  ["link-placement phone with a leading 1, on gmail", goodLead({ phone: "12494494100", email: "t@gmail.com" }), {}, "phone"],
+  ["contextual mentions on niche-relevant sites, from gmail", goodLead({ email: "t@gmail.com", message: "We help brands earn contextual mentions on niche-relevant sites." }), {}, "blocked-keyword"],
+  ["similar placements, from gmail", goodLead({ email: "t@gmail.com", message: "Would you like to get similar placements on other relevant websites?" }), {}, "blocked-keyword"],
   // Philip, 2026-11-27 — Google review-removal pitch (Indiana Flow), delivered with no flags.
   ["review-removal sender shapon (Indiana Flow, 2026-11-27)", goodLead({ name: "shapon", email: "shaponhossen98@gmail.com" }), {}, "email-address"],
   ["review-removal phone on another gmail", goodLead({ phone: "(917) 926-1831", email: "s@gmail.com" }), {}, "phone"],

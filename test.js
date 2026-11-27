@@ -576,6 +576,11 @@ const MUST_BLOCK = [
 
 const MUST_PASS = [
   {
+    label: "customer who saw the client's press article (link-placement wording never blocks on 'article' or 'mentions')",
+    name: "Sam Ortiz", email: "customer@gmail.com", phone: "5551234567",
+    message: "Saw the article that mentions you on einpresswire about water heaters. Ours is leaking, can you come out this week?",
+  },
+  {
     label: "customer who mentions reviews (review-removal wording never blocks on 'review' alone)",
     name: "Pat Moore", email: "customer@gmail.com", phone: "5551234567",
     message: "Saw all your positive reviews on Google. The last plumber got a negative review from us, so we want someone reliable for a sump pump.",
