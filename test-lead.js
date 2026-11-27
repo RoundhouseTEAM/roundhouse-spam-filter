@@ -285,6 +285,11 @@ for (const [label, body, headers, layer] of [
   ["Ridgepoint phone on a gmail address", goodLead({ phone: "(516) 842-9665", email: "tg@gmail.com" }), {}, "phone"],
   ["confidential business valuation, from gmail", goodLead({ email: "t@gmail.com", message: "We help owners sell their businesses and offer a free, confidential business valuation." }), {}, "blocked-keyword"],
   ["what your business could sell for, from gmail", goodLead({ email: "t@gmail.com", message: "Find out what your business could sell for. Request an estimate here." }), {}, "blocked-keyword"],
+  // Philip, 2026-11-27 — DataPallas BI-software pitch (CM&M), delivered with no flags.
+  ["c.datapallas.com sender (CM&M, 2026-11-27)", goodLead({ name: "DataPallas Team", email: "contact-zk7hs@c.datapallas.com" }), {}, "email-domain"],
+  ["datapallas.com written in, from gmail", goodLead({ email: "d@gmail.com", message: "We build DataPallas (datapallas.com). Open to a short call?" }), {}, "mention"],
+  ["DataPallas phone on a gmail address", goodLead({ phone: "(737) 213-4820", email: "d@gmail.com" }), {}, "phone"],
+  ["report bursting / open-source BI, from gmail", goodLead({ email: "d@gmail.com", message: "A free and open-source BI platform with pixel-perfect reports and report bursting." }), {}, "blocked-keyword"],
   // Philip, 2026-11-27 — paid link-placement pitch (Proverbs), delivered with no flags.
   ["yournewsagent.com.au sender (Proverbs, 2026-11-27)", goodLead({ name: "Tina Smith", email: "tina@yournewsagent.com.au" }), {}, "email-domain"],
   ["link-placement phone with a leading 1, on gmail", goodLead({ phone: "12494494100", email: "t@gmail.com" }), {}, "phone"],
