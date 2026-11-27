@@ -1,0 +1,29 @@
+{
+  "_comment": "Every repo that depends on @roundhouse/spam-filter. scripts/rollout.mjs bumps each one's package-lock.json on every merge to main, so all sites get every update. It also finds new consumers by code search in these owners, so a missed repo is still bumped — but add new sites here too. Remove a repo only when it no longer uses the package.",
+  "repos": [
+    "RoundhouseTEAM/7kings-landscaping",
+    "RoundhouseTEAM/adair-plumbing-website",
+    "RoundhouseTEAM/alamo-glass-website",
+    "RoundhouseTEAM/alpha-omega-plumbing",
+    "RoundhouseTEAM/alpha-omega-website",
+    "RoundhouseTEAM/andrews-plumbing",
+    "RoundhouseTEAM/benjamin-franklin-ogden-website",
+    "RoundhouseTEAM/cmm-plumbing-website",
+    "RoundhouseTEAM/dam-plumber-website",
+    "RoundhouseTEAM/indiana-flow-website",
+    "RoundhouseTEAM/irrigators-llc",
+    "RoundhouseTEAM/irrigators-llc-website",
+    "RoundhouseTEAM/local-roots-lawn-maintenance-website",
+    "RoundhouseTEAM/makedrums",
+    "RoundhouseTEAM/master-pro-plumber-website",
+    "RoundhouseTEAM/newmans-plumbing",
+    "RoundhouseTEAM/power-construction-website",
+    "RoundhouseTEAM/proverbs-plumbing-website",
+    "RoundhouseTEAM/purkey-puppies",
+    "RoundhouseTEAM/roundhouse-meta-router",
+    "RoundhouseTEAM/simply-plumbing-website",
+    "RoundhouseTEAM/taws-website",
+    "RoundhouseTEAM/two-brothers-plumbing-website",
+    "RoundhouseDM/integrated-plumbing-website"
+  ]
+}
