@@ -576,6 +576,11 @@ const MUST_BLOCK = [
 
 const MUST_PASS = [
   {
+    label: "customer who mentions reviews (review-removal wording never blocks on 'review' alone)",
+    name: "Pat Moore", email: "customer@gmail.com", phone: "5551234567",
+    message: "Saw all your positive reviews on Google. The last plumber got a negative review from us, so we want someone reliable for a sump pump.",
+  },
+  {
     label: "customer on Ridgepoint Drive (the broker's name alone never blocks)",
     name: "Dana Lee", email: "customer@gmail.com", phone: "5551234567",
     message: "We're at 412 Ridgepoint Dr. Water heater is leaking, and we're selling the house next month so need it fixed fast.",

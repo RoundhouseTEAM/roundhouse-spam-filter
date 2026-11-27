@@ -285,6 +285,11 @@ for (const [label, body, headers, layer] of [
   ["Ridgepoint phone on a gmail address", goodLead({ phone: "(516) 842-9665", email: "tg@gmail.com" }), {}, "phone"],
   ["confidential business valuation, from gmail", goodLead({ email: "t@gmail.com", message: "We help owners sell their businesses and offer a free, confidential business valuation." }), {}, "blocked-keyword"],
   ["what your business could sell for, from gmail", goodLead({ email: "t@gmail.com", message: "Find out what your business could sell for. Request an estimate here." }), {}, "blocked-keyword"],
+  // Philip, 2026-11-27 — Google review-removal pitch (Indiana Flow), delivered with no flags.
+  ["review-removal sender shapon (Indiana Flow, 2026-11-27)", goodLead({ name: "shapon", email: "shaponhossen98@gmail.com" }), {}, "email-address"],
+  ["review-removal phone on another gmail", goodLead({ phone: "(917) 926-1831", email: "s@gmail.com" }), {}, "phone"],
+  ["negative review removal, from gmail", goodLead({ email: "s@gmail.com", message: "I am a Google negative review removal expert and positive review provider." }), {}, "blocked-keyword"],
+  ["negative reviews delete, emoji list", goodLead({ email: "s@gmail.com", message: "My service \u2705 Google Negative Reviews Delete \u2705 Google maps Positive Reviews" }), {}, "blocked-keyword"],
   ["homeandbuildingbiz.com sender (CM&M)", goodLead({ email: "bakleysmith@homeandbuildingbiz.com" }), {}, "email-domain"],
   ["robotics companies pay (Newman's, 2026-11-18)", goodLead({ message: "Robotics companies pay businesses like yours to record everyday hands-on work." }), {}, "blocked-keyword"],
   ["blocklisted name: HAME WALLS. with a company after it", goodLead({ name: "HAME WALLS. - Growth Team" }), {}, "blocked-name"],

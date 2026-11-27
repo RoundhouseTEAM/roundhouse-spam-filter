@@ -96,6 +96,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
 // when written into the name or message.
 export const BLOCKED_EMAILS = [
   "joannariggs3@gmail.com", // Philip, 2026-11-02
+  "shaponhossen98@gmail.com", // "shapon", Google review-removal pitch (Indiana Flow), Philip 2026-11-27
 ];
 
 // Websites confirmed spammers promote. A lead that MENTIONS one of these (or any
@@ -179,6 +180,15 @@ export const BLOCKED_KEYWORDS = [
   // said "sell their businesses", not "sell your business".
   "confidential business valuation",
   "what your business could sell for",
+  // "Google negative review removal expert and positive review provider" (shapon, Indiana
+  // Flow), Philip 2026-11-27 — delivered unflagged: a real browser, and no known wording.
+  // Never bare "negative review" or "positive reviews": customers mention reviews.
+  "negative review removal",
+  "negative reviews removal",
+  "remove negative reviews",
+  "delete negative reviews",
+  "negative reviews delete",
+  "positive review provider",
 ];
 
 // TLDs no real customer sends from.
@@ -193,6 +203,7 @@ export const BLOCKED_PHONES = [
   "2674892720", // robot-footage pitch, every domain/name it rotates through, Philip 2026-11-20
   "3075334552", // Tiago, getlivedemo.com free-demo-site pitch, Philip 2026-11-20
   "5168429665", // "Tom Green", Ridgepoint Business Advisors broker pitch (Andrews), Philip 2026-11-25
+  "9179261831", // "shapon", Google review-removal pitch (Indiana Flow), Philip 2026-11-27
 ];
 
 // Repeat offenders by name. Matched against the NAME field only, as whole words in order
