@@ -586,6 +586,16 @@ const MUST_PASS = [
     message: "Saw the article that mentions you on einpresswire about water heaters. Ours is leaking, can you come out this week?",
   },
   {
+    label: "customer who runs a website business (website-pitch wording never blocks on 'build sites' or 'new customers')",
+    name: "Lee Park", email: "customer@gmail.com", phone: "5551234567",
+    message: "We build sites for a living and our office restroom is flooding. Are you still taking new customers? Need someone today.",
+  },
+  {
+    label: "customer who just bought a domain (domain-sale wording never blocks on 'domain' or 'acquisition')",
+    name: "Jo Kim", email: "customer@gmail.com", phone: "5551234567",
+    message: "Our company just closed an acquisition of a new building and needs a backflow test. My email domain is new, so please call.",
+  },
+  {
     label: "customer who mentions reviews (review-removal wording never blocks on 'review' alone)",
     name: "Pat Moore", email: "customer@gmail.com", phone: "5551234567",
     message: "Saw all your positive reviews on Google. The last plumber got a negative review from us, so we want someone reliable for a sump pump.",

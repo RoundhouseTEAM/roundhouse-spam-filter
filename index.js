@@ -87,6 +87,7 @@ export const BLOCKED_EMAIL_DOMAINS = [
   "whitmoredatapartners.com",
   "verconai.com", // "I built you a free demo site" pitch (Alpha Omega, Master Pro), Philip 2026-11-20
   "homeandbuildingbiz.com", // "excellent time to sell a business" broker pitch (CM&M), Philip 2026-11-20
+  "bitwisebuilt.com", // "Anthony Williams", BitwiseBuilt website-build pitch (Alpha Omega), Philip 2026-11-28
   "datapallas.com", // "DataPallas Team", BI-software pitch (CM&M), Philip 2026-11-27 — sends from c.datapallas.com
   "yournewsagent.com.au", // "Tina Smith", paid link-placement pitch (Proverbs), Philip 2026-11-27
   "ridgepointba.com", // Ridgepoint Business Advisors broker pitch, "Tom Green" (Andrews), Philip 2026-11-25
@@ -99,6 +100,8 @@ export const BLOCKED_EMAIL_DOMAINS = [
 export const BLOCKED_EMAILS = [
   "joannariggs3@gmail.com", // Philip, 2026-11-02
   "shaponhossen98@gmail.com", // "shapon", Google review-removal pitch (Indiana Flow), Philip 2026-11-27
+  "m.sterling.pro@gmail.com", // "Sterling Mark", EmergencyPlumberVirginia.com domain sale (Newman's), Philip 2026-11-28
+  "elmercornett15@gmail.com", // "Emma Wilson", vicecitybet.net casino link (Andrews), Philip 2026-11-28
 ];
 
 // Websites confirmed spammers promote. A lead that MENTIONS one of these (or any
@@ -110,6 +113,7 @@ export const BLOCKED_SITES = [
   "veraforma.fit", // VeraForma staff-fitness-app pitch (Andrews), Philip 2026-11-19
   "getlivedemo.com", // <business>.getlivedemo.com free-demo-site pitch from Tiago, Philip 2026-11-20
   "siteindex.live", // "List your site in Google's Search Index" pitch, Philip 2026-11-24
+  "vicecitybet.net", // casino link, "Emma Wilson" (Andrews), Philip 2026-11-28
 ];
 
 // Bot template phrases. A submission with one of these ANYWHERE in a field a visitor
@@ -142,6 +146,8 @@ export const BLOCKED_MESSAGES = [
   "New York Savings, NYC",
   // Philip, 2026-11-24 — "List <your site> in Google's Search Index" (siteindex.live).
   "in Google's Search Index so it can be visible in web search results",
+  // Philip, 2026-11-28 — casino link bot (Andrews): this line, then the link.
+  "Lots of goodies are up for grabs",
 ];
 
 // Withheld ONLY when the form's JavaScript didn't run (2.58.0, Philip 2026-11-23). A real
@@ -200,6 +206,16 @@ export const BLOCKED_KEYWORDS = [
   "report bursting",
   "pixel perfect reports", // also "pixel-perfect reports"
   "open source bi", // also "open-source BI"
+  // BitwiseBuilt website-build pitch (Alpha Omega), Philip 2026-11-28 — delivered unflagged:
+  // a real browser, a "still taking new customers?" opener, and a real mistake it spotted on
+  // the site. Never bare "build sites" or "new customers": customers write both.
+  "turn visitors into customers",
+  "bitwise built", // also "BitwiseBuilt", in the message or as a company name
+  // Exact-match domain sale, "Sterling Mark" (Newman's), Philip 2026-11-28 — delivered
+  // unflagged. Never bare "domain" or "acquisition".
+  "exact match domain", // also "exact-match domain"
+  "acquiring this domain",
+  "acquire this domain",
 ];
 
 // TLDs no real customer sends from.
@@ -217,6 +233,7 @@ export const BLOCKED_PHONES = [
   "7372134820", // "DataPallas Team", BI-software pitch (CM&M), Philip 2026-11-27
   "2494494100", // "Tina Smith", paid link-placement pitch (Proverbs), Philip 2026-11-27
   "9179261831", // "shapon", Google review-removal pitch (Indiana Flow), Philip 2026-11-27
+  "9135070687", // "Sterling Mark", domain-sale pitch (Newman's), Philip 2026-11-28
 ];
 
 // Repeat offenders by name. Matched against the NAME field only, as whole words in order

@@ -295,6 +295,16 @@ for (const [label, body, headers, layer] of [
   ["link-placement phone with a leading 1, on gmail", goodLead({ phone: "12494494100", email: "t@gmail.com" }), {}, "phone"],
   ["contextual mentions on niche-relevant sites, from gmail", goodLead({ email: "t@gmail.com", message: "We help brands earn contextual mentions on niche-relevant sites." }), {}, "blocked-keyword"],
   ["similar placements, from gmail", goodLead({ email: "t@gmail.com", message: "Would you like to get similar placements on other relevant websites?" }), {}, "blocked-keyword"],
+  // Philip, 2026-11-28 — three pitches delivered with no flags on 2.64.0.
+  ["bitwisebuilt.com sender (Alpha Omega, 2026-11-28)", goodLead({ name: "Anthony Williams", email: "anthony.williams@bitwisebuilt.com" }), {}, "email-domain"],
+  ["website pitch wording, from gmail", goodLead({ email: "a@gmail.com", message: "I noticed your contact page lists two different office hours, so visitors may drop off. We build sites to turn visitors into customers and run them end to end. Want me to send over the demo? Anthony, BitwiseBuilt" }), {}, "blocked-keyword"],
+  ["BitwiseBuilt as the company name", goodLead({ name: "Anthony - BitwiseBuilt", email: "a@gmail.com" }), {}, "blocked-keyword"],
+  ["domain-sale sender (Newman's, 2026-11-28)", goodLead({ name: "Sterling Mark", email: "m.sterling.pro@gmail.com" }), {}, "email-address"],
+  ["domain-sale phone with +1, on another gmail", goodLead({ phone: "+1 (913) 507-0687", email: "s@gmail.com" }), {}, "phone"],
+  ["exact-match domain wording, from gmail", goodLead({ email: "s@gmail.com", message: "I'm reaching out to offer EmergencyPlumberVirginia.com for acquisition. It's a clean, exact-match domain. Would you be interested in acquiring this domain?" }), {}, "blocked-keyword"],
+  ["casino sender (Andrews, 2026-11-28)", goodLead({ name: "Emma Wilson", email: "elmercornett15@gmail.com" }), {}, "email-address"],
+  ["goodies-up-for-grabs bot line, another link", goodLead({ email: "e@gmail.com", message: "Lots of goodies are up for grabs-> https://example-casino.net" }), {}, "template"],
+  ["vicecitybet.net mentioned", goodLead({ email: "e@gmail.com", message: "Check https://vicecitybet.net for bonuses" }), {}, "mention"],
   // Philip, 2026-11-27 — Google review-removal pitch (Indiana Flow), delivered with no flags.
   ["review-removal sender shapon (Indiana Flow, 2026-11-27)", goodLead({ name: "shapon", email: "shaponhossen98@gmail.com" }), {}, "email-address"],
   ["review-removal phone on another gmail", goodLead({ phone: "(917) 926-1831", email: "s@gmail.com" }), {}, "phone"],
